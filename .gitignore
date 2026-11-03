@@ -1,0 +1,12 @@
+# Compilación .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+TestResults/
+*.nupkg
+
+# Configuración local con secretos
+appsettings.*.local.json
+*.secrets.json

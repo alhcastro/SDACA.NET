@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Base común del ERP SDACA en .NET.
+    netstandard2.0: la usa el puente COM (.NET Framework 4.8, x86) que carga el menú VB6.
+    net8.0: la usan el menú nuevo y la API ASP.NET Core.
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
+    <RootNamespace>SDACA.Core</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <Company>Sistemas Digitales Avanzados - SDACA S.A.</Company>
+    <Product>SDACA ERP</Product>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.35" />
+    <!-- 2.6.1 o superior: corrige GHSA-473q-m89c-ghf8 -->
+    <PackageReference Include="MySqlConnector" Version="2.6.2" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="SDACA.Core.Tests" />
+  </ItemGroup>
+
+</Project>
