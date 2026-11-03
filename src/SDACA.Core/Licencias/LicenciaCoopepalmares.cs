@@ -9,8 +9,8 @@ namespace SDACA.Core.Licencias
     /// Copia fiel de <c>Fuentes\registro\07 - Coopepalmares\reg.cls</c> (sddat007.dll, 2009.257.841).
     /// </summary>
     /// <remarks>
-    /// SD0401 (GCP) está en la licencia, pero no hay carpeta SD0401 en Fuentes. Se deja igual
-    /// que en el original; el menú lo ignora si no puede crear el objeto.
+    /// reg.cls incluye SD0401 (GCP, Control de Producción), pero Coopepalmares no lo usa
+    /// (confirmado el 2026-11-03), así que no está en esta licencia. Quedan 18 módulos.
     /// </remarks>
     public sealed class LicenciaCoopepalmares : ILicencia
     {
@@ -25,7 +25,7 @@ namespace SDACA.Core.Licencias
             FechaCompra = new DateTime(2003, 5, 1),
             FechaVencimiento = new DateTime(1900, 1, 1),
             NumeroCliente = 7,
-            ModulosCount = 19,
+            ModulosCount = 18,
             Asociados = true,
             UnaEmpresa = true,
         };
@@ -36,7 +36,6 @@ namespace SDACA.Core.Licencias
             new ModuloLicenciado("SD0101", "GAC", "Gestión de Asociados y Clientes"),
             new ModuloLicenciado("SD0201", "GPC", "Gestión de Café"),
             new ModuloLicenciado("SD0301", "GVE", "Gestión de Ventas y Exportaciones"),
-            new ModuloLicenciado("SD0401", "GCP", "Gestión de Control de Producción"),
             new ModuloLicenciado("SD0502", "POS", "Facturación e Inventarios"),
             new ModuloLicenciado("SD0601", "CXC", "Cuentas por Cobrar"),
             new ModuloLicenciado("SD0701", "CXP", "Cuentas por Pagar"),

@@ -25,9 +25,10 @@ namespace SDACA.Core.Tests
         }
 
         [Fact]
-        public void Tiene_los_19_modulos_de_la_licencia()
+        public void Tiene_18_modulos_sin_SD0401()
         {
-            Assert.Equal(19, _lic.Modulos.Count);
+            Assert.Equal(18, _lic.Modulos.Count);
+            Assert.False(_lic.TieneModulo("SD0401"));
             Assert.Equal(_lic.Registro.ModulosCount, _lic.Modulos.Count);
             Assert.Equal(_lic.Modulos.Count, _lic.Modulos.Select(m => m.Codigo).Distinct().Count());
             Assert.True(_lic.TieneModulo("sd0502"));
@@ -47,7 +48,9 @@ namespace SDACA.Core.Tests
             if (!File.Exists(reg)) return; // Solo en la máquina que tiene las fuentes VB6.
 
             var texto = File.ReadAllText(reg, Windows1252());
-            var codigos = Regex.Matches(texto, "Modulos\\.Codigo\\s*=\\s*\"(SD\\w+)\"").Cast<Match>().Select(m => m.Groups[1].Value).ToArray();
+            // reg.cls tiene 19 módulos; SD0401 se quitó porque Coopepalmares no lo usa.
+            var codigos = Regex.Matches(texto, "Modulos\\.Codigo\\s*=\\s*\"(SD\\w+)\"").Cast<Match>().Select(m => m.Groups[1].Value)
+                .Where(c => c != "SD0401").ToArray();
             Assert.Equal(codigos, _lic.Modulos.Select(m => m.Codigo).ToArray());
         }
 

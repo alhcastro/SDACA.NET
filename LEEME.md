@@ -22,7 +22,7 @@ dotnet test -c Release
 
 - **MD5:** `Md5Vb6.Calcular` usa el byte bajo de cada carácter y devuelve minúsculas, igual que `SD_CLS_MD5.NEWMD5`. Con él se calculan las contraseñas de MySQL, la clave de `Init()` (`MD5("SD0601")`) y los hashes de `gatusuariospriv2`. No se debe cambiar a UTF-8.
 - **Usuarios de MySQL:** `Administrador` entra como `root` con la contraseña tal cual. Los demás usuarios usan `MD5(contraseña)`. Sin usuario se entra como `sdaca`.
-- **Privilegios:** `ModoPrivilegios.CompatibleVb6` (predeterminado) reproduce el comportamiento actual, que **no filtra por el privilegio pedido**. `Estricto` sí lo filtra. Pasar a `Estricto` es una decisión del negocio y hay que probarla con los usuarios reales.
+- **Privilegios:** `Privilegios.CargarAsync` carga los permisos al iniciar sesión, igual que `ObtenerUsuario`. Administrador y root reciben todos los de los módulos del local. Los demás reciben solo los que tienen su hash en `gatusuariospriv2`. `Privilegios.Validar` funciona igual que `SD_ValidarPriv`. `TieneAsync` es la versión corregida de `TienePrivilegio`: el original de VB6 no filtraba por el privilegio pedido, aunque ninguna parte del código lo llamaba. Se corrigió también en `Comun\SD_MOD_USU.bas`.
 - **Parámetros:** si el local no tiene el parámetro, se usa el del local `1000` (valores globales).
 
 ## Siguiente fase
@@ -31,4 +31,4 @@ Fase 2, puente COM: un `SD1701.Clase` hecho en .NET Framework 4.8 x86 que el men
 
 ## Alcance: licencia de Coopepalmares
 
-18 módulos con fuente (SD0401 está en la licencia, pero no hay carpeta), más el menú y las bases: unas **372 mil líneas**. Quedan fuera las variantes SD0507/SD0509 y los módulos de otros clientes (SD1901, SD20xx a SD27xx). La factura electrónica (`EnvioFC`) sí entra, porque tiene la cédula de Coopepalmares escrita en el código.
+18 módulos (SD0401 está en reg.cls, pero Coopepalmares no lo usa), más el menú y las bases: unas **372 mil líneas**. Quedan fuera las variantes SD0507/SD0509 y los módulos de otros clientes (SD1901, SD20xx a SD27xx). La factura electrónica (`EnvioFC`) sí entra, porque tiene la cédula de Coopepalmares escrita en el código.
