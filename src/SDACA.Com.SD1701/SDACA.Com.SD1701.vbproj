@@ -50,7 +50,7 @@
 
   <!--
     Depuración con F5: en Debug, después de compilar se registra esta DLL para el usuario actual
-    (HKCU, sin administrador). Así SDACAERP.exe (Properties\launchSettings.json) carga la versión
+    (HKCU, sin administrador). Así SDACAERP.exe (My Project\launchSettings.json) carga la versión
     recién compilada y los puntos de interrupción se detienen.
     Para volver a la versión publicada: herramientas\Probar-Paridad.ps1 o Registrar-ComUsuario.ps1.
   -->

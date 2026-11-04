@@ -1,9 +1,0 @@
-{
-  "profiles": {
-    "Menú SDACAERP": {
-      "commandName": "Executable",
-      "executablePath": "C:\\Program Files (x86)\\SDACA\\Bin\\SDACAERP.exe",
-      "workingDirectory": "C:\\Program Files (x86)\\SDACA\\Bin"
-    }
-  }
-}
