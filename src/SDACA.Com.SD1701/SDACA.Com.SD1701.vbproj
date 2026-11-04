@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    SD1701 (GCG, Consultas Gerenciales) como componente COM en .NET.
+    SD1701 (GCG, Consultas Gerenciales) como componente COM en VB.NET.
     Reemplaza a SD1701.dll de VB6: el menú SDACAERP lo crea con CreateObject("SD1701.Clase").
     Tiene que ser .NET Framework 4.8 y x86 porque el menú es un proceso VB6 de 32 bits.
   -->
@@ -9,10 +9,13 @@
     <TargetFramework>net48</TargetFramework>
     <PlatformTarget>x86</PlatformTarget>
     <LangVersion>latest</LangVersion>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>disable</ImplicitUsings>
+    <OptionExplicit>On</OptionExplicit>
+    <OptionStrict>On</OptionStrict>
+    <OptionInfer>On</OptionInfer>
+    <OptionCompare>Binary</OptionCompare>
     <AssemblyName>SDACA.Com.SD1701</AssemblyName>
-    <RootNamespace>SDACA.Com.SD1701</RootNamespace>
+    <!-- En VB el espacio raíz se antepone a cada Namespace: SDACA.Com + SD1701 = SDACA.Com.SD1701.Clase -->
+    <RootNamespace>SDACA.Com</RootNamespace>
     <Version>2026.11.3</Version>
     <Company>Sistemas Digitales Avanzados - SDACA S.A.</Company>
     <Product>SD1701 - Consultas Gerenciales</Product>
@@ -23,7 +26,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SDACA.Core\SDACA.Core.csproj" />
+    <ProjectReference Include="..\SDACA.Core\SDACA.Core.vbproj" />
     <Reference Include="Interop.SDBASE00">
       <HintPath>..\..\lib\interop\Interop.SDBASE00.dll</HintPath>
       <EmbedInteropTypes>false</EmbedInteropTypes>
@@ -35,6 +38,10 @@
       <Private>true</Private>
     </Reference>
     <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Import Include="System.Windows.Forms" />
   </ItemGroup>
 
   <ItemGroup>

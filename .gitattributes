@@ -1,5 +1,5 @@
 * text=auto eol=crlf
-*.cs  text eol=crlf diff=csharp
+*.vb  text eol=crlf
 *.png binary
 *.gif binary
 *.ico binary

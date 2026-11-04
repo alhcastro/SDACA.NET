@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Base común del ERP SDACA en VB.NET.
+    net48: la usa el puente COM (.NET Framework 4.8, x86) que carga el menú VB6.
+    net8.0: la usan el menú nuevo y la API ASP.NET Core.
+    Se usa net48 en lugar de netstandard2.0 para tener Microsoft.VisualBasic completo
+    (Val, Mid, Format...) con el mismo comportamiento que VB6 en los dos destinos.
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>net48;net8.0</TargetFrameworks>
+    <RootNamespace>SDACA.Core</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <OptionExplicit>On</OptionExplicit>
+    <OptionStrict>On</OptionStrict>
+    <OptionInfer>On</OptionInfer>
+    <OptionCompare>Binary</OptionCompare>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Company>Sistemas Digitales Avanzados - SDACA S.A.</Company>
+    <Product>SDACA ERP</Product>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.35" />
+    <!-- 2.6.1 o superior: corrige GHSA-473q-m89c-ghf8 -->
+    <PackageReference Include="MySqlConnector" Version="2.6.2" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" Condition="'$(TargetFramework)' == 'net8.0'" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <Reference Include="System.Security" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="SDACA.Core.Tests" />
+  </ItemGroup>
+
+</Project>
