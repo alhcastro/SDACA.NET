@@ -48,4 +48,14 @@
     <EmbeddedResource Include="Recursos\*.*" LogicalName="Recurso.%(Filename)" />
   </ItemGroup>
 
+  <!--
+    Depuración con F5: en Debug, después de compilar se registra esta DLL para el usuario actual
+    (HKCU, sin administrador). Así SDACAERP.exe (Properties\launchSettings.json) carga la versión
+    recién compilada y los puntos de interrupción se detienen.
+    Para volver a la versión publicada: herramientas\Probar-Paridad.ps1 o Registrar-ComUsuario.ps1.
+  -->
+  <Target Name="RegistrarParaDepurar" AfterTargets="Build" Condition="'$(Configuration)' == 'Debug'">
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\..\herramientas\Registrar-ComUsuario.ps1&quot; -Carpeta &quot;$(MSBuildProjectDirectory)\$(OutDir.TrimEnd('\'))&quot; -Dll $(TargetFileName)" />
+  </Target>
+
 </Project>
