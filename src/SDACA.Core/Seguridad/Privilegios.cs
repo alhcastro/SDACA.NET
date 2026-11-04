@@ -83,7 +83,14 @@ namespace SDACA.Core.Seguridad
         /// Con <paramref name="cualquiera"/> = true basta uno (OR, el valor predeterminado en VB6).
         /// Con false hacen falta todos (AND). Una lista vacía devuelve false.
         /// </summary>
-        public static bool Validar(ISet<string> privilegios, string? requeridos, string separador = ";", bool cualquiera = true)
+        public static bool Validar(ISet<string> privilegios, string? requeridos, string separador = ";", bool cualquiera = true) =>
+            Validar(privilegios.Contains, requeridos, separador, cualquiera);
+
+        /// <summary>
+        /// Igual que la otra sobrecarga, pero con una función de búsqueda. Sirve para la Collection de
+        /// VB6, que no deja recorrer sus llaves: <c>SD_LoadFromCollection(col, priv) = "1"</c>.
+        /// </summary>
+        public static bool Validar(Func<string, bool> tienePrivilegio, string? requeridos, string separador = ";", bool cualquiera = true)
         {
             var resultado = false;
             var resto = requeridos ?? "";
@@ -94,7 +101,7 @@ namespace SDACA.Core.Seguridad
                 var actual = pos >= 0 ? resto.Substring(0, pos) : "";
                 if (actual.Length == 0) actual = resto;
 
-                if (privilegios.Contains(actual))
+                if (tienePrivilegio(actual))
                 {
                     resultado = true;
                     if (cualquiera) return true;

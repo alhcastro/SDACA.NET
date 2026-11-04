@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SD1701 (GCG, Consultas Gerenciales) como componente COM en .NET.
+    Reemplaza a SD1701.dll de VB6: el menú SDACAERP lo crea con CreateObject("SD1701.Clase").
+    Tiene que ser .NET Framework 4.8 y x86 porque el menú es un proceso VB6 de 32 bits.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <PlatformTarget>x86</PlatformTarget>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>SDACA.Com.SD1701</AssemblyName>
+    <RootNamespace>SDACA.Com.SD1701</RootNamespace>
+    <Version>2026.11.3</Version>
+    <Company>Sistemas Digitales Avanzados - SDACA S.A.</Company>
+    <Product>SD1701 - Consultas Gerenciales</Product>
+    <ComVisible>false</ComVisible>
+    <!-- La typelib se exporta y registra con herramientas\Registrar-ComUsuario.ps1 (sin administrador). -->
+    <RegisterForComInterop>false</RegisterForComInterop>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SDACA.Core\SDACA.Core.csproj" />
+    <Reference Include="Interop.SDBASE00">
+      <HintPath>..\..\lib\interop\Interop.SDBASE00.dll</HintPath>
+      <EmbedInteropTypes>false</EmbedInteropTypes>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="VBA">
+      <HintPath>..\..\lib\interop\VBA.dll</HintPath>
+      <EmbedInteropTypes>false</EmbedInteropTypes>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Recursos\*.*" LogicalName="Recurso.%(Filename)" />
+  </ItemGroup>
+
+</Project>

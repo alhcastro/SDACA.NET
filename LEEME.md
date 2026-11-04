@@ -25,9 +25,39 @@ dotnet test -c Release
 - **Privilegios:** `Privilegios.CargarAsync` carga los permisos al iniciar sesión, igual que `ObtenerUsuario`. Administrador y root reciben todos los de los módulos del local. Los demás reciben solo los que tienen su hash en `gatusuariospriv2`. `Privilegios.Validar` funciona igual que `SD_ValidarPriv`. `TieneAsync` es la versión corregida de `TienePrivilegio`: el original de VB6 no filtraba por el privilegio pedido, aunque ninguna parte del código lo llamaba. Se corrigió también en `Comun\SD_MOD_USU.bas`.
 - **Parámetros:** si el local no tiene el parámetro, se usa el del local `1000` (valores globales).
 
-## Siguiente fase
+## Fase 2: puente COM (módulos .NET dentro del menú VB6)
 
-Fase 2, puente COM: un `SD1701.Clase` hecho en .NET Framework 4.8 x86 que el menú VB6 actual pueda cargar con `CreateObject`. Tiene que recibir los UDT `SDACA_*` de la typelib de `SDBASE00.dll`. Después sigue `SD1101`, para probar formularios y reportes.
+`src/SDACA.Com.SD1701` es el primer módulo migrado. Es .NET Framework 4.8 x86, con ProgID `SD1701.Clase`, y el menú VB6 actual lo carga con `CreateObject` sin cambios.
+
+Cómo funciona:
+- `Contrato.cs` define `IModuloSdaca` (Version, Init, SDClase, Menu, Accion, Menu_Order, SD_LoadRes, Preferencias) y los UDT `SD_Clase` y `SD_InfoMenu`, con los mismos nombres de campo que VB6. El menú los lee por nombre.
+- `Init` recibe los UDT de `SDBASE00` (`lib/interop/Interop.SDBASE00.dll`, generado con TlbImp desde `C:\Program Files (x86)\SDACA\Bin\SDBASE00.dll`).
+- `ModuloComBase.cs` tiene lo que repiten todos los Clase.cls: la clave de Init, la copia del contexto y SD_LoadRes, que escribe el icono igual que VB6, con el relleno a 4 bytes.
+- Los iconos salen del `.RES` de VB6 con `herramientas/ExtraerRes.ps1`.
+
+### Registrar, probar y revertir (sin administrador)
+
+```powershell
+# Compilar y publicar
+dotnet build src\SDACA.Com.SD1701 -c Release
+Copy-Item src\SDACA.Com.SD1701\bin\Release\net48\* publicado\SD1701 -Force
+
+# Registrar solo para el usuario actual (HKCU). El menú de ese usuario carga la versión .NET;
+# los demás usuarios siguen con VB6 (HKLM no se toca).
+herramientas\Registrar-ComUsuario.ps1 -Carpeta publicado\SD1701 -Dll SDACA.Com.SD1701.dll
+
+# Comparar VB6 contra .NET con el probador VB6 (pruebas-com/Probador). Deja registrada la versión .NET.
+herramientas\Probar-Paridad.ps1 -Modulo SD1701
+
+# Volver a VB6
+herramientas\Registrar-ComUsuario.ps1 -Carpeta publicado\SD1701 -Dll SDACA.Com.SD1701.dll -Desregistrar
+```
+
+Resultado del 2026-11-03: **PARIDAD OK**. 24 respuestas idénticas y el icono idéntico byte por byte.
+
+### Siguiente
+
+`SD1101` (CEV, Control de Equipos y Vehículos): 15 formularios y 5 reportes. Prueba que los formularios WinForms abran desde `Accion()` y que los reportes se puedan migrar.
 
 ## Alcance: licencia de Coopepalmares
 

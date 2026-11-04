@@ -10,3 +10,10 @@ TestResults/
 # Configuración local con secretos
 appsettings.*.local.json
 *.secrets.json
+
+# Componentes COM listos para registrar
+publicado/
+*.tlb
+pruebas-com/**/*.exe
+pruebas-com/**/*.log
+pruebas-com/resultado_*.txt
