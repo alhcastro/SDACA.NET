@@ -1,5 +1,6 @@
 Imports SDACA.Core.Bancos
 Imports SDACA.Core.Cheques
+Imports SDACA.Core.Datos
 Imports SDACA.Ui
 
 Namespace SD1401
@@ -40,11 +41,13 @@ Namespace SD1401
                         OpcionMenu.Pendiente("Tipos de Monedas", "14008"),
                         OpcionMenu.Formulario("Tipos de Movimiento", "14015",
                             Function(s) New FrmTiposMovimiento(New TiposMovimientoRepositorio(s.Fabrica), s.Local), IconoMenu.Lista),
-                        OpcionMenu.Pendiente("Transferencias", "14014"),
+                        OpcionMenu.Formulario("Transferencias", "14014",
+                            Function(s) New FrmTransferencias(New TransferenciasBancarias(s.Fabrica), s.Uid, s.Local), IconoMenu.Lista),
                         OpcionMenu.Formulario("Cerrar Mes", "14016",
                             Function(s) New FrmCierreMes(New CierreMes(s.Fabrica), s.Uid, s.Puede("14007")), IconoMenu.Calendario)),
                     OpcionMenu.Grupo("Procesos", "14013",
-                        OpcionMenu.Pendiente("Generar archivo de transferencia bancaria", "14012")),
+                        OpcionMenu.Formulario("Generar archivo de transferencia bancaria", "14012",
+                            Function(s) New FrmGenerarTransferencia(New TransferenciasBancarias(s.Fabrica), New Parametros(s.Fabrica), s.Uid, s.Local, s.EstacionId), IconoMenu.Documento)),
                     OpcionMenu.Formulario("Cuentas Bancarias", "14002",
                         Function(s) New FrmCuentasBancarias(New CuentasBancariasRepositorio(s.Fabrica), New ChequesRepositorio(s.Fabrica), s.Uid, s.Local, s.Cedula), IconoMenu.Banco),
                     OpcionMenu.Formulario("Movimientos Bancarios", "14003",
