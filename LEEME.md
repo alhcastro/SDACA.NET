@@ -100,9 +100,34 @@ El panel `vista` de `FrmConfigCheque` representa el papel impreso y queda fuera 
 
 **Fuentes incompletas:** el `SD1101.dll` instalado (2010.155.629) es más nuevo que `Fuentes\SD1101` (2009.153.2014). Trae las opciones 016 y 017 y `frmQMovimientos`, `frmQTiposHerra`, `rptDevol`, `rptQMovimientos` y `rptQTipoHerra`. Solo hay un `frmQMovimientos` en `Fuentes\SD2701`, sin confirmar si es el mismo; los otros cuatro no aparecen en `C:\Sistemas`. Por eso no se debe confiar solo en `Fuentes`: hay que comparar cada módulo con su DLL instalado.
 
+## SD0001 - Gestión de Asistencia Técnica
+
+Está el menú de las opciones que atiende su `Accion`, con `FrmDatosPersonales`, `FrmBancos`, `FrmMonedas` y `FrmTipoCambio`; lo demás remite al sistema anterior. SD1401 y SD1501 abren Bancos y Monedas con su propio privilegio. Usuarios, departamentos y respaldos los atiende el menú de VB6, no este módulo.
+
+**La fuente es más nueva que la base:** `gatbancos` no tiene siglas ni web services, `gatmonedas` tiene `Iniciales` y `gattipocambio` es por moneda y día, sin banco ni hora. Se siguió la base. `Numloc` está vacío en todos los bancos y no se migró ese control. Guardar un banco conserva `Finport`, que usa la conciliación CSV.
+
+**Tipo de cambio:** `gattipocambio` no recibe datos desde 2008; el que se usa está en `postipocambio`, de POS.
+
+**Datos Personales:** `FrmDatosPersonales` migra la lista, el buscador, Nuevo, Editar y las pestañas Ficha General, Ubicación y Contacto (`SDLoc` y `NumLoc`), Representante Legal y Códigos. `FrmCodigoPersona` migra `FrmAgregarTiposCodigos` y `FrmImagenes` migra `FrmImgsCliente`. `DatosPersonalesRepositorio` replica `gacdp` y `gacdprepresentante2` como `DP`, y `gaccodclientes` como `posclientes`. `gacdptel` y `gatimagenes` no se replican, igual que en VB6.
+
+No migrado: `ClsDP`, la entrada desde otros módulos; el buscador del padrón (`LblPadron`), aunque sí se busca la cédula al digitarla; agregar tipos de códigos, que es de Administración de Códigos; y la acción de SD1901, que es de otro cliente.
+
+Sigue la base y no `Fuentes`: `nombre` admite 100 caracteres, los tipos de identificación salen de `gactiposid` (DIMEX, NITE y otros) y el largo se limita a los 16 de `gacdp.id`. Las 1,533 personas con `fnac` en cero se muestran como 1900-01-01, y al guardarlas queda esa fecha, igual que en VB6. Las 666 identificaciones que no cumplen el tamaño de su tipo siguen sin poder guardarse hasta corregirlas.
+
+Difiere de VB6 en:
+
+- **`numloc`:** no se vacía al guardar. VB6 lo borra, y 1,706 personas aún lo tienen.
+- **Representantes:** se actualizan con `ON DUPLICATE KEY UPDATE`, solo en personas jurídicas. En VB6 el `COUNT` compara contra un texto fijo y siempre da 0, de modo que el `INSERT` choca con la llave y el `DELETE` de `orden` negativo puede borrar el representante. Los datos no lo confirman: hay 18 filas y ninguna con `orden` negativo.
+- **Códigos:** solo se agregan o eliminan al editar una persona ya guardada, y se replican solo si la sentencia funcionó. Agregar no reemplaza el código seleccionado, igual que en VB6, por eso el botón dice Agregar código. Los códigos de empleado no se pueden eliminar aquí: en VB6 avisaba éxito sin borrar nada.
+- **Fotografía:** se cambia al editar una persona ya guardada, para no dejar imágenes sin dueño.
+- **Textos:** los apóstrofos se escapan. En VB6, `O'Brien` rompe la sentencia.
+- **`uidc`:** los contactos y códigos graban el usuario real, no 0.
+
+**Probado contra `sdprincipal` (2026-11-06), con identificaciones sintéticas y el local 7, que no tiene filas en `gatreplicadef`:** lecturas de 343 casos borde, y por la pantalla Nuevo, Editar, Guardar, Cancelar, la cascada de ubicación y los representantes. Todo se borró al final y los conteos quedaron iguales, sin réplicas encoladas. `DP` tiene destinos reales en los locales 0, 1, 4 y 9. Falta probar a 125 %, con un usuario sin privilegios y agregando una foto real por el diálogo de archivos.
+
 ## SD1401 - Control de Cuentas Bancarias
 
-Todas las opciones están migradas, salvo Bancos y Monedas, que son de SD0001 y remiten al sistema anterior. `FrmCuentasBancarias` y sus subpantallas también las abre SD1501. La opción 016 ("Pruebas no usar") no se migra; las 008 y 010 están comentadas en `Menu_Order`. Bancos y Monedas son de SD0001.
+Todas las opciones están migradas. Bancos y Monedas son de SD0001 y se abren desde aquí. `FrmCuentasBancarias` y sus subpantallas también las abre SD1501. La opción 016 ("Pruebas no usar") no se migra; las 008 y 010 están comentadas en `Menu_Order`. Bancos y Monedas son de SD0001.
 
 Antes de seguir hay que comprobar contra la base:
 

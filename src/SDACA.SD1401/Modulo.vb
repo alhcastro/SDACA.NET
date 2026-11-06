@@ -37,8 +37,8 @@ Namespace SD1401
             Get
                 Return {
                     OpcionMenu.Grupo("Mantenimiento", "14007",
-                        OpcionMenu.Pendiente("Bancos", "14001"),
-                        OpcionMenu.Pendiente("Tipos de Monedas", "14008"),
+                        OpcionMenu.Formulario("Bancos", "14001", AddressOf SD0001.Modulo.Bancos, IconoMenu.Banco),
+                        OpcionMenu.Formulario("Tipos de Monedas", "14008", AddressOf SD0001.Modulo.Monedas, IconoMenu.Lista),
                         OpcionMenu.Formulario("Tipos de Movimiento", "14015",
                             Function(s) New FrmTiposMovimiento(New TiposMovimientoRepositorio(s.Fabrica), s.Local), IconoMenu.Lista),
                         OpcionMenu.Formulario("Transferencias", "14014",

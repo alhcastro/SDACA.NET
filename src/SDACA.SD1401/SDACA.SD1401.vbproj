@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SDACA.Ui\SDACA.Ui.vbproj" />
+    <ProjectReference Include="..\SDACA.SD0001\SDACA.SD0001.vbproj" />
   </ItemGroup>
 
 </Project>

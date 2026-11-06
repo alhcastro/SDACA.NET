@@ -34,8 +34,8 @@ Namespace SD1501
             Get
                 Return {
                     OpcionMenu.Grupo("Mantenimiento", "15018",
-                        OpcionMenu.Pendiente("Bancos", "15002"),
-                        OpcionMenu.Pendiente("Monedas", "15003"),
+                        OpcionMenu.Formulario("Bancos", "15002", AddressOf SD0001.Modulo.Bancos, IconoMenu.Banco),
+                        OpcionMenu.Formulario("Monedas", "15003", AddressOf SD0001.Modulo.Monedas, IconoMenu.Lista),
                         OpcionMenu.Formulario("Cuentas Bancarias", "15004",
                             Function(s) New SD1401.FrmCuentasBancarias(New CuentasBancariasRepositorio(s.Fabrica), New ChequesRepositorio(s.Fabrica), s.Uid, s.Local, s.Cedula), IconoMenu.Banco),
                         OpcionMenu.Formulario("Configuración Cheque", "15005",
