@@ -3,10 +3,10 @@ Imports Dapper
 
 Namespace Datos
 
-    ''' <summary>Tipo de registro de bitácora (SDACA_BITACORA_TIPO_CNN).</summary>
+    ''' <summary>Tipo de registro de bitácora. Mismos valores que SDACA_BITACORA_TIPO de ModBitacora.bas.</summary>
     Public Enum TipoBitacora
-        Suceso = 0
-        [Error] = 1
+        [Error] = 0
+        Suceso = 1
     End Enum
 
     ''' <summary>Bitácora en <c>gatbitacora</c>. Reemplaza a <c>SD_CLS_CNN.BITACORA_AGREGAR</c>.</summary>

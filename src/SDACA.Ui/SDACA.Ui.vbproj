@@ -1,26 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!--
-    Controles WinForms comunes de los módulos migrados. Reemplazan a los OCX de VB6
-    (SDCMD.ocx, FrmBuscador y SDBuscador3.ocx) a medida que los formularios los necesitan.
-  -->
+  <!-- Controles comunes y el contrato IModulo que cada módulo implementa para aparecer en el menú. -->
   <PropertyGroup>
-    <TargetFramework>net48</TargetFramework>
+    <TargetFramework>$(SdacaNetWindows)</TargetFramework>
     <RootNamespace>SDACA.Ui</RootNamespace>
-    <LangVersion>latest</LangVersion>
-    <OptionExplicit>On</OptionExplicit>
-    <OptionStrict>On</OptionStrict>
-    <OptionInfer>On</OptionInfer>
-    <OptionCompare>Binary</OptionCompare>
-    <Company>Sistemas Digitales Avanzados - SDACA S.A.</Company>
-    <Product>SDACA ERP</Product>
+    <UseWindowsForms>true</UseWindowsForms>
+    <MyType>Empty</MyType>
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Drawing" />
-    <Import Include="System.Drawing" />
-    <Import Include="System.Windows.Forms" />
+    <ProjectReference Include="..\SDACA.Core\SDACA.Core.vbproj" />
   </ItemGroup>
 
 </Project>

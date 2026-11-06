@@ -67,6 +67,28 @@ Namespace Configuracion
             Return perfiles
         End Function
 
+        ''' <summary>
+        ''' Lee una sola llave de un .ini, por ejemplo [GENERAL] DEFAULT. Devuelve "" si no existe
+        ''' el archivo, la sección o la llave.
+        ''' </summary>
+        Public Shared Function LeerValor(ruta As String, seccion As String, llave As String) As String
+            If Not File.Exists(ruta) Then Return ""
+            Dim dentro = False
+            For Each crudo In File.ReadAllLines(ruta, CodificacionWindows1252())
+                Dim linea = crudo.Trim()
+                If linea.StartsWith("[") AndAlso linea.EndsWith("]") Then
+                    dentro = String.Equals(linea.Substring(1, linea.Length - 2).Trim(), seccion, StringComparison.OrdinalIgnoreCase)
+                    Continue For
+                End If
+                If Not dentro Then Continue For
+                Dim igual = linea.IndexOf("="c)
+                If igual > 0 AndAlso String.Equals(linea.Substring(0, igual).Trim(), llave, StringComparison.OrdinalIgnoreCase) Then
+                    Return linea.Substring(igual + 1).Trim()
+                End If
+            Next
+            Return ""
+        End Function
+
         Friend Shared Function CodificacionWindows1252() As Encoding
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance)
             Return Encoding.GetEncoding(1252)

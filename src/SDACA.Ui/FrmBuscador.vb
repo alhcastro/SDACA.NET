@@ -45,6 +45,7 @@ Public Class FrmBuscador
         CancelButton = cancelar
         AcceptButton = aceptar
         Controls.AddRange(New Control() {etiqueta, _filtro, _rejilla, aceptar, cancelar})
+        Tema.Aplicar(Me)
     End Sub
 
     ''' <summary>Valor de la columna en la fila elegida, o "" si no hay. Igual que <c>Resultado</c> del original.</summary>

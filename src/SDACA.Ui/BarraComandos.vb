@@ -90,6 +90,7 @@ Public Class BarraComandos
         For Each tipo In tipos
             Dim b As New Button With {.Tag = tipo, .UseVisualStyleBackColor = True}
             AddHandler b.Click, AddressOf Boton_Click
+            AddHandler b.EnabledChanged, Sub() Tema.PintarBoton(b, EstiloDe(CType(b.Tag, BotonBarra)))
             _botones.Add(b)
             Controls.Add(b)
         Next
@@ -97,8 +98,9 @@ Public Class BarraComandos
         Refrescar(False)
     End Sub
 
-    Protected Overrides Sub OnResize(e As EventArgs)
-        MyBase.OnResize(e)
+    ''' <summary>En Layout y no en Resize: Resize corre antes de que Tema escale a los hijos.</summary>
+    Protected Overrides Sub OnLayout(e As LayoutEventArgs)
+        MyBase.OnLayout(e)
         Acomodar()
     End Sub
 
@@ -148,8 +150,17 @@ Public Class BarraComandos
             Dim permitido As Boolean = True
             If _permitido.TryGetValue(tipo, permitido) AndAlso Not permitido Then activo = False
             b.Enabled = activo
+            Tema.PintarBoton(b, EstiloDe(tipo))
         Next
     End Sub
+
+    Private Shared Function EstiloDe(boton As BotonBarra) As EstiloBoton
+        Select Case boton
+            Case BotonBarra.Guardar : Return EstiloBoton.Primario
+            Case BotonBarra.Borrar : Return EstiloBoton.Peligro
+            Case Else : Return EstiloBoton.Normal
+        End Select
+    End Function
 
     Private Shared Function Descripcion(boton As BotonBarra) As String
         Select Case boton

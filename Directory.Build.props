@@ -1,0 +1,16 @@
+<Project>
+
+  <!-- Opciones de todos los proyectos. Para cambiar de .NET basta con estas dos líneas. -->
+  <PropertyGroup>
+    <SdacaNet>net8.0</SdacaNet>
+    <SdacaNetWindows>net8.0-windows</SdacaNetWindows>
+    <LangVersion>latest</LangVersion>
+    <OptionExplicit>On</OptionExplicit>
+    <OptionStrict>On</OptionStrict>
+    <OptionInfer>On</OptionInfer>
+    <OptionCompare>Binary</OptionCompare>
+    <Company>Desarrollo Integral CP</Company>
+    <Product>CoopeNet ERP</Product>
+  </PropertyGroup>
+
+</Project>

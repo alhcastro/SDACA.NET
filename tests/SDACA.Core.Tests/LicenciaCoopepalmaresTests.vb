@@ -58,8 +58,7 @@ Public Class LicenciaCoopepalmaresTests
             Dim m = Regex.Match(File.ReadAllText(clase, Windows1252()), "If\s+pClave\s*=\s*""([0-9a-f]{32})""", RegexOptions.IgnoreCase)
             If Not m.Success Then Continue For
 
-            Assert.True(LicenciaExtensiones.ClaveValida(modulo.Codigo, m.Groups(1).Value),
-                $"{modulo.Codigo}: Clase.cls espera {m.Groups(1).Value}, MD5 da {modulo.ClaveInit}")
+            Assert.Equal(m.Groups(1).Value, modulo.ClaveInit)
             revisados += 1
         Next
         Assert.True(revisados >= 10, $"Solo se pudieron revisar {revisados} módulos.")

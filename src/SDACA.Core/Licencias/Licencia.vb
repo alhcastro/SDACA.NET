@@ -44,14 +44,6 @@ Namespace Licencias
             Return licencia.Modulos.Any(Function(m) String.Equals(m.Codigo, codigo, StringComparison.OrdinalIgnoreCase))
         End Function
 
-        ''' <summary>
-        ''' Valida la clave que recibe un módulo en <c>Init()</c>, igual que
-        ''' <c>If pClave = "132a3832..."</c> en cada Clase.cls.
-        ''' </summary>
-        Public Function ClaveValida(codigoModulo As String, clave As String) As Boolean
-            Return String.Equals(Md5Vb6.Calcular(codigoModulo), clave, StringComparison.Ordinal)
-        End Function
-
         ''' <summary>FechaVencimiento = 1900-01-01 significa licencia perpetua.</summary>
         <Extension>
         Public Function EstaVigente(licencia As ILicencia, hoy As Date) As Boolean

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- El ejecutable: entrada, menú y cierre de sesión. Cada módulo nuevo se agrega aquí y en Programa.vb. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>$(SdacaNetWindows)</TargetFramework>
+    <RootNamespace>SDACA.Erp</RootNamespace>
+    <AssemblyName>CoopeNet</AssemblyName>
+    <UseWindowsForms>true</UseWindowsForms>
+    <MyType>Empty</MyType>
+    <StartupObject>SDACA.Erp.Programa</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SDACA.Ui\SDACA.Ui.vbproj" />
+    <ProjectReference Include="..\SDACA.SD1101\SDACA.SD1101.vbproj" />
+    <ProjectReference Include="..\SDACA.SD1501\SDACA.SD1501.vbproj" />
+  </ItemGroup>
+
+</Project>
