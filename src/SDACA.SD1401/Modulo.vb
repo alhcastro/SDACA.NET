@@ -57,7 +57,8 @@ Namespace SD1401
                         OpcionMenu.Pendiente("Paso #3 - Errores de Conciliación", "14004"),
                         OpcionMenu.Pendiente("Paso #4 - Conciliación Manual", "14004"),
                         OpcionMenu.Pendiente("Paso #5 - Informe de Conciliación", "14004")),
-                    OpcionMenu.Pendiente("Calcular Cierres", "14010"),
+                    OpcionMenu.Formulario("Calcular Cierres", "14010",
+                        Function(s) New FrmCalcularCierres(New CierreMes(s.Fabrica), s.Uid, s.Local, s.Puede("14007")), IconoMenu.Calendario),
                     OpcionMenu.Formulario("Saldos por Cuenta", "14017",
                         Function(s) New FrmSaldosCuenta(New CierreMes(s.Fabrica), New SaldosCuenta(s.Fabrica), s.Uid, s.Local, s.Cedula, s.Puede("14007")), IconoMenu.Lista)
                 }

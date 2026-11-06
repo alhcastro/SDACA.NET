@@ -61,6 +61,13 @@ Namespace Bancos
             End Using
         End Function
 
+        ''' <summary>Opción Calcular Cierres: rehace ccbcierrediario desde <paramref name="desde"/>.</summary>
+        Public Async Function RecalcularAsync(local As Long, banco As Integer, cuenta As String, desde As Date, hoy As Date, Optional ct As CancellationToken = Nothing) As Task
+            Using cn = Await _fabrica.AbrirAsync(ct).ConfigureAwait(False)
+                Await CierresDiarios.RecalcularAsync(cn, local, banco, cuenta, desde, hoy, ct).ConfigureAwait(False)
+            End Using
+        End Function
+
         Public Async Function CerrarAsync(banco As Integer, cuenta As String, fecha As Date, Optional ct As CancellationToken = Nothing) As Task
             Const sql As String = "INSERT INTO ccbcierre (banco, cuenta, mes) VALUES (@banco, @cuenta, @mes)"
             Dim mes = LibroBancos.MesDeCierre(fecha)
