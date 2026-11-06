@@ -54,12 +54,18 @@ Namespace SD1401
                         Function(s) New FrmLibro(New MovimientosLibro(s.Fabrica), New SaldosCuenta(s.Fabrica), New CierreMes(s.Fabrica), New TiposMovimientoRepositorio(s.Fabrica),
                                                  s.Uid, s.Local, s.Puede("14004"), s.Puede("14007"), s.Cedula, s.Empresa), IconoMenu.Lista),
                     OpcionMenu.Grupo("Conciliación Bancaria", "14004",
-                        OpcionMenu.Pendiente("Paso #1.a - Conciliación Bancaria CSV", "14004"),
-                        OpcionMenu.Pendiente("Paso #1.b - Conciliación Bancaria TEC", "14004"),
-                        OpcionMenu.Pendiente("Paso #2 - Importar Movimientos Bancarios", "14004"),
-                        OpcionMenu.Pendiente("Paso #3 - Errores de Conciliación", "14004"),
-                        OpcionMenu.Pendiente("Paso #4 - Conciliación Manual", "14004"),
-                        OpcionMenu.Pendiente("Paso #5 - Informe de Conciliación", "14004")),
+                        OpcionMenu.Formulario("Paso #1.a - Conciliación Bancaria CSV", "14004",
+                            Function(s) New FrmConciliarArchivo(New ConciliacionBancaria(s.Fabrica), New CierreMes(s.Fabrica), s.Uid, s.Local, s.Puede("14007"), s.Empresa, False), IconoMenu.Documento),
+                        OpcionMenu.Formulario("Paso #1.b - Conciliación Bancaria TEC", "14004",
+                            Function(s) New FrmConciliarArchivo(New ConciliacionBancaria(s.Fabrica), New CierreMes(s.Fabrica), s.Uid, s.Local, s.Puede("14007"), s.Empresa, True), IconoMenu.Documento),
+                        OpcionMenu.Formulario("Paso #2 - Importar Movimientos Bancarios", "14004",
+                            Function(s) Pendientes(s, FrmMovimientosPendientes.Paso.ImportarAlLibro), IconoMenu.Lista),
+                        OpcionMenu.Formulario("Paso #3 - Errores de Conciliación", "14004",
+                            Function(s) Pendientes(s, FrmMovimientosPendientes.Paso.ErroresDeConciliacion), IconoMenu.Lista),
+                        OpcionMenu.Formulario("Paso #4 - Conciliación Manual", "14004",
+                            Function(s) Pendientes(s, FrmMovimientosPendientes.Paso.ConciliacionManual), IconoMenu.Editar),
+                        OpcionMenu.Formulario("Paso #5 - Informe de Conciliación", "14004",
+                            Function(s) New FrmInformeConciliacion(New ConciliacionBancaria(s.Fabrica), New CierreMes(s.Fabrica), s.Uid, s.Puede("14007"), s.Empresa), IconoMenu.Imprimir)),
                     OpcionMenu.Formulario("Calcular Cierres", "14010",
                         Function(s) New FrmCalcularCierres(New CierreMes(s.Fabrica), s.Uid, s.Local, s.Puede("14007")), IconoMenu.Calendario),
                     OpcionMenu.Formulario("Saldos por Cuenta", "14017",
@@ -67,6 +73,10 @@ Namespace SD1401
                 }
             End Get
         End Property
+
+        Private Shared Function Pendientes(s As Core.Seguridad.Sesion, paso As FrmMovimientosPendientes.Paso) As Form
+            Return New FrmMovimientosPendientes(New ConciliacionBancaria(s.Fabrica), New CierreMes(s.Fabrica), s.Uid, s.Local, s.Puede("14007"), s.Puede("14006"), s.Empresa, paso)
+        End Function
 
     End Class
 

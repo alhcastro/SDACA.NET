@@ -17,6 +17,8 @@ Namespace Bancos
         Public Property Cuenta As String = ""
         Public Property Descripcion As String = ""
         Public Property Moneda As String = ""
+        ''' <summary>Cuenta como la conoce el banco, de 15 dígitos. La usa el archivo TEC.</summary>
+        Public Property CuentaB As String = ""
 
         Public Overrides Function ToString() As String
             Return $"{Cuenta} ({Descripcion})"
@@ -47,7 +49,7 @@ Namespace Bancos
 
         Public Async Function ListarCuentasAsync(banco As Integer, uid As Long, todasLasCuentas As Boolean, Optional ct As CancellationToken = Nothing) As Task(Of List(Of CuentaCierre))
             Dim permiso = If(todasLasCuentas, "", " INNER JOIN ccbusuarioscuentas uc ON (uc.banco = a.banco AND uc.cuenta = a.cuenta AND uc.usuario = @uid) ")
-            Dim sql = "SELECT a.cuenta AS Cuenta, a.descripcion AS Descripcion, IFNULL(m.descripcion,'') AS Moneda FROM ccbcuentas a " &
+            Dim sql = "SELECT a.cuenta AS Cuenta, a.descripcion AS Descripcion, IFNULL(m.descripcion,'') AS Moneda, IFNULL(a.cuentab,'') AS CuentaB FROM ccbcuentas a " &
                       "LEFT JOIN gatmonedas m ON (m.moneda = a.moneda) " & permiso & "WHERE a.banco = @banco"
             Using cn = Await _fabrica.AbrirAsync(ct).ConfigureAwait(False)
                 Dim filas = Await cn.QueryAsync(Of CuentaCierre)(New CommandDefinition(sql, New With {banco, uid}, cancellationToken:=ct)).ConfigureAwait(False)
