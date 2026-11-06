@@ -168,7 +168,7 @@ Namespace Seguridad
                 .Sesion = New Sesion With {
                     .Login = s.Login, .Uid = uid, .Nombre = usuario.Nombre, .Apellidos = usuario.Apellidos, .Genero = usuario.Genero,
                     .Local = s.Local, .LocalDescripcion = s.LocalDescripcion, .EstacionId = estacion.Id, .Estacion = estacion.Nombre,
-                    .Catalogo = s.Catalogo, .Cedula = _licencia.Registro.CedulaSinGuiones, .Permisos = permisos
+                    .Catalogo = s.Catalogo, .Cedula = _licencia.Registro.CedulaSinGuiones, .Empresa = _licencia.Registro.Nombre, .Permisos = permisos
                 }
             }
         End Function

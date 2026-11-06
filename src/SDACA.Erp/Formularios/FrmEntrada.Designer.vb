@@ -96,7 +96,11 @@ Partial Class FrmEntrada
             .Text = Tema.Desarrollador, .AutoSize = True, .Location = New Point(30, 404),
             .Anchor = AnchorStyles.Bottom Or AnchorStyles.Left, .ForeColor = Tema.TextoSobreMarino, .Font = New Font(Tema.FuenteBase, 8.75F)
         }
-        marca.Controls.AddRange(New Control() {lblMarca, lblProducto, franja, lblLicencia, lblProveedor})
+        Dim logo As New LogoEmpresa() With {
+            .Name = "logoEmpresa", .Location = New Point(30, 308), .Size = New Size(220, 58), .Padding = New Padding(14, 10, 14, 10),
+            .Anchor = AnchorStyles.Bottom Or AnchorStyles.Left
+        }
+        marca.Controls.AddRange(New Control() {lblMarca, lblProducto, franja, logo, lblLicencia, lblProveedor})
         Return marca
     End Function
 

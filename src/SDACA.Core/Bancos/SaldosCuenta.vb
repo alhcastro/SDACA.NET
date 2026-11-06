@@ -67,7 +67,7 @@ Namespace Bancos
     ''' Saldos mensuales de una cuenta. Migración de SD1401\FrmSaldosBanco.frm. Difiere de VB6 en dos
     ''' cosas. El periodo termina el último día del mes 12: allá se arma con MesInicio + 11 y día 30, que
     ''' omite el día 31 y con MesInicio 10 da una fecha inválida. Y Saldo Actual parte del último cierre
-    ''' aunque el mes no tenga movimientos, como FrmLibro: allá vuelve al monto inicial de la cuenta.
+    ''' aunque el mes no tenga movimientos, como CCBLoadMovimientos de FrmLibro: allá vuelve al monto inicial.
     ''' Como en VB6, un mes sin movimientos sale en cero, sin arrastrar el saldo.
     ''' </summary>
     Public NotInheritable Class SaldosCuenta

@@ -20,6 +20,10 @@ Namespace Bancos
                 Return If(Tipo = "1", Suma, Resta)
             End Get
         End Property
+
+        Public Overrides Function ToString() As String
+            Return $"{Descripcion} ({Abreviatura})"
+        End Function
     End Class
 
     ''' <summary>Acceso a <c>ccbtiposmov</c>. Consultas de SD1401\FrmMantTiposMov.frm, con parámetros.</summary>

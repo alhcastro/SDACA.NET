@@ -63,7 +63,7 @@ Namespace Bancos
             Return True
         End Function
 
-        Private Shared Async Function EjecutarAsync(cn As MySqlConnection, sql As String, local As Long, ct As CancellationToken) As Task
+        Friend Shared Async Function EjecutarAsync(cn As MySqlConnection, sql As String, local As Long, ct As CancellationToken) As Task
             Await cn.ExecuteAsync(New CommandDefinition(sql, cancellationToken:=ct)).ConfigureAwait(False)
             Await Replicador.ReplicarAsync(cn, IdentificadorReplica, sql, local, ct).ConfigureAwait(False)
         End Function

@@ -20,6 +20,8 @@ Namespace Seguridad
         Public Property Catalogo As String = ""
         ''' <summary>Cédula de la licencia, sin guiones.</summary>
         Public Property Cedula As String = ""
+        ''' <summary>Nombre de la licencia, para los reportes.</summary>
+        Public Property Empresa As String = ""
         Public Property Permisos As ISet(Of String) = New HashSet(Of String)()
         Public Property Fabrica As IFabricaConexiones
 

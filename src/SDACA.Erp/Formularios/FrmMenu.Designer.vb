@@ -81,6 +81,7 @@ Partial Class FrmMenu
         lateral.Controls.Add(listaModulos)
         lateral.Controls.Add(pie)
         lateral.Controls.Add(marca)
+        lateral.Controls.Add(New LogoEmpresa With {.Name = "logoEmpresa", .Dock = DockStyle.Top, .Height = 60, .Padding = New Padding(20, 12, 20, 12)})
     End Sub
 
     Private Shared Function EtiquetaPie(nombre As String, y As Integer, color As Color, fuente As Font) As Label
