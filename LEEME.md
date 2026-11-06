@@ -100,6 +100,16 @@ El panel `vista` de `FrmConfigCheque` representa el papel impreso y queda fuera 
 
 **Fuentes incompletas:** el `SD1101.dll` instalado (2010.155.629) es más nuevo que `Fuentes\SD1101` (2009.153.2014). Trae las opciones 016 y 017 y `frmQMovimientos`, `frmQTiposHerra`, `rptDevol`, `rptQMovimientos` y `rptQTipoHerra`. Solo hay un `frmQMovimientos` en `Fuentes\SD2701`, sin confirmar si es el mismo; los otros cuatro no aparecen en `C:\Sistemas`. Por eso no se debe confiar solo en `Fuentes`: hay que comparar cada módulo con su DLL instalado.
 
+## SD1401 - Control de Cuentas Bancarias
+
+Está el menú completo, `FrmTiposMovimiento`, `FrmCierreMes`, `FrmSaldosCuenta` y `FrmCuentasBancarias` con sus subpantallas, que SD1501 también abre. Lo demás remite al sistema anterior. La opción 016 ("Pruebas no usar") no se migra; las 008 y 010 están comentadas en `Menu_Order`. Bancos y Monedas son de SD0001.
+
+Antes de seguir hay que comprobar contra la base:
+
+- **`ccbcierre`:** no existía en ningún catálogo. Se creó en `sdprincipal` de pruebas; para cualquier otro catálogo hay que aplicar `sql\2026-11-06-ccbcierre.sql`. Vacía no cambia nada. Al cerrar un mes, anular en él genera una reversión en lugar de borrar, también en VB6.
+- **Saldos por Cuenta:** `MesInicio` sale de `sgcempresas.InitPer` (0 o sin empresa = 10). VB6 arma el fin de periodo con `MesInicio + 11` y día 30, que omite el día 31 y con mes 10 da `2025-21-30`; aquí el periodo son 12 meses exactos. Saldo Actual sin movimientos en el mes volvía al monto inicial de la cuenta; aquí parte del último cierre, como `FrmLibro`. Débito son las entradas (`tipo = 1`) y Crédito las salidas, también como `FrmLibro`: en VB6 solo están cruzados los alias del SQL. Se conserva que un mes sin movimientos salga en cero. Falta probarlo contra la base.
+- **`Init` de VB6:** altera `ccbcuentas` y `ccbcuentasconta` si falta `cconvh`. La base real no tiene esa columna: conserva `cconv` y `cconvd`, así que `Fuentes\SD1401` es más nueva que la base y .NET debe seguir el esquema real.
+
 ## Alcance: licencia de Coopepalmares
 
 18 módulos (SD0401 está en reg.cls, pero Coopepalmares no lo usa), más el menú y las bases: unas **372 mil líneas**. Quedan fuera las variantes SD0507/SD0509 y los módulos de otros clientes (SD1901, SD20xx a SD27xx). La factura electrónica (`EnvioFC`) sí entra, porque tiene la cédula de Coopepalmares escrita en el código.

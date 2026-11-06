@@ -7,7 +7,7 @@ Public Module Programa
 
     ''' <summary>Módulos migrados. El menú muestra los que estén en la licencia y el usuario pueda abrir.</summary>
     Public Function Modulos() As IReadOnlyList(Of IModulo)
-        Return New IModulo() {New SD1101.Modulo(), New SD1501.Modulo()}
+        Return New IModulo() {New SD1101.Modulo(), New SD1401.Modulo(), New SD1501.Modulo()}
     End Function
 
     <STAThread>
@@ -25,12 +25,13 @@ Public Module Programa
             Application.SetCompatibleTextRenderingDefault(False)
 
             Dim licencia As New LicenciaCoopepalmares()
-            Using entrada As New FrmEntrada(licencia, DirectorioIni(argumentos))
+            Dim preferencias = Core.Configuracion.Preferencias.Cargar(Core.Configuracion.Preferencias.RutaPredeterminada)
+            Using entrada As New FrmEntrada(licencia, DirectorioIni(argumentos), preferencias)
                 If entrada.ShowDialog() <> DialogResult.OK Then Return
                 Dim sesion = entrada.Sesion
                 Dim servicio = entrada.Servicio
                 Try
-                    Application.Run(New FrmMenu(sesion, Modulos(), licencia))
+                    Application.Run(New FrmMenu(sesion, Modulos(), licencia, preferencias))
                 Finally
                     Try
                         Task.Run(Function() servicio.SalirAsync(sesion)).Wait()

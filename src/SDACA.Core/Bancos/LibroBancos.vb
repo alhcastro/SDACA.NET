@@ -16,18 +16,23 @@ Namespace Bancos
         End Sub
 
         ''' <summary>
-        ''' CCBMesCerrado. La tabla ccbcierre no existe en las bases revisadas: en VB6 ese error se
-        ''' pierde en RS_Ejecutar, el resultado es 0 y el mes cuenta como abierto. Aquí se conserva
-        ''' ese resultado solo para la falta de la tabla. Cualquier otro error detiene la operación.
+        ''' CCBMesCerrado. Una base sin ccbcierre (ver sql\2026-11-06-ccbcierre.sql) cuenta como mes
+        ''' abierto: en VB6 ese error se pierde en RS_Ejecutar y el resultado es 0. Cualquier otro
+        ''' error detiene la operación.
         ''' </summary>
         Public Shared Async Function MesCerradoAsync(cn As MySqlConnection, banco As Long, cuenta As String, fecha As Date, Optional ct As CancellationToken = Nothing) As Task(Of Boolean)
             Const sql As String = "SELECT COUNT(*) FROM ccbcierre WHERE banco = @banco AND cuenta = @cuenta AND mes = @mes"
-            Dim mes = fecha.ToString("MMyyyy", CultureInfo.InvariantCulture)
+            Dim mes = MesDeCierre(fecha)
             Try
                 Return Await cn.ExecuteScalarAsync(Of Long)(New CommandDefinition(sql, New With {banco, cuenta, mes}, cancellationToken:=ct)).ConfigureAwait(False) > 0
             Catch ex As MySqlException When ex.Number = TablaNoExiste
                 Return False
             End Try
+        End Function
+
+        ''' <summary>Formato de <c>ccbcierre.mes</c>: Format(fecha, "MMYYYY").</summary>
+        Public Shared Function MesDeCierre(fecha As Date) As String
+            Return fecha.ToString("MMyyyy", CultureInfo.InvariantCulture)
         End Function
 
         ''' <summary>
@@ -63,7 +68,7 @@ Namespace Bancos
             Await Replicador.ReplicarAsync(cn, IdentificadorReplica, sql, local, ct).ConfigureAwait(False)
         End Function
 
-        Private Shared Function Literal(texto As String) As String
+        Friend Shared Function Literal(texto As String) As String
             Return texto.Replace("\", "\\").Replace("'", "\'")
         End Function
 

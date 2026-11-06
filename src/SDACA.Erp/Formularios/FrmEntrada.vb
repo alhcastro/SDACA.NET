@@ -19,15 +19,17 @@ Partial Public Class FrmEntrada
 
     Private ReadOnly _licencia As ILicencia
     Private ReadOnly _directorioIni As String
+    Private ReadOnly _preferencias As Preferencias
     Private _localesDe As String = ""
     Private _conexionVisible As Boolean
 
     Public ReadOnly Property Sesion As Sesion
     Public ReadOnly Property Servicio As ServicioEntrada
 
-    Public Sub New(licencia As ILicencia, directorioIni As String)
+    Public Sub New(licencia As ILicencia, directorioIni As String, preferencias As Preferencias)
         _licencia = licencia
         _directorioIni = directorioIni
+        _preferencias = preferencias
         InitializeComponent()
         Tema.AplicarControles(Me)
         Tema.ColorearVentana(Me)
@@ -60,8 +62,13 @@ Partial Public Class FrmEntrada
         cmbPerfil.DisplayMember = NameOf(PerfilConexion.Nombre)
         cmbPerfil.DataSource = ConexionesIni.Leer(ini).Where(Function(p) p.Servidor.Length > 0).ToList()
         cmbPerfil.SelectedIndex = -1
-        Dim predeterminado = ConexionesIni.LeerValor(ini, "GENERAL", "DEFAULT")
-        cmbPerfil.SelectedIndex = cmbPerfil.FindStringExact(predeterminado)
+        Dim ultimo = cmbPerfil.FindStringExact(_preferencias.UltimoPerfil)
+        If ultimo >= 0 Then
+            cmbPerfil.SelectedIndex = ultimo
+            If _preferencias.UltimoUsuario.Length > 0 Then txtUsuario.Text = _preferencias.UltimoUsuario
+        Else
+            cmbPerfil.SelectedIndex = cmbPerfil.FindStringExact(ConexionesIni.LeerValor(ini, "GENERAL", "DEFAULT"))
+        End If
     End Sub
 
     Private Sub CmbPerfil_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cmbPerfil.SelectedIndexChanged
@@ -90,13 +97,16 @@ Partial Public Class FrmEntrada
 
     ''' <summary>Los locales dependen del usuario, así que se piden al tener usuario y contraseña.</summary>
     Private Async Function CargarLocales() As Task(Of Boolean)
-        Dim llave = String.Join("|", txtServidor.Text, txtPuerto.Text, txtCatalogo.Text, txtUsuario.Text)
+        Dim llave = LlaveConexion()
         If _localesDe = llave Then Return True
         If txtUsuario.Text.Trim().Length = 0 Then Return False
         Try
             Dim locales = Await New DatosEntradaMySql(Fabrica()).ListarLocalesAsync(txtUsuario.Text.Trim())
             cmbLocal.DisplayMember = NameOf(LocalEntrada.Descripcion)
             cmbLocal.DataSource = locales
+            Dim ultimo = _preferencias.LocalDe(llave)
+            Dim recordado = locales.Find(Function(l) ultimo.HasValue AndAlso l.Local = ultimo.Value)
+            If recordado IsNot Nothing Then cmbLocal.SelectedItem = recordado
             _localesDe = llave
             Return True
         Catch ex As MySqlException
@@ -104,6 +114,11 @@ Partial Public Class FrmEntrada
                             Titulo, MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
             Return False
         End Try
+    End Function
+
+    ''' <summary>Identifica los locales de un usuario en una base: los mismos datos dan la misma lista.</summary>
+    Private Function LlaveConexion() As String
+        Return String.Join("|", txtServidor.Text.Trim(), txtPuerto.Text.Trim(), txtCatalogo.Text.Trim(), txtUsuario.Text.Trim())
     End Function
 
     Private Async Sub BtnEntrar_Click(sender As Object, e As EventArgs) Handles btnEntrar.Click
@@ -149,6 +164,10 @@ Partial Public Class FrmEntrada
         End Try
         If respuesta.Resultado = ResultadoEntrada.Correcto Then
             respuesta.Sesion.Fabrica = fabrica
+            _preferencias.RecordarLocal(LlaveConexion(), local.Local)
+            _preferencias.UltimoPerfil = cmbPerfil.Text
+            _preferencias.UltimoUsuario = login
+            _preferencias.Guardar()
             _Sesion = respuesta.Sesion
             _Servicio = servicio
             DialogResult = DialogResult.OK

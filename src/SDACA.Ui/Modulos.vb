@@ -42,6 +42,8 @@ Public NotInheritable Class IconoMenu
     Public Const Configurar As Char = ChrW(&HE713)
     Public Const Entregar As Char = ChrW(&HE724)
     Public Const Lista As Char = ChrW(&HE8FD)
+    Public Const Calendario As Char = ChrW(&HE787)
+    Public Const Banco As Char = ChrW(&HE825)
 
     Private Sub New()
     End Sub

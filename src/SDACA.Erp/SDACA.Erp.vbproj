@@ -14,6 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\SDACA.Ui\SDACA.Ui.vbproj" />
     <ProjectReference Include="..\SDACA.SD1101\SDACA.SD1101.vbproj" />
+    <ProjectReference Include="..\SDACA.SD1401\SDACA.SD1401.vbproj" />
     <ProjectReference Include="..\SDACA.SD1501\SDACA.SD1501.vbproj" />
   </ItemGroup>
 

@@ -112,7 +112,7 @@ Public NotInheritable Class Tema
         Select Case boton.Name.ToLowerInvariant()
             Case "btnanular", "btnborrar"
                 Return EstiloBoton.Peligro
-            Case "btnguardar", "btnimprimir", "btnentregar", "btnaplicar", "btnentrar"
+            Case "btnguardar", "btnimprimir", "btnentregar", "btnaplicar", "btnentrar", "btncerrarmes"
                 Return EstiloBoton.Primario
         End Select
         Dim formulario = boton.FindForm()

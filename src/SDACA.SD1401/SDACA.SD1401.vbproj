@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- SD1401 (CCB, Control de Cuentas Bancarias). -->
+  <PropertyGroup>
+    <TargetFramework>$(SdacaNetWindows)</TargetFramework>
+    <RootNamespace>SDACA</RootNamespace>
+    <UseWindowsForms>true</UseWindowsForms>
+    <MyType>Empty</MyType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SDACA.Ui\SDACA.Ui.vbproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,4 +1,5 @@
 Imports System.Globalization
+Imports SDACA.Core.Configuracion
 Imports SDACA.Core.Licencias
 Imports SDACA.Core.Seguridad
 Imports SDACA.Ui
@@ -23,14 +24,18 @@ Partial Public Class FrmMenu
         Public ReadOnly Property Tarjetas As New List(Of (Opcion As OpcionMenu, Modulo As IModulo))
     End Class
 
+    Private ReadOnly _ayuda As New ToolTip()
     Private ReadOnly _sesion As Sesion
     Private ReadOnly _modulos As List(Of IModulo)
+    Private ReadOnly _preferencias As Preferencias
     Private _actual As IModulo
     Private _abriendo As Boolean
 
-    Public Sub New(sesion As Sesion, modulos As IReadOnlyList(Of IModulo), licencia As ILicencia)
+    Public Sub New(sesion As Sesion, modulos As IReadOnlyList(Of IModulo), licencia As ILicencia, preferencias As Preferencias)
         _sesion = sesion
+        _preferencias = preferencias
         InitializeComponent()
+        If preferencias.MenuMaximizado Then WindowState = FormWindowState.Maximized
         Tema.ColorearVentana(Me)
         Text = $"{Tema.Producto} - {licencia.Registro.NombreCorto}"
         lblEmpresa.Text = licencia.Registro.NombreCorto
@@ -82,6 +87,13 @@ Partial Public Class FrmMenu
         ActiveControl = Nothing
     End Sub
 
+    Private Sub FrmMenu_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
+        ' Cerrar desde la barra de tareas con la ventana minimizada no dice nada de cómo la quiere.
+        If WindowState = FormWindowState.Minimized Then Return
+        _preferencias.MenuMaximizado = WindowState = FormWindowState.Maximized
+        _preferencias.Guardar()
+    End Sub
+
     Private Sub Mostrar()
         Dim buscando = txtBuscar.Text.Trim().Length > 0
         Dim secciones As New List(Of Seccion)
@@ -113,6 +125,7 @@ Partial Public Class FrmMenu
                 Dim control As New TarjetaOpcion(tarjeta.Opcion, tarjeta.Modulo) With {
                     .Height = LogicalToDeviceUnits(AltoTarjeta), .Margin = New Padding(0, 0, separacion, separacion)
                 }
+                _ayuda.SetToolTip(control, tarjeta.Opcion.Etiqueta)
                 AddHandler control.Click, AddressOf Tarjeta_Click
                 contenido.Controls.Add(control)
             Next

@@ -1,3 +1,4 @@
+Imports SDACA.Core.Bancos
 Imports SDACA.Core.Cheques
 Imports SDACA.Core.Datos
 Imports SDACA.Core.Licencias
@@ -35,7 +36,8 @@ Namespace SD1501
                     OpcionMenu.Grupo("Mantenimiento", "15018",
                         OpcionMenu.Pendiente("Bancos", "15002"),
                         OpcionMenu.Pendiente("Monedas", "15003"),
-                        OpcionMenu.Pendiente("Cuentas Bancarias", "15004"),
+                        OpcionMenu.Formulario("Cuentas Bancarias", "15004",
+                            Function(s) New SD1401.FrmCuentasBancarias(New CuentasBancariasRepositorio(s.Fabrica), New ChequesRepositorio(s.Fabrica), s.Uid, s.Local, s.Cedula), IconoMenu.Banco),
                         OpcionMenu.Formulario("Configuración Cheque", "15005",
                             Function(s) New FrmConfigCheque(New ChequesRepositorio(s.Fabrica), s.Local), IconoMenu.Configurar),
                         OpcionMenu.Formulario("Editar Asiento del Cheque", "15008",

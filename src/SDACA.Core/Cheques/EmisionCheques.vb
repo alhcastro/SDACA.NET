@@ -198,7 +198,7 @@ Namespace Cheques
         ''' Prefijo de la base del catálogo contable (columna DB de sgcempresas). En el servidor de
         ''' pruebas esa base no existe y sgccatalogo está en el catálogo de trabajo.
         ''' </summary>
-        Private Shared Async Function CatalogoAsync(cn As MySqlConnection, cedula As String, ct As CancellationToken) As Task(Of String)
+        Friend Shared Async Function CatalogoAsync(cn As MySqlConnection, cedula As String, ct As CancellationToken) As Task(Of String)
             Const sql As String = "SELECT s.schema_name FROM sgcempresas e INNER JOIN information_schema.schemata s ON s.schema_name = e.DB WHERE e.Cedula = @cedula LIMIT 1"
             Dim db = Await cn.ExecuteScalarAsync(Of String)(New CommandDefinition(sql, New With {cedula}, cancellationToken:=ct)).ConfigureAwait(False)
             If String.IsNullOrEmpty(db) OrElse Not Regex.IsMatch(db, "^[A-Za-z0-9_]+$") Then Return ""
