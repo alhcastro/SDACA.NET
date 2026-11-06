@@ -500,6 +500,54 @@ Namespace Catalogos
             End Using
         End Function
 
+        ' ---- Fallecidos ----
+
+        ''' <summary>Como en VB6, el buscador deja por fuera a las personas jurídicas.</summary>
+        Public Function BuscarFisicasAsync(Optional ct As CancellationToken = Nothing) As Task(Of DataTable)
+            Return TablaAsync($"SELECT {NombreSql} AS 'Nombre', id AS 'Identificación', IF(fnac < '1900-01-01', '', DATE_FORMAT(fnac, '%d/%m/%Y')) AS 'Fecha Nacimiento', alias AS 'Alias' FROM gacdp WHERE genero <> '2'", Nothing, ct)
+        End Function
+
+        Friend Shared Function SentenciaFallecimiento(id As String, fecha As Date) As String
+            Return $"UPDATE gacdp SET fdef = '{DatosPersonalesRepositorio.Fecha(fecha)}', activo = '0' WHERE id = {Q(id)}"
+        End Function
+
+        ''' <summary>Deja a la persona activa aunque antes estuviera bloqueada, igual que en VB6.</summary>
+        Friend Shared Function SentenciaAnularFallecimiento(id As String) As String
+            Return $"UPDATE gacdp SET fdef = '{DatosPersonalesRepositorio.Fecha(Persona.SinFecha)}', activo = '1' WHERE id = {Q(id)}"
+        End Function
+
+        Public Async Function RegistrarFallecimientoAsync(id As String, fecha As Date, local As Long, Optional ct As CancellationToken = Nothing) As Task
+            Using cn = Await _fabrica.AbrirAsync(ct).ConfigureAwait(False)
+                Await EjecutarReplicadoAsync(cn, ReplicaPersonas, SentenciaFallecimiento(id, fecha), local, ct).ConfigureAwait(False)
+            End Using
+        End Function
+
+        Public Async Function AnularFallecimientoAsync(id As String, local As Long, Optional ct As CancellationToken = Nothing) As Task
+            Using cn = Await _fabrica.AbrirAsync(ct).ConfigureAwait(False)
+                Await EjecutarReplicadoAsync(cn, ReplicaPersonas, SentenciaAnularFallecimiento(id), local, ct).ConfigureAwait(False)
+            End Using
+        End Function
+
+        Private Shared Function FechaFicha(valor As Date) As String
+            Return valor.ToString("dd/MMM/yyyy", CultureInfo.GetCultureInfo("es-CR")).Replace(".", "").ToUpperInvariant()
+        End Function
+
+        ''' <summary>Texto de FrmFallecido. Un género vacío sale como masculino: en MySQL, '' es igual a 0.</summary>
+        Public Shared Function FichaFallecido(p As Persona, estadoCivil As String) As String
+            Dim genero = If(p.Genero = "1", "FEMENINO", If(p.Genero = "0" OrElse p.Genero.Length = 0, "MASCULINO", "JURIDICA"))
+            Dim conocido = If(p.Alias.Length = 0, "", $" (CC:{p.Alias})")
+            Dim lineas As New List(Of String) From {
+                $"Identificación: {p.Id}",
+                $"Nombre: {p.NombreCompleto}{conocido.ToUpperInvariant()}",
+                $"Género: {genero}",
+                $"Estado civil: {estadoCivil}",
+                $"Estado: {If(p.Activo = "1", "ACTIVO", "BLOQUEADO")}",
+                $"Fecha de nacimiento: {FechaFicha(p.FNac)}"
+            }
+            If p.Fallecido Then lineas.Add($"Fecha de defunción: {FechaFicha(p.FDef)}")
+            Return String.Join(Environment.NewLine & Environment.NewLine, lineas)
+        End Function
+
         ' ---- Imágenes ----
 
         Public Function ObtenerImagenAsync(id As String, tipo As TipoImagen, Optional ct As CancellationToken = Nothing) As Task(Of Byte())

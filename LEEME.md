@@ -102,7 +102,7 @@ El panel `vista` de `FrmConfigCheque` representa el papel impreso y queda fuera 
 
 ## SD0001 - Gestión de Asistencia Técnica
 
-Está el menú de las opciones que atiende su `Accion`, con `FrmDatosPersonales`, `FrmAdminCodigos`, `FrmBancos`, `FrmMonedas` y `FrmTipoCambio`; lo demás remite al sistema anterior. SD1401 y SD1501 abren Bancos y Monedas con su propio privilegio. Usuarios, departamentos y respaldos los atiende el menú de VB6, no este módulo.
+Está el menú de las opciones que atiende su `Accion`, con `FrmDatosPersonales`, `FrmAdminCodigos`, `FrmCambioId`, `FrmFallecido`, `FrmBancos`, `FrmMonedas` y `FrmTipoCambio`; lo demás remite al sistema anterior. SD1401 y SD1501 abren Bancos y Monedas con su propio privilegio. Usuarios, departamentos y respaldos los atiende el menú de VB6, no este módulo.
 
 **La fuente es más nueva que la base:** `gatbancos` no tiene siglas ni web services, `gatmonedas` tiene `Iniciales` y `gattipocambio` es por moneda y día, sin banco ni hora. Se siguió la base. `Numloc` está vacío en todos los bancos y no se migró ese control. Guardar un banco conserva `Finport`, que usa la conciliación CSV.
 
@@ -128,6 +128,20 @@ Difiere de VB6 en:
 **Administración de Códigos:** `FrmAdminCodigos` migra `FrmAdminCodigos` y `FrmTiposCodigo` migra `FrmMantCodigos`, que no tiene opción en el menú: se abre con el botón Tipos de `FrmCodigoPersona`, que reemplaza a `<<AGREGAR TIPOS DE CODIGOS>>` del combo, con el privilegio 12. `CodigosRepositorio` replica `gaccodclientes` como `DP`, no como `posclientes`: así lo hace VB6 en esta pantalla y cada identificador tiene destinos distintos. Los tipos se replican como `GATMANT`, y borrarlos no se replica, igual que en VB6.
 
 No migrado: incluir a una persona que no existe. VB6 la agrega desde el padrón con un `INSERT ... SELECT` por posición, o abre `ClsDP`; aquí se avisa y se remite a Datos Personales.
+
+**Cambio de Identificación:** `FrmCambioId` migra el asistente de cuatro pasos de `FrmCambioID` y `CambioIdentificacionRepositorio` migra `SD_CambiarID`: recorre `gatcambioid` y cambia cada columna con `UPDATE IGNORE`, replicado como `DP`. Se replica aunque la sentencia falle aquí, igual que en VB6, porque cada local tiene sus propias tablas. Lo ya cambiado no se deshace: las tablas son MyISAM. El modo de eventos no se migró porque solo lo usa `ClsDP`, y `FrmCambioIdMasa` tampoco: su opción está comentada en `Clase.cls`.
+
+Difiere de VB6 en:
+
+- **Resumen:** cuenta los éxitos. VB6 muestra los errores como si fueran cambios exitosos.
+- **Identificación ya existente:** avisa antes de confirmar. Con `UPDATE IGNORE`, las filas que chocan con una llave se quedan con la identificación original, sin error.
+- **Validaciones:** rechaza una identificación igual a la original y limita el largo a los 16 de `gacdp.id`.
+- **Paso 4:** no deja volver. En VB6, Anterior y Finalizar repetían el cambio.
+- **`gatcambioid` vacía:** avisa que no se cambió nada.
+
+**Fallecidos:** `FrmFallecido` migra `FrmFallecido`. Registrar graba `fdef` y deja `activo` en 0; anular vuelve `fdef` a 1900-01-01 y deja `activo` en 1, aunque la persona estuviera bloqueada antes, igual que en VB6. Ambos se replican como `DP`. La casilla admite códigos con `CoincidenciasAsync`, igual que el `SDT` con `BuscarID`, y el buscador deja por fuera a las personas jurídicas, aunque se puede digitar su identificación.
+
+**Sin probar contra la base (2026-11-06):** Administración de Códigos, Cambio de Identificación y Fallecidos. Solo tienen pruebas unitarias, y las pantallas de los dos últimos se revisaron a 125 % sin datos. Falta confirmar las columnas de `gatcambioid` y qué tablas lista. Probar con identificaciones sintéticas y el local 7.
 
 Difiere de VB6 en:
 

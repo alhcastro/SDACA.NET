@@ -135,7 +135,7 @@ Namespace SD0001
             If clave.Length < LargoMinimoClave Then Return
             Try
                 Using datos = Await _repo.CoincidenciasAsync(clave)
-                    Dim id = Elegir(datos)
+                    Dim id = Elegir(Me, datos)
                     If id.Length > 0 Then
                         Await MostrarPersonaAsync(id)
                     ElseIf datos.Rows.Count = 0 Then
@@ -148,11 +148,11 @@ Namespace SD0001
         End Sub
 
         ''' <summary>Con varias coincidencias pregunta cuál. Vacío si no hay o si el usuario cancela.</summary>
-        Private Function Elegir(datos As DataTable) As String
+        Friend Shared Function Elegir(dueno As IWin32Window, datos As DataTable) As String
             If datos.Rows.Count = 0 Then Return ""
             If datos.Rows.Count = 1 Then Return datos.Rows(0)(0).ToString()
             Using buscador As New FrmBuscador("Seleccione la identificación", datos)
-                Return If(buscador.ShowDialog(Me) = DialogResult.OK, buscador.Resultado(0), "")
+                Return If(buscador.ShowDialog(dueno) = DialogResult.OK, buscador.Resultado(0), "")
             End Using
         End Function
 
