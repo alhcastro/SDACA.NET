@@ -45,7 +45,7 @@ Sub Main()
     Usuario.Local = 1
     Usuario.Nombre = "Nombre con tilde: Pe" & Chr$(241) & "a"
     Set Usuario.Privilegios = New Collection
-    Usuario.Privilegios.Add "1", "17000"
+    Usuario.Privilegios.Add "1", Mid$(iProgId, 3, 2) & "000"
     Set Usuario.Horario = New Collection
     Set Usuario.Extra = New Collection
     Usuario.Extra.Add "1", "SGCEmpresa"
@@ -90,7 +90,14 @@ Sub Main()
     Dim A As Variant
     A = SDClass.Menu_Order
     Linea "Menu_Order.Limites=" & LBound(A) & ".." & UBound(A)
-    Linea "Menu_Order(0)=[" & A(0) & "] Empty(1)=" & IsEmpty(A(1))
+    Dim i As Long
+    For i = LBound(A) To UBound(A)
+        Linea "Menu_Order(" & i & ")=[" & A(i) & "] Empty=" & IsEmpty(A(i))
+    Next i
+    For i = 1 To 20
+        iMenu = SDClass.Menu(Right$("000" & i, 3))
+        Linea "Menu(" & i & ")=" & iMenu.Key & "|" & iMenu.Etiqueta & "|" & iMenu.Icono48 & "|" & iMenu.Icono16 & "|" & iMenu.Privilegio
+    Next i
 
     Dim iKey As String
     iKey = "000"
@@ -101,9 +108,13 @@ Sub Main()
     Dim iPic As Variant
     Set iPic = SDClass.SD_LoadRes(CLng(101))
     Linea "SD_LoadRes(101) Is Nothing=" & (iPic Is Nothing)
-    Linea "Icons\SD1701101.gif bytes=" & FileLen(Conexion.SDACADIR & "\Icons\SD1701101.gif")
+    Linea "Icono 101 bytes=" & FileLen(Conexion.SDACADIR & "\Icons\" & Left$(iProgId, 6) & "101.gif")
     Set iPic = SDClass.SD_LoadRes(CLng(102))
     Linea "SD_LoadRes(102) Is Nothing=" & (iPic Is Nothing)
+    For i = 103 To 116
+        Set iPic = SDClass.SD_LoadRes(CLng(i))
+        Linea "SD_LoadRes(" & i & ") Is Nothing=" & (iPic Is Nothing)
+    Next i
 
     Linea "Preferencias IsEmpty=" & IsEmpty(SDClass.Preferencias)
     Linea "Version=" & SDClass.Version

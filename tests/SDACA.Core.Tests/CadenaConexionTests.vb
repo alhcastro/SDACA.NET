@@ -65,4 +65,23 @@ Public Class CadenaConexionTests
             CadenaConexion.CrearOdbcLegacy("130.0.0.2", "sdprincipal", 3306, "nuria", "clave"))
     End Sub
 
+    <Fact>
+    Public Sub DesdeOdbc_abre_la_misma_base_que_la_cadena_del_menu()
+        Dim odbc = CadenaConexion.CrearOdbcLegacy("130.0.0.2", "sdprincipal", 3312, "nuria", "clave")
+        Dim b As New MySqlConnectionStringBuilder(CadenaConexion.DesdeOdbc(odbc))
+        Assert.Equal("130.0.0.2", b.Server)
+        Assert.Equal("sdprincipal", b.Database)
+        Assert.Equal(3312UI, b.Port)
+        Assert.Equal("nuria", b.UserID)
+        Assert.Equal(Md5Vb6.Calcular("clave"), b.Password)
+    End Sub
+
+    <Fact>
+    Public Sub DesdeOdbc_conserva_la_contrasena_de_root_sin_md5()
+        Dim odbc = CadenaConexion.CrearOdbcLegacy("localhost", "pruebas", 3306, "Administrador", "clave")
+        Dim b As New MySqlConnectionStringBuilder(CadenaConexion.DesdeOdbc(odbc))
+        Assert.Equal("root", b.UserID)
+        Assert.Equal("clave", b.Password)
+    End Sub
+
 End Class

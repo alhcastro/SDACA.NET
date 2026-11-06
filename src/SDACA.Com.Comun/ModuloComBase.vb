@@ -18,9 +18,49 @@ Public MustInherit Class ModuloComBase
     Protected Registro As SDACA_Registro
     Protected Config As SDACA_CONFIG
 
+    Private Shared _estilosActivos As Boolean
+
+    ''' <summary>
+    ''' SDACAERP.exe no tiene .config, así que nadie aplica las redirecciones de versión que
+    ''' necesitan MySqlConnector y sus dependencias en net48. Aquí se resuelven por nombre desde
+    ''' la carpeta del módulo, sin mirar la versión pedida.
+    ''' </summary>
+    Shared Sub New()
+        AddHandler AppDomain.CurrentDomain.AssemblyResolve, AddressOf ResolverEnsamblado
+    End Sub
+
+    Private Shared Function ResolverEnsamblado(sender As Object, e As ResolveEventArgs) As Assembly
+        Dim nombre = New AssemblyName(e.Name).Name
+        Dim cargado = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(Function(a) a.GetName().Name = nombre)
+        If cargado IsNot Nothing Then Return cargado
+        Dim archivo = Path.Combine(Path.GetDirectoryName(GetType(ModuloComBase).Assembly.Location), nombre & ".dll")
+        Return If(File.Exists(archivo), Assembly.LoadFrom(archivo), Nothing)
+    End Function
+
+    ''' <summary>Igual que <c>Form.Show vbModal</c>: el menú queda bloqueado hasta cerrar el formulario.</summary>
+    Protected Shared Sub MostrarModal(formulario As Form)
+        If Not _estilosActivos Then
+            Application.EnableVisualStyles()
+            _estilosActivos = True
+        End If
+        Using formulario
+            formulario.ShowDialog()
+        End Using
+    End Sub
+
     ''' <summary>Código del módulo, igual a App.EXEName en VB6: "SD1701".</summary>
     Protected MustOverride ReadOnly Property Codigo As String
     Protected MustOverride ReadOnly Property Siglas As String
+
+    ''' <summary>
+    ''' True si el DLL VB6 instalado escribe sus iconos rellenos con ceros hasta múltiplo de 4 bytes.
+    ''' SD1701 lo hace y SD1101 no; Probar-Paridad.ps1 muestra cuál corresponde a cada módulo.
+    ''' </summary>
+    Protected Overridable ReadOnly Property IconosConRelleno As Boolean
+        Get
+            Return False
+        End Get
+    End Property
 
     Public MustOverride Function SDClase() As SD_Clase Implements IModuloSdaca.SDClase
     Public MustOverride Function Menu(Index As String) As SD_InfoMenu Implements IModuloSdaca.Menu
@@ -64,9 +104,8 @@ Public MustInherit Class ModuloComBase
     ''' </summary>
     ''' <remarks>
     ''' El menú HTML usa el archivo .gif, aunque su contenido sea PNG. LoadPicture (OLE) no abre
-    ''' PNG, así que en ese caso el original devuelve Nothing; aquí también. VB6 escribe el
-    ''' recurso con el relleno a 4 bytes que trae dentro de la DLL; se reproduce para que el
-    ''' archivo quede idéntico.
+    ''' PNG, así que en ese caso el original devuelve Nothing; aquí también. Ver
+    ''' <see cref="IconosConRelleno"/> para que el archivo quede idéntico al de VB6.
     ''' </remarks>
     Public Function SD_LoadRes(pKey As Integer) As Object Implements IModuloSdaca.SD_LoadRes
         If Not Autorizado Then Return Nothing
@@ -82,7 +121,7 @@ Public MustInherit Class ModuloComBase
 
             Dim archivo = Path.Combine(carpeta, Codigo & pKey & ".gif")
             If Not File.Exists(archivo) Then
-                Dim relleno = (4 - datos.Length Mod 4) Mod 4
+                Dim relleno = If(IconosConRelleno, (4 - datos.Length Mod 4) Mod 4, 0)
                 Using fs As New FileStream(archivo, FileMode.CreateNew, FileAccess.Write)
                     fs.Write(datos, 0, datos.Length)
                     If relleno > 0 Then fs.Write(New Byte(relleno - 1) {}, 0, relleno)

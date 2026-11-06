@@ -77,6 +77,36 @@ Namespace Datos
         End Function
 
         ''' <summary>
+        ''' Convierte la cadena ODBC que el menú VB6 entrega en <c>Conexion.ConnectionString</c> a una
+        ''' de MySqlConnector. Los módulos migrados la usan para abrir la misma base que el menú.
+        ''' </summary>
+        ''' <remarks>UID y PWD ya vienen resueltos: las reglas de <see cref="ResolverCredenciales"/> no los cambian.</remarks>
+        Public Shared Function DesdeOdbc(cadenaOdbc As String) As String
+            Dim propiedades = LeerPropiedadesOdbc(cadenaOdbc)
+            Dim valor = Function(llave As String) If(propiedades.ContainsKey(llave), propiedades(llave), "")
+            Dim puerto As UInteger
+            UInteger.TryParse(valor("PORT"), puerto)
+            Return Crear(valor("SERVER"), valor("DATABASE"), puerto, valor("UID"), valor("PWD"))
+        End Function
+
+        Private Shared Function LeerPropiedadesOdbc(cadenaOdbc As String) As Dictionary(Of String, String)
+            Dim propiedades As New Dictionary(Of String, String)(StringComparer.OrdinalIgnoreCase)
+            Dim texto = If(cadenaOdbc, "")
+            Const marca As String = "Extended Properties="""
+            Dim inicio = texto.IndexOf(marca, StringComparison.OrdinalIgnoreCase)
+            If inicio >= 0 Then
+                inicio += marca.Length
+                Dim fin = texto.LastIndexOf(""""c)
+                If fin > inicio Then texto = texto.Substring(inicio, fin - inicio)
+            End If
+            For Each parte In texto.Split(";"c)
+                Dim igual = parte.IndexOf("="c)
+                If igual > 0 Then propiedades(parte.Substring(0, igual).Trim()) = parte.Substring(igual + 1)
+            Next
+            Return propiedades
+        End Function
+
+        ''' <summary>
         ''' Cadena ODBC exacta del original (driver 3.51), solo para comparar en pruebas
         ''' o para pasarla a módulos VB6 que todavía usan ADO.
         ''' </summary>

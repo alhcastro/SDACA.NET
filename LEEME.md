@@ -11,7 +11,10 @@ Todo el código es VB.NET con `Option Strict On`. La API ASP.NET Core también s
 | Proyecto | Destino | Para qué |
 |---|---|---|
 | `src/SDACA.Core` | net48 + net8.0 | Base común: contrato de `Init()`, MD5 compatible con VB6, conexión MySQL, licencia, privilegios, parámetros y bitácora |
+| `src/SDACA.Com.Comun` | (se compila dentro de cada módulo) | `ModuloCom.props`, contrato COM y `ModuloComBase` |
+| `src/SDACA.Ui` | net48 | Controles WinForms comunes: barra de comandos, buscador y mensajes |
 | `src/SDACA.Com.SD1701` | net48 x86 | Primer módulo migrado, que el menú VB6 carga por COM |
+| `src/SDACA.Com.SD1101` | net48 x86 | Bodegas de Herramientas, en migración: no dejarlo registrado para uso normal |
 | `tests/SDACA.Core.Tests` | net8.0 | Pruebas xUnit en VB.NET. Algunas leen `C:\Sistemas\Fuentes` para comparar con el código VB6 |
 
 ## Comandos
@@ -31,12 +34,12 @@ dotnet test -c Release
 
 ## Fase 2: puente COM (módulos .NET dentro del menú VB6)
 
-`src/SDACA.Com.SD1701` es el primer módulo migrado. Es VB.NET sobre .NET Framework 4.8 x86, con ProgID `SD1701.Clase`, y el menú VB6 actual lo carga con `CreateObject` sin cambios.
+`src/SDACA.Com.SD1701` fue el primer módulo migrado. Es VB.NET sobre .NET Framework 4.8 x86, con ProgID `SD1701.Clase`, y el menú VB6 actual lo carga con `CreateObject` sin cambios.
 
 Cómo funciona:
 - `Contrato.vb` define `IModuloSdaca` (Version, Init, SDClase, Menu, Accion, Menu_Order, SD_LoadRes, Preferencias) y los UDT `SD_Clase` y `SD_InfoMenu`, con los mismos nombres de campo que VB6. El menú los lee por nombre.
 - `Init` recibe los UDT de `SDBASE00` (`lib/interop/Interop.SDBASE00.dll`, generado con TlbImp desde `C:\Program Files (x86)\SDACA\Bin\SDBASE00.dll`).
-- `ModuloComBase.vb` implementa `IModuloSdaca` con lo que repiten todos los Clase.cls: la clave de Init, la copia del contexto y SD_LoadRes, que escribe el icono igual que VB6, con el relleno a 4 bytes. Cada módulo hereda de esta clase y completa `SDClase`, `Menu`, `Accion` y `Menu_Order` (ver `SD1701\Clase.vb`).
+- `ModuloComBase.vb` implementa `IModuloSdaca` con lo que repiten todos los Clase.cls: la clave de Init, la copia del contexto y SD_LoadRes, que escribe el icono igual que VB6. El relleno a 4 bytes depende del DLL instalado: SD1701 lo usa (`IconosConRelleno`) y SD1101 no. Cada módulo hereda de esta clase y completa `SDClase`, `Menu`, `Accion` y `Menu_Order` (ver `SD1701\Clase.vb`).
 - Los iconos salen del `.RES` de VB6 con `herramientas/ExtraerRes.ps1`.
 
 ### Registrar, probar y revertir (sin administrador)
@@ -57,11 +60,23 @@ herramientas\Probar-Paridad.ps1 -Modulo SD1701
 herramientas\Registrar-ComUsuario.ps1 -Carpeta publicado\SD1701 -Dll SDACA.Com.SD1701.dll -Desregistrar
 ```
 
-Resultado del 2026-11-03, ya en VB.NET: **PARIDAD OK**. 24 respuestas idénticas y el icono idéntico byte por byte.
+Para un módulo a medio migrar, agregar `-VolverAVb6` para que no quede registrado:
+
+```powershell
+herramientas\Probar-Paridad.ps1 -Modulo SD1101 -VolverAVb6
+```
+
+Las llaves `Record` son compartidas y apuntan a la carpeta del último módulo registrado. Después de probar otro módulo, correr la paridad de los que sigan registrados para devolverles sus llaves.
+
+Una compilación Debug registra el módulo para el usuario actual, incluido SD1101. Si se compila SD1101 en Debug, desregistrarlo al terminar.
+
+Resultado del 2026-11-05: **PARIDAD OK** en SD1701 (59 líneas, 1 icono) y SD1101 (74 líneas, 15 iconos). La paridad compara contra los DLL de `C:\Program Files (x86)\SDACA\Bin`.
 
 ### Siguiente
 
-`SD1101` (CEV, Control de Equipos y Vehículos): 15 formularios y 5 reportes. Prueba que los formularios WinForms abran desde `Accion()` y que los reportes se puedan migrar.
+`SD1101` (SBH, Sistema de Bodegas de Herramientas). Ya están `Clase.vb` y `FrmTiposHerramientas` (opción 003). Las demás opciones muestran un aviso de que no están migradas.
+
+**Fuentes incompletas:** el `SD1101.dll` instalado (2010.155.629) es más nuevo que `Fuentes\SD1101` (2009.153.2014). Trae las opciones 016 y 017 y `frmQMovimientos`, `frmQTiposHerra`, `rptDevol`, `rptQMovimientos` y `rptQTipoHerra`, que no tienen fuente. Por eso no se debe confiar solo en `Fuentes`: hay que comparar cada módulo con su DLL instalado.
 
 ## Alcance: licencia de Coopepalmares
 

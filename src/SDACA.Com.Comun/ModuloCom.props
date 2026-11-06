@@ -1,0 +1,56 @@
+<Project>
+
+  <!--
+    Lo que comparten todos los módulos COM (SDACA.Com.SDxxxx). Cada .vbproj importa este archivo
+    y solo define su AssemblyName, Version y Product.
+    Tiene que ser .NET Framework 4.8 y x86 porque el menú es un proceso VB6 de 32 bits.
+    Contrato.vb, ModuloComBase.vb y ColeccionVb.vb se compilan dentro de cada módulo, y no en una
+    DLL aparte, para que la typelib de cada módulo traiga completos los UDT SD_Clase y SD_InfoMenu
+    que el menú lee por nombre.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <PlatformTarget>x86</PlatformTarget>
+    <LangVersion>latest</LangVersion>
+    <OptionExplicit>On</OptionExplicit>
+    <OptionStrict>On</OptionStrict>
+    <OptionInfer>On</OptionInfer>
+    <OptionCompare>Binary</OptionCompare>
+    <!-- En VB el espacio raíz se antepone a cada Namespace: SDACA.Com + SD1701 = SDACA.Com.SD1701.Clase -->
+    <RootNamespace>SDACA.Com</RootNamespace>
+    <Company>Sistemas Digitales Avanzados - SDACA S.A.</Company>
+    <ComVisible>false</ComVisible>
+    <!-- La typelib se exporta y registra con herramientas\Registrar-ComUsuario.ps1 (sin administrador). -->
+    <RegisterForComInterop>false</RegisterForComInterop>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)*.vb" Link="Comun\%(Filename)%(Extension)" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\SDACA.Core\SDACA.Core.vbproj" />
+    <Reference Include="Interop.SDBASE00">
+      <HintPath>$(MSBuildThisFileDirectory)..\..\lib\interop\Interop.SDBASE00.dll</HintPath>
+      <EmbedInteropTypes>false</EmbedInteropTypes>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="VBA">
+      <HintPath>$(MSBuildThisFileDirectory)..\..\lib\interop\VBA.dll</HintPath>
+      <EmbedInteropTypes>false</EmbedInteropTypes>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="System.Windows.Forms" />
+    <Import Include="System.Windows.Forms" />
+    <EmbeddedResource Include="Recursos\*.*" LogicalName="Recurso.%(Filename)" />
+  </ItemGroup>
+
+  <!--
+    Depuración con F5: en Debug, después de compilar se registra esta DLL para el usuario actual
+    (HKCU, sin administrador). Así SDACAERP.exe (My Project\launchSettings.json) carga la versión
+    recién compilada y los puntos de interrupción se detienen.
+    Para volver a VB6: herramientas\Registrar-ComUsuario.ps1 -Desregistrar.
+  -->
+  <Target Name="RegistrarParaDepurar" AfterTargets="Build" Condition="'$(Configuration)' == 'Debug'">
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)..\..\herramientas\Registrar-ComUsuario.ps1&quot; -Carpeta &quot;$(MSBuildProjectDirectory)\$(OutDir.TrimEnd('\'))&quot; -Dll $(TargetFileName)" />
+  </Target>
+
+</Project>

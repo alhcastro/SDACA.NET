@@ -1,9 +1,10 @@
 ﻿param(
   [Parameter(Mandatory)][string]$Modulo,     # ej. SD1701
-  [string]$Raiz = (Split-Path $PSScriptRoot)
+  [string]$Raiz = (Split-Path $PSScriptRoot),
+  [switch]$VolverAVb6                        # para módulos a medio migrar: no dejar registrada la versión .NET
 )
 # Compara el módulo VB6 instalado contra su versión .NET con el mismo probador VB6.
-# Al terminar deja registrada la versión .NET para el usuario actual.
+# Al terminar deja registrada la versión .NET para el usuario actual, salvo con -VolverAVb6.
 $ErrorActionPreference = 'Stop'
 $progId = "$Modulo.Clase"
 $md5 = [Security.Cryptography.MD5]::Create()
@@ -29,6 +30,7 @@ function Correr([string]$archivo) {
 $iconosVb6 = Correr (Join-Path $salida "resultado_vb6_$Modulo.txt")
 & $registrar -Carpeta $pub -Dll $dll | Out-Null
 $iconosNet = Correr (Join-Path $salida "resultado_net_$Modulo.txt")
+if ($VolverAVb6) { & $registrar -Carpeta $pub -Dll $dll -Desregistrar | Out-Null }
 
 $vb6 = Get-Content (Join-Path $salida "resultado_vb6_$Modulo.txt") | Where-Object { $_ -notlike 'Version=*' }
 $net = Get-Content (Join-Path $salida "resultado_net_$Modulo.txt") | Where-Object { $_ -notlike 'Version=*' }

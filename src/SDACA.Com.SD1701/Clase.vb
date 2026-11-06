@@ -33,6 +33,12 @@ Namespace SD1701
             End Get
         End Property
 
+        Protected Overrides ReadOnly Property IconosConRelleno As Boolean
+            Get
+                Return True
+            End Get
+        End Property
+
         Public Overrides Function SDClase() As SD_Clase
             If Not Autorizado Then Return Nothing
             Return New SD_Clase With {

@@ -45,7 +45,12 @@ function Llaves([string]$texto) {
 if ($Desregistrar) {
   if (-not (Test-Path $registro)) { "No hay registro previo en $registro"; return }
   $r = Get-Content $registro -Raw | ConvertFrom-Json
+  # Las llaves Record (UDT de SDBASE00 y del contrato) las comparten todos los módulos .NET:
+  # si queda otro registrado, borrarlas haría fallar su Init.
+  $progId = ($Dll -replace '^SDACA\.Com\.', '' -replace '\.dll$', '') + '.Clase'
+  $otros = @(Get-ChildItem 'HKCU:\Software\Classes' -ErrorAction SilentlyContinue | Where-Object { $_.PSChildName -match '^SD\d+\.Clase$' -and $_.PSChildName -ne $progId })
   foreach ($k in $r.Llaves) {
+    if ($otros.Count -gt 0 -and $k -like 'Record\*') { continue }
     foreach ($vista in '/reg:32', '/reg:64') { cmd.exe /c "reg delete `"HKCU\Software\Classes\$k`" /f $vista >nul 2>nul" }
   }
   if ($r.TypeLib) { [void][SDACA.Tlb]::Quitar($r.TypeLib, [int16]$r.Major, [int16]$r.Minor) }

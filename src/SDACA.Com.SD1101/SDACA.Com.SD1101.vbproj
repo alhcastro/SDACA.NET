@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SD1101 (SBH, Sistema de Bodegas de Herramientas) como componente COM en VB.NET.
+    Reemplaza a SD1101.dll de VB6: el menú SDACAERP lo crea con CreateObject("SD1101.Clase").
+    Migración en curso: Clase.vb lista todas las opciones, pero Accion() solo abre las que ya
+    tienen formulario. Por eso este módulo no debe quedar registrado para uso normal todavía.
+  -->
+  <Import Project="..\SDACA.Com.Comun\ModuloCom.props" />
+
+  <PropertyGroup>
+    <AssemblyName>SDACA.Com.SD1101</AssemblyName>
+    <Version>2026.11.5</Version>
+    <Product>Sistema de Bodegas de Herramientas</Product>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SDACA.Ui\SDACA.Ui.vbproj" />
+  </ItemGroup>
+
+</Project>

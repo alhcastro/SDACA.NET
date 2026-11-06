@@ -3,59 +3,13 @@
   <!--
     SD1701 (GCG, Consultas Gerenciales) como componente COM en VB.NET.
     Reemplaza a SD1701.dll de VB6: el menú SDACAERP lo crea con CreateObject("SD1701.Clase").
-    Tiene que ser .NET Framework 4.8 y x86 porque el menú es un proceso VB6 de 32 bits.
   -->
+  <Import Project="..\SDACA.Com.Comun\ModuloCom.props" />
+
   <PropertyGroup>
-    <TargetFramework>net48</TargetFramework>
-    <PlatformTarget>x86</PlatformTarget>
-    <LangVersion>latest</LangVersion>
-    <OptionExplicit>On</OptionExplicit>
-    <OptionStrict>On</OptionStrict>
-    <OptionInfer>On</OptionInfer>
-    <OptionCompare>Binary</OptionCompare>
     <AssemblyName>SDACA.Com.SD1701</AssemblyName>
-    <!-- En VB el espacio raíz se antepone a cada Namespace: SDACA.Com + SD1701 = SDACA.Com.SD1701.Clase -->
-    <RootNamespace>SDACA.Com</RootNamespace>
     <Version>2026.11.3</Version>
-    <Company>Sistemas Digitales Avanzados - SDACA S.A.</Company>
     <Product>SD1701 - Consultas Gerenciales</Product>
-    <ComVisible>false</ComVisible>
-    <!-- La typelib se exporta y registra con herramientas\Registrar-ComUsuario.ps1 (sin administrador). -->
-    <RegisterForComInterop>false</RegisterForComInterop>
-    <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\SDACA.Core\SDACA.Core.vbproj" />
-    <Reference Include="Interop.SDBASE00">
-      <HintPath>..\..\lib\interop\Interop.SDBASE00.dll</HintPath>
-      <EmbedInteropTypes>false</EmbedInteropTypes>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="VBA">
-      <HintPath>..\..\lib\interop\VBA.dll</HintPath>
-      <EmbedInteropTypes>false</EmbedInteropTypes>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="System.Windows.Forms" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Import Include="System.Windows.Forms" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Recursos\*.*" LogicalName="Recurso.%(Filename)" />
-  </ItemGroup>
-
-  <!--
-    Depuración con F5: en Debug, después de compilar se registra esta DLL para el usuario actual
-    (HKCU, sin administrador). Así SDACAERP.exe (My Project\launchSettings.json) carga la versión
-    recién compilada y los puntos de interrupción se detienen.
-    Para volver a la versión publicada: herramientas\Probar-Paridad.ps1 o Registrar-ComUsuario.ps1.
-  -->
-  <Target Name="RegistrarParaDepurar" AfterTargets="Build" Condition="'$(Configuration)' == 'Debug'">
-    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\..\herramientas\Registrar-ComUsuario.ps1&quot; -Carpeta &quot;$(MSBuildProjectDirectory)\$(OutDir.TrimEnd('\'))&quot; -Dll $(TargetFileName)" />
-  </Target>
 
 </Project>
