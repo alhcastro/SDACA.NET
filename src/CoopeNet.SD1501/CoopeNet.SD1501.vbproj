@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- SD1501 (ECC, Emisión y Control de Cheques). -->
+  <PropertyGroup>
+    <TargetFramework>$(CoopeNetTfmWindows)</TargetFramework>
+    <RootNamespace>CoopeNet</RootNamespace>
+    <UseWindowsForms>true</UseWindowsForms>
+    <MyType>Empty</MyType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CoopeNet.Ui\CoopeNet.Ui.vbproj" />
+    <ProjectReference Include="..\CoopeNet.SD1401\CoopeNet.SD1401.vbproj" />
+  </ItemGroup>
+
+</Project>

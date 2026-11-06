@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Controles comunes y el contrato IModulo que cada módulo implementa para aparecer en el menú. -->
+  <PropertyGroup>
+    <TargetFramework>$(CoopeNetTfmWindows)</TargetFramework>
+    <RootNamespace>CoopeNet.Ui</RootNamespace>
+    <UseWindowsForms>true</UseWindowsForms>
+    <MyType>Empty</MyType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CoopeNet.Core\CoopeNet.Core.vbproj" />
+    <EmbeddedResource Include="..\..\logo.jpg" LogicalName="CoopeNet.Ui.logo.jpg" />
+  </ItemGroup>
+
+</Project>

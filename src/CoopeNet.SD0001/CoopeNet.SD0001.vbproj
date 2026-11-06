@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- SD0001 (GAT, Gestión de Asistencia Técnica). -->
+  <PropertyGroup>
+    <TargetFramework>$(CoopeNetTfmWindows)</TargetFramework>
+    <RootNamespace>CoopeNet</RootNamespace>
+    <UseWindowsForms>true</UseWindowsForms>
+    <MyType>Empty</MyType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CoopeNet.Ui\CoopeNet.Ui.vbproj" />
+  </ItemGroup>
+
+</Project>

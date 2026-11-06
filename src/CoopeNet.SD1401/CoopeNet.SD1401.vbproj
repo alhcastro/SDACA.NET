@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- SD1401 (CCB, Control de Cuentas Bancarias). -->
+  <PropertyGroup>
+    <TargetFramework>$(CoopeNetTfmWindows)</TargetFramework>
+    <RootNamespace>CoopeNet</RootNamespace>
+    <UseWindowsForms>true</UseWindowsForms>
+    <MyType>Empty</MyType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CoopeNet.Ui\CoopeNet.Ui.vbproj" />
+    <ProjectReference Include="..\CoopeNet.SD0001\CoopeNet.SD0001.vbproj" />
+  </ItemGroup>
+
+</Project>

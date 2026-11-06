@@ -1,8 +1,8 @@
-# SDACA.NET
+# CoopeNet
 
 Migración del ERP SDACA de VB6 a **VB.NET**, con alcance en la licencia de **Coopepalmares** (cédula 3-004-045003, cliente 7, 18 módulos).
 
-Estrategia: se migra módulo por módulo a un ejecutable .NET propio, `SDACA.Erp`, que tiene su entrada y su menú. Usa la misma base MySQL y los mismos `.ini` que VB6, así que los dos sistemas conviven: lo que falta migrar se sigue usando en SDACAERP. La versión anterior, que cargaba los módulos .NET dentro del menú VB6 por COM, se retiró; está en el historial hasta el commit `073ef32`.
+Estrategia: se migra módulo por módulo a un ejecutable .NET propio, `CoopeNet.Erp`, que tiene su entrada y su menú. Usa la misma base MySQL y los mismos `.ini` que VB6, así que los dos sistemas conviven: lo que falta migrar se sigue usando en SDACAERP. La versión anterior, que cargaba los módulos .NET dentro del menú VB6 por COM, se retiró; está en el historial hasta el commit `073ef32`.
 
 Todo el código es VB.NET con `Option Strict On`, sobre .NET 8. La versión de .NET y las opciones comunes están en `Directory.Build.props`.
 
@@ -10,36 +10,36 @@ Todo el código es VB.NET con `Option Strict On`, sobre .NET 8. La versión de .
 
 | Proyecto | Destino | Para qué |
 |---|---|---|
-| `src/SDACA.Core` | net8.0 | Reglas sin interfaz: entrada y sesión, MD5 compatible con VB6, conexión MySQL, licencia, privilegios, parámetros, bitácora y repositorios |
-| `src/SDACA.Ui` | net8.0-windows | Controles WinForms comunes (barra de comandos, buscador, mensajes) y el contrato `IModulo` |
-| `src/SDACA.SD1101` | net8.0-windows | Bodegas de Herramientas, en migración |
-| `src/SDACA.SD1501` | net8.0-windows | Emisión y Control de Cheques, en migración |
-| `src/SDACA.Erp` | net8.0-windows | El ejecutable `CoopeNet.exe`: entrada, menú y cierre de sesión |
-| `tests/SDACA.Core.Tests` | net8.0 | Pruebas xUnit en VB.NET. Algunas leen `C:\Sistemas\Fuentes` para comparar con el código VB6 |
+| `src/CoopeNet.Core` | net8.0 | Reglas sin interfaz: entrada y sesión, MD5 compatible con VB6, conexión MySQL, licencia, privilegios, parámetros, bitácora y repositorios |
+| `src/CoopeNet.Ui` | net8.0-windows | Controles WinForms comunes (barra de comandos, buscador, mensajes) y el contrato `IModulo` |
+| `src/CoopeNet.SD1101` | net8.0-windows | Bodegas de Herramientas, en migración |
+| `src/CoopeNet.SD1501` | net8.0-windows | Emisión y Control de Cheques, en migración |
+| `src/CoopeNet.Erp` | net8.0-windows | El ejecutable `CoopeNet.exe`: entrada, menú y cierre de sesión |
+| `tests/CoopeNet.Core.Tests` | net8.0 | Pruebas xUnit en VB.NET. Algunas leen `C:\Sistemas\Fuentes` para comparar con el código VB6 |
 
 ## Comandos
 
 ```powershell
 dotnet build -c Release
 dotnet test -c Release
-dotnet run --project src\SDACA.Erp -c Release
+dotnet run --project src\CoopeNet.Erp -c Release
 ```
 
-`SDACA.Erp` lee los `.ini` de `C:\Program Files (x86)\SDACA\Bin`. Se cambia con `-inipath <carpeta>`, igual que en SDACAERP.
+`CoopeNet.Erp` lee los `.ini` de `C:\Program Files (x86)\SDACA\Bin`. Se cambia con `-inipath <carpeta>`, igual que en SDACAERP.
 
 ## Agregar un módulo
 
-1. Crear `src/SDACA.SDxxxx` con una clase `Modulo` que implemente `IModulo` (ver `SD1101\Modulo.vb`). Las opciones que falten se declaran con `OpcionMenu.Pendiente`.
-2. Agregar la referencia en `SDACA.Erp.vbproj` y el módulo en `Programa.Modulos()`.
+1. Crear `src/CoopeNet.SDxxxx` con una clase `Modulo` que implemente `IModulo` (ver `SD1101\Modulo.vb`). Las opciones que falten se declaran con `OpcionMenu.Pendiente`.
+2. Agregar la referencia en `CoopeNet.Erp.vbproj` y el módulo en `Programa.Modulos()`.
 
 El menú muestra solo los módulos de la licencia y las opciones que el usuario puede abrir.
 
 ## Apariencia
 
-`Tema.Aplicar` (`SDACA.Ui\Tema.vb`) viste cada pantalla al abrirla desde el menú: colores, encabezado, tarjetas, rejillas y escalado a la resolución del equipo. Un formulario nuevo no necesita código de diseño:
+`Tema.Aplicar` (`CoopeNet.Ui\Tema.vb`) viste cada pantalla al abrirla desde el menú: colores, encabezado, tarjetas, rejillas y escalado a la resolución del equipo. Un formulario nuevo no necesita código de diseño:
 
 - Use nombres conocidos para los botones: `btnGuardar`, `btnImprimir`, `btnEntregar` y `btnAplicar` salen como acción principal; `btnAnular` y `btnBorrar`, como acción de riesgo.
-- Use `SDACA.Ui.Pestanas` en lugar de `TabControl`.
+- Use `CoopeNet.Ui.Pestanas` en lugar de `TabControl`.
 - Tome los colores de `Tema`, no de `Color`. No fije `ForeColor` en los hijos de un grupo: `FrmVerCheque` pinta un cheque anulado por herencia.
 - Declare el ícono de la tarjeta en `OpcionMenu.Formulario` con una constante de `IconoMenu`.
 

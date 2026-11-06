@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- El ejecutable: entrada, menú y cierre de sesión. Cada módulo nuevo se agrega aquí y en Programa.vb. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>$(CoopeNetTfmWindows)</TargetFramework>
+    <RootNamespace>CoopeNet.Erp</RootNamespace>
+    <AssemblyName>CoopeNet</AssemblyName>
+    <UseWindowsForms>true</UseWindowsForms>
+    <MyType>Empty</MyType>
+    <StartupObject>CoopeNet.Erp.Programa</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CoopeNet.Ui\CoopeNet.Ui.vbproj" />
+    <ProjectReference Include="..\CoopeNet.SD1101\CoopeNet.SD1101.vbproj" />
+    <ProjectReference Include="..\CoopeNet.SD0001\CoopeNet.SD0001.vbproj" />
+    <ProjectReference Include="..\CoopeNet.SD1401\CoopeNet.SD1401.vbproj" />
+    <ProjectReference Include="..\CoopeNet.SD1501\CoopeNet.SD1501.vbproj" />
+  </ItemGroup>
+
+</Project>

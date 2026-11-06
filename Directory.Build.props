@@ -2,8 +2,8 @@
 
   <!-- Opciones de todos los proyectos. Para cambiar de .NET basta con estas dos líneas. -->
   <PropertyGroup>
-    <SdacaNet>net8.0</SdacaNet>
-    <SdacaNetWindows>net8.0-windows</SdacaNetWindows>
+    <CoopeNetTfm>net8.0</CoopeNetTfm>
+    <CoopeNetTfmWindows>net8.0-windows</CoopeNetTfmWindows>
     <LangVersion>latest</LangVersion>
     <OptionExplicit>On</OptionExplicit>
     <OptionStrict>On</OptionStrict>
