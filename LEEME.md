@@ -102,7 +102,7 @@ El panel `vista` de `FrmConfigCheque` representa el papel impreso y queda fuera 
 
 ## SD0001 - Gestión de Asistencia Técnica
 
-Está el menú de las opciones que atiende su `Accion`, con `FrmDatosPersonales`, `FrmBancos`, `FrmMonedas` y `FrmTipoCambio`; lo demás remite al sistema anterior. SD1401 y SD1501 abren Bancos y Monedas con su propio privilegio. Usuarios, departamentos y respaldos los atiende el menú de VB6, no este módulo.
+Está el menú de las opciones que atiende su `Accion`, con `FrmDatosPersonales`, `FrmAdminCodigos`, `FrmBancos`, `FrmMonedas` y `FrmTipoCambio`; lo demás remite al sistema anterior. SD1401 y SD1501 abren Bancos y Monedas con su propio privilegio. Usuarios, departamentos y respaldos los atiende el menú de VB6, no este módulo.
 
 **La fuente es más nueva que la base:** `gatbancos` no tiene siglas ni web services, `gatmonedas` tiene `Iniciales` y `gattipocambio` es por moneda y día, sin banco ni hora. Se siguió la base. `Numloc` está vacío en todos los bancos y no se migró ese control. Guardar un banco conserva `Finport`, que usa la conciliación CSV.
 
@@ -110,7 +110,7 @@ Está el menú de las opciones que atiende su `Accion`, con `FrmDatosPersonales`
 
 **Datos Personales:** `FrmDatosPersonales` migra la lista, el buscador, Nuevo, Editar y las pestañas Ficha General, Ubicación y Contacto (`SDLoc` y `NumLoc`), Representante Legal y Códigos. `FrmCodigoPersona` migra `FrmAgregarTiposCodigos` y `FrmImagenes` migra `FrmImgsCliente`. `DatosPersonalesRepositorio` replica `gacdp` y `gacdprepresentante2` como `DP`, y `gaccodclientes` como `posclientes`. `gacdptel` y `gatimagenes` no se replican, igual que en VB6.
 
-No migrado: `ClsDP`, la entrada desde otros módulos; el buscador del padrón (`LblPadron`), aunque sí se busca la cédula al digitarla; agregar tipos de códigos, que es de Administración de Códigos; y la acción de SD1901, que es de otro cliente.
+No migrado: `ClsDP`, la entrada desde otros módulos; el buscador del padrón (`LblPadron`), aunque sí se busca la cédula al digitarla; y la acción de SD1901, que es de otro cliente.
 
 Sigue la base y no `Fuentes`: `nombre` admite 100 caracteres, los tipos de identificación salen de `gactiposid` (DIMEX, NITE y otros) y el largo se limita a los 16 de `gacdp.id`. Las 1,533 personas con `fnac` en cero se muestran como 1900-01-01, y al guardarlas queda esa fecha, igual que en VB6. Las 666 identificaciones que no cumplen el tamaño de su tipo siguen sin poder guardarse hasta corregirlas.
 
@@ -125,9 +125,22 @@ Difiere de VB6 en:
 
 **Probado contra `sdprincipal` (2026-11-06), con identificaciones sintéticas y el local 7, que no tiene filas en `gatreplicadef`:** lecturas de 343 casos borde, y por la pantalla Nuevo, Editar, Guardar, Cancelar, la cascada de ubicación y los representantes. Todo se borró al final y los conteos quedaron iguales, sin réplicas encoladas. `DP` tiene destinos reales en los locales 0, 1, 4 y 9. Falta probar a 125 %, con un usuario sin privilegios y agregando una foto real por el diálogo de archivos.
 
+**Administración de Códigos:** `FrmAdminCodigos` migra `FrmAdminCodigos` y `FrmTiposCodigo` migra `FrmMantCodigos`, que no tiene opción en el menú: se abre con el botón Tipos de `FrmCodigoPersona`, que reemplaza a `<<AGREGAR TIPOS DE CODIGOS>>` del combo, con el privilegio 12. `CodigosRepositorio` replica `gaccodclientes` como `DP`, no como `posclientes`: así lo hace VB6 en esta pantalla y cada identificador tiene destinos distintos. Los tipos se replican como `GATMANT`, y borrarlos no se replica, igual que en VB6.
+
+No migrado: incluir a una persona que no existe. VB6 la agrega desde el padrón con un `INSERT ... SELECT` por posición, o abre `ClsDP`; aquí se avisa y se remite a Datos Personales.
+
+Difiere de VB6 en:
+
+- **Búsqueda:** `SD_Obtener_ID` llama a la función `gac_fun_asociados`; aquí se busca el código exacto en `gacasociados`.
+- **Detalle:** los contactos salen de `gacdptel` y `gacdpteltipos`, no de la vista `vtel`.
+- **Códigos:** se listan también los de empleado, como en Datos Personales, y `uidc` graba el usuario real, no 0. Se replican solo si la sentencia funcionó. Un código que la persona ya tiene se rechaza, en lugar de avisar éxito sin hacer nada.
+- **Tipos:** piden tipo y descripción, y borrar pide confirmación.
+
+**Sin probar contra la base:** solo tiene pruebas de sentencias y de compilación. Falta confirmar con `SHOW CREATE TABLE` las columnas `SISTEMA`, `UIDC`, `FE` y `FC` de `gactiposcodigos`, que salen de `Fuentes`, y que `gacasociados` da el mismo resultado que `gac_fun_asociados`.
+
 ## SD1401 - Control de Cuentas Bancarias
 
-Todas las opciones están migradas. Bancos y Monedas son de SD0001 y se abren desde aquí. `FrmCuentasBancarias` y sus subpantallas también las abre SD1501. La opción 016 ("Pruebas no usar") no se migra; las 008 y 010 están comentadas en `Menu_Order`. Bancos y Monedas son de SD0001.
+Todas las opciones están migradas. Bancos y Monedas son de SD0001 y se abren desde aquí. `FrmCuentasBancarias` y sus subpantallas también las abre SD1501. La opción 016 ("Pruebas no usar") no se migra; las 008 y 010 están comentadas en `Menu_Order`.
 
 Antes de seguir hay que comprobar contra la base:
 

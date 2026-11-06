@@ -43,7 +43,16 @@ Namespace SD0001
 
         ''' <summary>Todos entran a consultar. Editar pide el 10 o el 19015, e imágenes el 11 o el 19016.</summary>
         Public Shared Function DatosPersonales(s As Sesion) As Form
-            Return New FrmDatosPersonales(New DatosPersonalesRepositorio(s.Fabrica), s.Uid, s.Local, s.Puede("10;19015"), Privilegios.EsAdministrador(s.Login), s.Puede("11;19016"), s.Puede("12"))
+            Return New FrmDatosPersonales(New DatosPersonalesRepositorio(s.Fabrica), s.Uid, s.Local, s.Puede("10;19015"), Privilegios.EsAdministrador(s.Login), s.Puede("11;19016"), s.Puede("12"), Function() TiposCodigo(s))
+        End Function
+
+        ''' <summary>Sin opción en el menú: la abre Agregar código con el privilegio 12.</summary>
+        Private Shared Function TiposCodigo(s As Sesion) As Form
+            Return New FrmTiposCodigo(New CodigosRepositorio(s.Fabrica), s.Uid, s.Local)
+        End Function
+
+        Private Shared Function AdminCodigos(s As Sesion) As Form
+            Return New FrmAdminCodigos(New DatosPersonalesRepositorio(s.Fabrica), New CodigosRepositorio(s.Fabrica), s.Uid, s.Local, s.Puede("12"), Function() TiposCodigo(s))
         End Function
 
         Public ReadOnly Property Opciones As IReadOnlyList(Of OpcionMenu) Implements IModulo.Opciones
@@ -51,7 +60,7 @@ Namespace SD0001
                 Return {
                     OpcionMenu.Grupo("Mantenimiento", "8",
                         OpcionMenu.Formulario("Datos Personales", "0", AddressOf DatosPersonales, IconoMenu.Editar),
-                        OpcionMenu.Pendiente("Administración de Códigos", "1"),
+                        OpcionMenu.Formulario("Administración de Códigos", "1", AddressOf AdminCodigos, IconoMenu.Lista),
                         OpcionMenu.Pendiente("Cambio de Identificación", "1"),
                         OpcionMenu.Pendiente("Cambio de Identificación Masiva", "999"),
                         OpcionMenu.Pendiente("Padrón Nacional", "1"),

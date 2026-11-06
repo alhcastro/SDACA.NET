@@ -39,6 +39,7 @@ Namespace SD0001
         Private ReadOnly _esAdministrador As Boolean
         Private ReadOnly _puedeImagenes As Boolean
         Private ReadOnly _puedeCalcular As Boolean
+        Private ReadOnly _abrirTipos As Func(Of Form)
         Private _etiquetaAsociado As String = "Cliente"
         Private _modo As ModoPantalla = ModoPantalla.Normal
         Private _persona As Persona
@@ -127,8 +128,9 @@ Namespace SD0001
         Private ReadOnly btnImagenes As New Button With {.Name = "btnImagenes", .Text = "Imágenes", .Location = New Point(290, 600), .Size = New Size(100, 32)}
         Private ReadOnly barra As New BarraComandos With {.Name = "barra", .Location = New Point(530, 600), .Size = New Size(460, 32)}
 
-        Public Sub New(repositorio As DatosPersonalesRepositorio, uid As Long, local As Long, puedeEditar As Boolean, esAdministrador As Boolean, puedeImagenes As Boolean, puedeCalcular As Boolean)
+        Public Sub New(repositorio As DatosPersonalesRepositorio, uid As Long, local As Long, puedeEditar As Boolean, esAdministrador As Boolean, puedeImagenes As Boolean, puedeCalcular As Boolean, abrirTipos As Func(Of Form))
             _repo = repositorio
+            _abrirTipos = abrirTipos
             _uid = uid
             _local = local
             _puedeEditar = puedeEditar
@@ -860,7 +862,7 @@ Namespace SD0001
 
         Private Async Sub AgregarCodigo_Clic(sender As Object, e As EventArgs)
             Dim actual = CodigoActual()
-            Using ventana As New FrmCodigoPersona(_repo, If(actual IsNot Nothing AndAlso actual.Eliminable, actual.Codigo, ""), _puedeCalcular)
+            Using ventana As New FrmCodigoPersona(_repo, If(actual IsNot Nothing AndAlso actual.Eliminable, actual.Codigo, ""), _puedeCalcular, _abrirTipos)
                 Tema.Aplicar(ventana, Modulo.TituloModulo)
                 If ventana.ShowDialog(Me) <> DialogResult.OK Then Return
                 Try
