@@ -143,6 +143,11 @@ Public Module Programa
     Private Sub Padron(cn As MySqlConnection)
         Seccion("padron.Sexo")
         Tabla(cn, "SELECT Sexo, COUNT(*) AS filas FROM padron.padron GROUP BY Sexo")
+        ' FrmPadron busca por Cedula LIKE 'x%', Apellido1 y Apellido2 exactos y Nombre LIKE '%x%'.
+        Seccion("Esquema del padrón")
+        Tabla(cn, "SHOW CREATE TABLE padron.padron")
+        Tabla(cn, "SHOW CREATE TABLE padron.padronj")
+        Tabla(cn, "SELECT COUNT(*) AS juridicas FROM padron.padronj")
     End Sub
 
     Private Sub Replicacion(cn As MySqlConnection)

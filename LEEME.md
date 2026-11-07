@@ -102,7 +102,7 @@ El panel `vista` de `FrmConfigCheque` representa el papel impreso y queda fuera 
 
 ## SD0001 - Gestión de Asistencia Técnica
 
-Está el menú de las opciones que atiende su `Accion`, con `FrmDatosPersonales`, `FrmAdminCodigos`, `FrmCambioId`, `FrmFallecido`, `FrmBancos`, `FrmMonedas` y `FrmTipoCambio`; lo demás remite al sistema anterior. SD1401 y SD1501 abren Bancos y Monedas con su propio privilegio. Usuarios, departamentos y respaldos los atiende el menú de VB6, no este módulo.
+Está el menú de las opciones que atiende su `Accion`, con `FrmDatosPersonales`, `FrmAdminCodigos`, `FrmCambioId`, `FrmFallecido`, `FrmPadron`, `FrmBancos`, `FrmMonedas` y `FrmTipoCambio`; lo demás remite al sistema anterior. SD1401 y SD1501 abren Bancos y Monedas con su propio privilegio. Usuarios, departamentos y respaldos los atiende el menú de VB6, no este módulo.
 
 **La fuente es más nueva que la base:** `gatbancos` no tiene siglas ni web services, `gatmonedas` tiene `Iniciales` y `gattipocambio` es por moneda y día, sin banco ni hora. Se siguió la base. `Numloc` está vacío en todos los bancos y no se migró ese control. Guardar un banco conserva `Finport`, que usa la conciliación CSV.
 
@@ -141,8 +141,6 @@ Difiere de VB6 en:
 
 **Fallecidos:** `FrmFallecido` migra `FrmFallecido`. Registrar graba `fdef` y deja `activo` en 0; anular vuelve `fdef` a 1900-01-01 y deja `activo` en 1, aunque la persona estuviera bloqueada antes, igual que en VB6. Ambos se replican como `DP`. La casilla admite códigos con `CoincidenciasAsync`, igual que el `SDT` con `BuscarID`, y el buscador deja por fuera a las personas jurídicas, aunque se puede digitar su identificación.
 
-**Sin probar contra la base (2026-11-06):** Administración de Códigos, Cambio de Identificación y Fallecidos. Solo tienen pruebas unitarias, y las pantallas de los dos últimos se revisaron a 125 % sin datos. Falta confirmar las columnas de `gatcambioid` y qué tablas lista. Probar con identificaciones sintéticas y el local 7.
-
 Difiere de VB6 en:
 
 - **Búsqueda:** el código exacto usa `gac_fun_asociados` con local 0, igual que VB6, y encuentra asociados inactivos. Después `SD_Obtener_ID` busca solo la clave exacta; aquí se buscan coincidencias parciales.
@@ -151,6 +149,10 @@ Difiere de VB6 en:
 - **Tipos:** piden tipo y descripción, y borrar pide confirmación.
 
 **Repositorios probados, pantallas sin probar:** `herramientas/VerificarBase` confirmó en el 3315 las columnas de `gactiposcodigos` y `gatcambioid`, y los repositorios de Códigos, Cambio de Identificación y Fallecidos se probaron ahí con datos sintéticos en el local 7. Cada cambio de identificación tardó unos 40 segundos. Falta la prueba de pantallas que describe el `LEEME.md` de esa herramienta. Si la identificación nueva ya existe, el resumen cuenta `gacdp` y también `dp`, que es una vista de `gacdp`. `gacdptel` tiene triggers que escriben en `gacdptel_bitac`: al borrar personas de prueba hay que limpiar también esa tabla.
+
+**Padrón Nacional y Jurídico:** `FrmPadron` migra `FrmBuscaPadron` en el modo del menú, que solo consulta, y `PadronRepositorio` migra `SD_Padron` y `SD_PadronJ`. Como en VB6, la cédula manda sobre los demás campos y busca por el inicio, los apellidos son exactos, el nombre se busca en cualquier parte y se muestran hasta 500 filas, con un aviso si hay más. Difiere en que no consulta sin criterio (en VB6 la sentencia fallaba), usa parámetros en lugar de concatenar el texto, ignora los guiones de la cédula y avisa si el servidor no tiene la base `padron`. `Sexo` se muestra tal como está: `M`, `F` y unas pocas filas con `0` o `3`. Las 1,414 personas con `Nacimiento` en cero se muestran sin fecha. Falta el modo de selección que usa `LblPadron` en Datos Personales.
+
+**Padrón probado en el 3315 (2026-11-07), solo lecturas:** `padron.padron` (unos 4 millones de filas) tiene índices por cédula, cada apellido, nombre y los tres juntos; `padron.padronj` (259,065) solo por cédula. Por cédula, apellidos o apellidos y nombre responde en menos de 0.2 s, y el jurídico por nombre en 0.1 s. Buscar solo por nombre no usa índice porque busca en cualquier parte: con un nombre común tarda unos 3 s, y con uno que no existe recorre todo el padrón y tarda unos 47 s, igual que en VB6.
 
 ## SD1401 - Control de Cuentas Bancarias
 
