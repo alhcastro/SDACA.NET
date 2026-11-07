@@ -540,7 +540,7 @@ Namespace SD0001
             FijarGenero(p.Genero)
             txtDefuncion.Text = If(p.Fallecido, p.FDef.ToShortDateString(), "")
             MostrarDefuncion(p.Fallecido)
-            PintarFoto(FrmImagenes.CrearImagen(foto))
+            PintarFoto(Imagenes.Crear(foto))
             PintarContactos(contactos)
             PintarRepresentantes()
             PintarCodigos()
@@ -722,7 +722,7 @@ Namespace SD0001
                     MessageBox.Show(Me, "El tamaño del archivo excede los 256 kb permitidos.", Modulo.TituloModulo, MessageBoxButtons.OK, MessageBoxIcon.Information)
                     Return
                 End If
-                Dim imagen = FrmImagenes.CrearImagen(contenido)
+                Dim imagen = Imagenes.Crear(contenido)
                 If imagen Is Nothing Then
                     MessageBox.Show(Me, "El archivo no es una imagen válida.", Modulo.TituloModulo, MessageBoxButtons.OK, MessageBoxIcon.Information)
                     Return
@@ -757,7 +757,7 @@ Namespace SD0001
             End Using
             Try
                 ' La fotografía también se cambia desde esa ventana.
-                PintarFoto(FrmImagenes.CrearImagen(Await _repo.ObtenerImagenAsync(_persona.Id, TipoImagen.Fotografia)))
+                PintarFoto(Imagenes.Crear(Await _repo.ObtenerImagenAsync(_persona.Id, TipoImagen.Fotografia)))
                 Editable()
             Catch ex As MySqlException
                 Mensajes.NoConecta()

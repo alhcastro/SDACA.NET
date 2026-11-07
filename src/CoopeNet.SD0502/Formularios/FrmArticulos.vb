@@ -7,7 +7,7 @@ Namespace SD0502
 
     ''' <summary>
     ''' Catálogo de Artículos. Migración de Fuentes\SD0502(Coopepalmares)\frmMantArticulos.frm: la ficha, la
-    ''' navegación, la búsqueda, los precios y el alta, la edición y el borrado. Proveedores, imágenes, cambio
+    ''' navegación, la búsqueda, los precios, las imágenes y el alta, la edición y el borrado. Proveedores, cambio
     ''' de código, catálogo CABYS, códigos de barras, alternos, etiquetas, movimientos, utilidades históricas y
     ''' existencias por local todavía no están. La pestaña Lista no se migra: en VB6 nunca se llenaba.
     ''' </summary>
@@ -114,10 +114,30 @@ Namespace SD0502
         Private ReadOnly chkConsignacion As New CheckBox With {.Name = "chkConsignacion", .Text = "Consignación", .AutoSize = True, .Location = New Point(14, 110)}
         Private ReadOnly cmbMoneda As New ComboBox With {.Name = "cmbMoneda", .AccessibleName = "Moneda", .DropDownStyle = ComboBoxStyle.DropDownList, .Location = New Point(90, 146), .Width = 70}
 
+        ' ---- Imágenes ----
+        Private ReadOnly tabImagenes As New TabPage("Imágenes")
+        Private ReadOnly picImagen As New PictureBox With {.Name = "picImagen", .AccessibleName = "Imagen del artículo", .BorderStyle = BorderStyle.FixedSingle, .SizeMode = PictureBoxSizeMode.Zoom, .Location = New Point(14, 14), .Size = New Size(560, 340)}
+        Private ReadOnly lblImgNumero As New Label With {.Name = "lblImgNumero", .AutoSize = True, .Location = New Point(590, 16)}
+        Private ReadOnly txtImgDesc As New TextBox With {.Name = "txtImgDesc", .AccessibleName = "Descripción de la imagen", .Location = New Point(590, 64), .Width = 240, .MaxLength = ImagenesArticuloRepositorio.LargoDescripcion}
+        Private ReadOnly btnImgAnterior As New Button With {.Name = "btnImgAnterior", .Text = "◀", .AccessibleName = "Imagen anterior", .Location = New Point(590, 100), .Size = New Size(117, 30)}
+        Private ReadOnly btnImgSiguiente As New Button With {.Name = "btnImgSiguiente", .Text = "▶", .AccessibleName = "Imagen siguiente", .Location = New Point(713, 100), .Size = New Size(117, 30)}
+        Private ReadOnly btnImgNueva As New Button With {.Name = "btnImgNueva", .Text = "Nueva", .Location = New Point(590, 146), .Size = New Size(117, 30)}
+        Private ReadOnly btnImgGuardar As New Button With {.Name = "btnImgGuardar", .Text = "Guardar", .Location = New Point(713, 146), .Size = New Size(117, 30)}
+        Private ReadOnly btnImgModificar As New Button With {.Name = "btnImgModificar", .Text = "Modificar", .Location = New Point(590, 182), .Size = New Size(117, 30)}
+        Private ReadOnly btnImgEliminar As New Button With {.Name = "btnImgEliminar", .Text = "Eliminar", .Location = New Point(713, 182), .Size = New Size(117, 30)}
+        Private ReadOnly _imagenes As ImagenesArticuloRepositorio
+        ''' <summary>sdtCod: el número de la imagen que se ve; 0 si no hay.</summary>
+        Private _imgConsec As Integer
+        ''' <summary>El archivo elegido con Nueva que falta guardar.</summary>
+        Private _imgPendiente As Byte()
+        ''' <summary>El artículo cuyas imágenes se cargaron, para no leerlas de nuevo al volver a la pestaña.</summary>
+        Private _imgArticulo As String
+
         Private ReadOnly barra As New BarraComandos With {.Name = "barra", .Location = New Point(420, 556), .Size = New Size(460, 32)}
 
-        Public Sub New(repositorio As ArticulosRepositorio, local As Long, uid As Long, login As String, estacion As String, localDescripcion As String, puedeEditar As Boolean, puedeUtilidades As Boolean)
+        Public Sub New(repositorio As ArticulosRepositorio, imagenes As ImagenesArticuloRepositorio, local As Long, uid As Long, login As String, estacion As String, localDescripcion As String, puedeEditar As Boolean, puedeUtilidades As Boolean)
             _repo = repositorio
+            _imagenes = imagenes
             _local = local
             _uid = uid
             _login = If(login, "")
@@ -155,7 +175,9 @@ Namespace SD0502
                 Etiqueta("Descuento en compra %", 14, 17), txtDescCompra, Etiqueta("Descuento a aplicar en venta %", 14, 49), txtDescVenta,
                 Etiqueta("Descuento de venta máximo %", 14, 81), txtDescMax, Etiqueta("Otros impuestos %", 14, 113), txtPorcOtros,
                 Etiqueta("Monto de otros impuestos", 14, 145), txtMontoOtros, gbFacturar, gbOtros})
-            tabs.TabPages.AddRange({tabDetalle, tabPrecio, tabOtros})
+            tabImagenes.Controls.AddRange(New Control() {picImagen, lblImgNumero, Etiqueta("Descripción", 590, 44), txtImgDesc,
+                btnImgAnterior, btnImgSiguiente, btnImgNueva, btnImgGuardar, btnImgModificar, btnImgEliminar})
+            tabs.TabPages.AddRange({tabDetalle, tabPrecio, tabOtros, tabImagenes})
 
             Controls.AddRange(New Control() {
                 Etiqueta("Código", 12, 15), txtCodigo, btnAnterior, btnSiguiente, lblCorto, lblExistencia, lblPrecioDia,
@@ -193,6 +215,14 @@ Namespace SD0502
             AddHandler chkSinCantidad.CheckedChanged, Sub() Excluyente(chkSinCantidad)
             AddHandler chkSinPrecio.CheckedChanged, Sub() Excluyente(chkSinPrecio)
             AddHandler chkSinPeso.CheckedChanged, Sub() Excluyente(chkSinPeso)
+            AddHandler tabs.SelectedIndexChanged, Async Sub() Await MostrarImagenesAsync()
+            AddHandler btnImgAnterior.Click, Async Sub() Await MoverImagenAsync(False)
+            AddHandler btnImgSiguiente.Click, Async Sub() Await MoverImagenAsync(True)
+            AddHandler btnImgNueva.Click, AddressOf ImagenNueva_Clic
+            AddHandler btnImgGuardar.Click, Async Sub() Await GuardarImagenAsync()
+            AddHandler btnImgModificar.Click, Async Sub() Await ModificarImagenAsync()
+            AddHandler btnImgEliminar.Click, Async Sub() Await EliminarImagenAsync()
+            AddHandler FormClosed, Sub() PintarImagen(Nothing)
             Habilitar(False)
         End Sub
 
@@ -456,6 +486,8 @@ Namespace SD0502
             lblExistencia.Text = ""
             lblPrecioDia.Text = ""
             lblCostoNeto.Text = ""
+            _imgArticulo = Nothing
+            MostrarImagen(Nothing)
             _pintando = False
         End Sub
 
@@ -536,6 +568,7 @@ Namespace SD0502
             MostrarCostoNeto()
             btnAnterior.Enabled = True
             btnSiguiente.Enabled = True
+            Await MostrarImagenesAsync()
             Return True
         End Function
 
@@ -556,7 +589,127 @@ Namespace SD0502
             gbFiltro.Enabled = Not editando
             btnAnterior.Enabled = Not editando
             btnSiguiente.Enabled = Not editando
+            _imgPendiente = Nothing
+            BotonesImagen()
         End Sub
+
+        ' ---- Imágenes ----
+
+        Private Sub PintarImagen(imagen As Image)
+            Dim anterior = picImagen.Image
+            picImagen.Image = imagen
+            anterior?.Dispose()
+        End Sub
+
+        ''' <summary>Pinta una fila de posimagartic, o deja la pestaña vacía con Nothing.</summary>
+        Private Sub MostrarImagen(fila As ImagenArticulo)
+            _imgPendiente = Nothing
+            _imgConsec = If(fila?.Consec, 0)
+            txtImgDesc.Text = If(fila?.Descr, "")
+            PintarImagen(Imagenes.Crear(fila?.Imag))
+            lblImgNumero.Text = If(_imgConsec = 0, "Sin imágenes", $"Imagen {_imgConsec}")
+            BotonesImagen()
+        End Sub
+
+        ''' <summary>
+        ''' fraImgs solo se habilita al editar (SD_Habilitar). Aquí, además, solo al editar un artículo que ya
+        ''' existe: en un Nuevo, VB6 dejaba grabar imágenes de un código que podía no llegar a guardarse.
+        ''' </summary>
+        Private Sub BotonesImagen()
+            Dim puede = _modo = ModoFicha.Editar AndAlso _articulo IsNot Nothing
+            Dim pendiente = _imgPendiente IsNot Nothing
+            btnImgNueva.Enabled = puede AndAlso Not pendiente
+            btnImgGuardar.Enabled = puede AndAlso pendiente
+            btnImgModificar.Enabled = puede AndAlso Not pendiente AndAlso _imgConsec <> 0
+            btnImgEliminar.Enabled = puede AndAlso Not pendiente AndAlso _imgConsec <> 0
+            txtImgDesc.Enabled = puede
+            btnImgAnterior.Enabled = Not pendiente AndAlso _imgConsec <> 0
+            btnImgSiguiente.Enabled = Not pendiente AndAlso _imgConsec <> 0
+        End Sub
+
+        ''' <summary>SSTab1_Click: al entrar a la pestaña se carga la primera imagen del artículo.</summary>
+        Private Async Function MostrarImagenesAsync() As Task
+            If tabs.SelectedTab IsNot tabImagenes OrElse _articulo Is Nothing Then Return
+            Dim codigo = _articulo.CodigoArt
+            If String.Equals(_imgArticulo, codigo, StringComparison.Ordinal) Then Return
+            _imgArticulo = codigo
+            Try
+                Dim fila = Await _imagenes.ObtenerAsync(codigo, 0, True)
+                If _articulo IsNot Nothing AndAlso _articulo.CodigoArt = codigo Then MostrarImagen(fila)
+            Catch ex As MySqlException
+                _imgArticulo = Nothing
+                Mensajes.NoConecta()
+            End Try
+        End Function
+
+        ''' <summary>cmdINext y cmdIPrev: en el extremo la imagen se queda como está.</summary>
+        Private Async Function MoverImagenAsync(siguiente As Boolean) As Task
+            If _articulo Is Nothing OrElse _imgConsec = 0 Then Return
+            Try
+                Dim fila = Await _imagenes.ObtenerAsync(_articulo.CodigoArt, _imgConsec, siguiente)
+                If fila IsNot Nothing Then MostrarImagen(fila)
+            Catch ex As MySqlException
+                Mensajes.NoConecta()
+            End Try
+        End Function
+
+        ''' <summary>cmdINueva: muestra el archivo y lo deja pendiente hasta Guardar.</summary>
+        Private Sub ImagenNueva_Clic(sender As Object, e As EventArgs)
+            Using dialogo As New OpenFileDialog With {.Title = "Seleccione la imagen a importar", .Filter = "Archivos de imágenes (jpg)|*.jpg"}
+                If dialogo.ShowDialog(Me) <> DialogResult.OK Then Return
+                Dim contenido = IO.File.ReadAllBytes(dialogo.FileName)
+                If contenido.Length >= ImagenesArticuloRepositorio.TamanoMaximo Then
+                    MessageBox.Show(Me, "El tamaño del archivo excede los 256 kb permitidos.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information)
+                    Return
+                End If
+                Dim imagen = Imagenes.Crear(contenido)
+                If imagen Is Nothing Then
+                    MessageBox.Show(Me, "El archivo no es una imagen válida.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information)
+                    Return
+                End If
+                PintarImagen(imagen)
+                _imgConsec = 0
+                _imgPendiente = contenido
+                lblImgNumero.Text = "Imagen nueva"
+                txtImgDesc.Text = IO.Path.GetFileName(dialogo.FileName)
+                BotonesImagen()
+                txtImgDesc.Focus()
+            End Using
+        End Sub
+
+        Private Async Function GuardarImagenAsync() As Task
+            If _articulo Is Nothing OrElse _imgPendiente Is Nothing Then Return
+            Try
+                Dim codigo = _articulo.CodigoArt
+                _imgConsec = Await _imagenes.GuardarAsync(codigo, _imgConsec, txtImgDesc.Text, _imgPendiente, _uid)
+                _imgPendiente = Nothing
+                lblImgNumero.Text = $"Imagen {_imgConsec}"
+                BotonesImagen()
+            Catch ex As MySqlException
+                Mensajes.NoGuardo(ex.Message, "IMAGENES", Modulo.TituloModulo)
+            End Try
+        End Function
+
+        Private Async Function ModificarImagenAsync() As Task
+            If _articulo Is Nothing OrElse _imgConsec = 0 Then Return
+            Try
+                Await _imagenes.CambiarDescripcionAsync(_articulo.CodigoArt, _imgConsec, txtImgDesc.Text)
+            Catch ex As MySqlException
+                Mensajes.NoGuardo(ex.Message, "IMAGENES", Modulo.TituloModulo)
+            End Try
+        End Function
+
+        Private Async Function EliminarImagenAsync() As Task
+            If _articulo Is Nothing OrElse _imgConsec = 0 Then Return
+            If MessageBox.Show(Me, "¿Está seguro de que desea eliminar la imagen?", Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) <> DialogResult.Yes Then Return
+            Try
+                Dim codigo = _articulo.CodigoArt
+                Await _imagenes.BorrarAsync(codigo, _imgConsec)
+                MostrarImagen(Await _imagenes.ObtenerAsync(codigo, 0, True))
+            Catch ex As MySqlException
+                Mensajes.NoGuardo(ex.Message, "IMAGENES", Modulo.TituloModulo)
+            End Try
+        End Function
 
         ' ---- Navegación y búsqueda ----
 
