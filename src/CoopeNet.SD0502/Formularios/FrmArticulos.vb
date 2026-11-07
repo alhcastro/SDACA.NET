@@ -7,9 +7,10 @@ Namespace SD0502
 
     ''' <summary>
     ''' Catálogo de Artículos. Migración de Fuentes\SD0502(Coopepalmares)\frmMantArticulos.frm: la ficha, la
-    ''' navegación, la búsqueda, los precios, las imágenes, los proveedores y el alta, la edición y el borrado. Cambio
-    ''' de código, catálogo CABYS, códigos de barras, alternos, etiquetas, movimientos, utilidades históricas y
-    ''' existencias por local todavía no están. La pestaña Lista no se migra: en VB6 nunca se llenaba.
+    ''' navegación, la búsqueda, los precios, las imágenes, los proveedores, los códigos de barras y el alta, la
+    ''' edición y el borrado. Catálogo CABYS, alternos, etiquetas, movimientos, utilidades históricas y existencias
+    ''' por local todavía no están. No se migran la pestaña Lista, que en VB6 nunca se llenaba, ni el cambio de
+    ''' código, cuyo botón VB6 tiene oculto.
     ''' </summary>
     Public Class FrmArticulos
         Inherits Form
@@ -80,6 +81,7 @@ Namespace SD0502
         Private ReadOnly txtModificado As New TextBox With {.Name = "txtModificado", .AccessibleName = "Modificado el", .ReadOnly = True, .TabStop = False, .Location = New Point(670, 284), .Width = 160}
         Private ReadOnly lblSugerido As New Label With {.Name = "lblSugerido", .AutoSize = True, .Location = New Point(130, 322)}
         Private ReadOnly btnProveedores As New Button With {.Name = "btnProveedores", .Text = "Proveedores", .Location = New Point(700, 316), .Size = New Size(130, 30)}
+        Private ReadOnly btnCodigosBarras As New Button With {.Name = "btnCodigosBarras", .Text = "Códigos de barras", .Location = New Point(560, 316), .Size = New Size(134, 30)}
 
         ' ---- Precio ----
         Private ReadOnly txtCosto As New TextBox With {.Name = "txtCosto", .AccessibleName = "Precio de costo", .ReadOnly = True, .TabStop = False, .TextAlign = HorizontalAlignment.Right, .Location = New Point(130, 14), .Width = 120}
@@ -128,6 +130,7 @@ Namespace SD0502
         Private ReadOnly btnImgEliminar As New Button With {.Name = "btnImgEliminar", .Text = "Eliminar", .Location = New Point(713, 182), .Size = New Size(117, 30)}
         Private ReadOnly _imagenes As ImagenesArticuloRepositorio
         Private ReadOnly _proveedores As ProveedoresArticuloRepositorio
+        Private ReadOnly _codigosBarras As CodigosBarrasRepositorio
         ''' <summary>sdtCod: el número de la imagen que se ve; 0 si no hay.</summary>
         Private _imgConsec As Integer
         ''' <summary>El archivo elegido con Nueva que falta guardar.</summary>
@@ -137,10 +140,11 @@ Namespace SD0502
 
         Private ReadOnly barra As New BarraComandos With {.Name = "barra", .Location = New Point(420, 556), .Size = New Size(460, 32)}
 
-        Public Sub New(repositorio As ArticulosRepositorio, imagenes As ImagenesArticuloRepositorio, proveedores As ProveedoresArticuloRepositorio, local As Long, uid As Long, login As String, estacion As String, localDescripcion As String, puedeEditar As Boolean, puedeUtilidades As Boolean)
+        Public Sub New(repositorio As ArticulosRepositorio, imagenes As ImagenesArticuloRepositorio, proveedores As ProveedoresArticuloRepositorio, codigosBarras As CodigosBarrasRepositorio, local As Long, uid As Long, login As String, estacion As String, localDescripcion As String, puedeEditar As Boolean, puedeUtilidades As Boolean)
             _repo = repositorio
             _imagenes = imagenes
             _proveedores = proveedores
+            _codigosBarras = codigosBarras
             _local = local
             _uid = uid
             _login = If(login, "")
@@ -164,7 +168,7 @@ Namespace SD0502
                 Etiqueta("Presentación", 14, 85), txtPresentacion, Etiqueta("Cód. empaque", 270, 85), txtEmpaque, Etiqueta("Cant. por mayor", 540, 85), txtMayor,
                 Etiqueta("Cód. Hacienda", 14, 119), txtCabys,
                 Etiqueta("Especificación", 14, 153), txtEspecificacion,
-                Etiqueta("Creado por", 14, 287), txtCreadoPor, Etiqueta("Creado el", 310, 287), txtCreado, Etiqueta("Modificado", 580, 287), txtModificado, lblSugerido, btnProveedores})
+                Etiqueta("Creado por", 14, 287), txtCreadoPor, Etiqueta("Creado el", 310, 287), txtCreado, Etiqueta("Modificado", 580, 287), txtModificado, lblSugerido, btnCodigosBarras, btnProveedores})
             gridPrecios.Columns.AddRange(colEtiqueta, colUtilidad, colExtra, colPrecio)
             For Each col In {colUtilidad, colExtra, colPrecio}
                 col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
@@ -227,6 +231,7 @@ Namespace SD0502
             AddHandler btnImgEliminar.Click, Async Sub() Await EliminarImagenAsync()
             AddHandler FormClosed, Sub() PintarImagen(Nothing)
             AddHandler btnProveedores.Click, AddressOf Proveedores_Clic
+            AddHandler btnCodigosBarras.Click, AddressOf CodigosBarras_Clic
             Habilitar(False)
         End Sub
 
@@ -597,6 +602,25 @@ Namespace SD0502
             BotonesImagen()
             ' cmdCodProv: solo al editar; aquí, como las imágenes, solo un artículo que ya existe.
             btnProveedores.Enabled = editando AndAlso _modo = ModoFicha.Editar AndAlso _articulo IsNot Nothing
+            ' cmdCodBarra: igual que proveedores.
+            btnCodigosBarras.Enabled = btnProveedores.Enabled
+        End Sub
+
+        ' ---- Códigos de barras ----
+
+        ''' <summary>cmdCodBarra_Click: propone el próximo código corto y al cerrar lo vuelve a calcular.</summary>
+        Private Async Sub CodigosBarras_Clic(sender As Object, e As EventArgs)
+            If _articulo Is Nothing Then Return
+            Try
+                Dim sugerido = (Await _repo.ProximoSugeridoAsync(_local)).ToString(CultureInfo.InvariantCulture)
+                Using f As New FrmCodigosBarras(_codigosBarras, _articulo.CodigoArt, _articulo.Descripcion, _local, sugerido)
+                    Tema.Aplicar(f, Modulo.TituloModulo)
+                    f.ShowDialog(Me)
+                End Using
+                Await SugeridoAsync()
+            Catch ex As MySqlException
+                Mensajes.NoConecta()
+            End Try
         End Sub
 
         ' ---- Proveedores ----
