@@ -7,7 +7,7 @@ Namespace SD0502
 
     ''' <summary>
     ''' Catálogo de Artículos. Migración de Fuentes\SD0502(Coopepalmares)\frmMantArticulos.frm: la ficha, la
-    ''' navegación, la búsqueda, los precios, las imágenes y el alta, la edición y el borrado. Proveedores, cambio
+    ''' navegación, la búsqueda, los precios, las imágenes, los proveedores y el alta, la edición y el borrado. Cambio
     ''' de código, catálogo CABYS, códigos de barras, alternos, etiquetas, movimientos, utilidades históricas y
     ''' existencias por local todavía no están. La pestaña Lista no se migra: en VB6 nunca se llenaba.
     ''' </summary>
@@ -79,6 +79,7 @@ Namespace SD0502
         Private ReadOnly txtCreado As New TextBox With {.Name = "txtCreado", .AccessibleName = "Creado el", .ReadOnly = True, .TabStop = False, .Location = New Point(390, 284), .Width = 160}
         Private ReadOnly txtModificado As New TextBox With {.Name = "txtModificado", .AccessibleName = "Modificado el", .ReadOnly = True, .TabStop = False, .Location = New Point(670, 284), .Width = 160}
         Private ReadOnly lblSugerido As New Label With {.Name = "lblSugerido", .AutoSize = True, .Location = New Point(130, 322)}
+        Private ReadOnly btnProveedores As New Button With {.Name = "btnProveedores", .Text = "Proveedores", .Location = New Point(700, 316), .Size = New Size(130, 30)}
 
         ' ---- Precio ----
         Private ReadOnly txtCosto As New TextBox With {.Name = "txtCosto", .AccessibleName = "Precio de costo", .ReadOnly = True, .TabStop = False, .TextAlign = HorizontalAlignment.Right, .Location = New Point(130, 14), .Width = 120}
@@ -126,6 +127,7 @@ Namespace SD0502
         Private ReadOnly btnImgModificar As New Button With {.Name = "btnImgModificar", .Text = "Modificar", .Location = New Point(590, 182), .Size = New Size(117, 30)}
         Private ReadOnly btnImgEliminar As New Button With {.Name = "btnImgEliminar", .Text = "Eliminar", .Location = New Point(713, 182), .Size = New Size(117, 30)}
         Private ReadOnly _imagenes As ImagenesArticuloRepositorio
+        Private ReadOnly _proveedores As ProveedoresArticuloRepositorio
         ''' <summary>sdtCod: el número de la imagen que se ve; 0 si no hay.</summary>
         Private _imgConsec As Integer
         ''' <summary>El archivo elegido con Nueva que falta guardar.</summary>
@@ -135,9 +137,10 @@ Namespace SD0502
 
         Private ReadOnly barra As New BarraComandos With {.Name = "barra", .Location = New Point(420, 556), .Size = New Size(460, 32)}
 
-        Public Sub New(repositorio As ArticulosRepositorio, imagenes As ImagenesArticuloRepositorio, local As Long, uid As Long, login As String, estacion As String, localDescripcion As String, puedeEditar As Boolean, puedeUtilidades As Boolean)
+        Public Sub New(repositorio As ArticulosRepositorio, imagenes As ImagenesArticuloRepositorio, proveedores As ProveedoresArticuloRepositorio, local As Long, uid As Long, login As String, estacion As String, localDescripcion As String, puedeEditar As Boolean, puedeUtilidades As Boolean)
             _repo = repositorio
             _imagenes = imagenes
+            _proveedores = proveedores
             _local = local
             _uid = uid
             _login = If(login, "")
@@ -161,7 +164,7 @@ Namespace SD0502
                 Etiqueta("Presentación", 14, 85), txtPresentacion, Etiqueta("Cód. empaque", 270, 85), txtEmpaque, Etiqueta("Cant. por mayor", 540, 85), txtMayor,
                 Etiqueta("Cód. Hacienda", 14, 119), txtCabys,
                 Etiqueta("Especificación", 14, 153), txtEspecificacion,
-                Etiqueta("Creado por", 14, 287), txtCreadoPor, Etiqueta("Creado el", 310, 287), txtCreado, Etiqueta("Modificado", 580, 287), txtModificado, lblSugerido})
+                Etiqueta("Creado por", 14, 287), txtCreadoPor, Etiqueta("Creado el", 310, 287), txtCreado, Etiqueta("Modificado", 580, 287), txtModificado, lblSugerido, btnProveedores})
             gridPrecios.Columns.AddRange(colEtiqueta, colUtilidad, colExtra, colPrecio)
             For Each col In {colUtilidad, colExtra, colPrecio}
                 col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
@@ -223,6 +226,7 @@ Namespace SD0502
             AddHandler btnImgModificar.Click, Async Sub() Await ModificarImagenAsync()
             AddHandler btnImgEliminar.Click, Async Sub() Await EliminarImagenAsync()
             AddHandler FormClosed, Sub() PintarImagen(Nothing)
+            AddHandler btnProveedores.Click, AddressOf Proveedores_Clic
             Habilitar(False)
         End Sub
 
@@ -591,6 +595,18 @@ Namespace SD0502
             btnSiguiente.Enabled = Not editando
             _imgPendiente = Nothing
             BotonesImagen()
+            ' cmdCodProv: solo al editar; aquí, como las imágenes, solo un artículo que ya existe.
+            btnProveedores.Enabled = editando AndAlso _modo = ModoFicha.Editar AndAlso _articulo IsNot Nothing
+        End Sub
+
+        ' ---- Proveedores ----
+
+        Private Sub Proveedores_Clic(sender As Object, e As EventArgs)
+            If _articulo Is Nothing Then Return
+            Using f As New FrmProveedoresArticulo(_proveedores, _articulo.CodigoArt, _articulo.Descripcion, _local)
+                Tema.Aplicar(f, Modulo.TituloModulo)
+                f.ShowDialog(Me)
+            End Using
         End Sub
 
         ' ---- Imágenes ----
