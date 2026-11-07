@@ -83,11 +83,10 @@ Namespace SD0001
                             Function(s) New FrmTipoCambio(New CatalogosMonetarios(s.Fabrica), s.Uid, s.Local), IconoMenu.Calendario),
                         OpcionMenu.Formulario("Fallecidos", "13",
                             Function(s) New FrmFallecido(New DatosPersonalesRepositorio(s.Fabrica), New CodigosRepositorio(s.Fabrica), s.Local), IconoMenu.Lista),
-                        OpcionMenu.Pendiente("Configuración de Impresión y Consecutivos API", "1")),
+                        OpcionMenu.Formulario("Configuración de Impresión y Consecutivos", "1", Function(s) New FrmConfiguracionImpresion(New Core.Impresion.ConfiguracionImpresion(s.Fabrica)), IconoMenu.Imprimir)),
                     OpcionMenu.Formulario("Agenda", "0", AddressOf Agenda, IconoMenu.Lista),
                     OpcionMenu.Grupo("Sistema", "0",
-                        OpcionMenu.Formulario("Reparar BD", "1", Function(s) New FrmRepararTablas(New Core.Datos.ReparacionTablas(s.Fabrica)), IconoMenu.Configurar),
-                        OpcionMenu.Pendiente("Sincronizar", "14"))
+                        OpcionMenu.Formulario("Reparar BD", "1", Function(s) New FrmRepararTablas(New Core.Datos.ReparacionTablas(s.Fabrica)), IconoMenu.Configurar))
                 }
             End Get
         End Property

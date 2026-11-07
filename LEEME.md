@@ -102,7 +102,7 @@ El panel `vista` de `FrmConfigCheque` representa el papel impreso y queda fuera 
 
 ## SD0001 - Gestión de Asistencia Técnica
 
-Está el menú de las opciones que atiende su `Accion`, con `FrmDatosPersonales`, `FrmAdminCodigos`, `FrmCambioId`, `FrmFallecido`, `FrmPadron`, `FrmAgenda`, `FrmRepararTablas`, `FrmBancos`, `FrmMonedas` y `FrmTipoCambio`; lo demás remite al sistema anterior. SD1401 y SD1501 abren Bancos y Monedas con su propio privilegio. Usuarios, departamentos y respaldos los atiende el menú de VB6, no este módulo.
+Está el menú de las opciones que atiende su `Accion`, con `FrmDatosPersonales`, `FrmAdminCodigos`, `FrmCambioId`, `FrmFallecido`, `FrmPadron`, `FrmAgenda`, `FrmRepararTablas`, `FrmConfiguracionImpresion`, `FrmBancos`, `FrmMonedas` y `FrmTipoCambio`; lo demás remite al sistema anterior. SD1401 y SD1501 abren Bancos y Monedas con su propio privilegio. Usuarios, departamentos y respaldos los atiende el menú de VB6, no este módulo.
 
 **La fuente es más nueva que la base:** `gatbancos` no tiene siglas ni web services, `gatmonedas` tiene `Iniciales` y `gattipocambio` es por moneda y día, sin banco ni hora. Se siguió la base. `Numloc` está vacío en todos los bancos y no se migró ese control. Guardar un banco conserva `Finport`, que usa la conciliación CSV.
 
@@ -163,6 +163,21 @@ Difiere de VB6 en: busca con parámetros y escapa el HTML; la dirección omite e
 **Reparar BD:** `FrmRepararTablas` migra `frmRepararT` y `Core.Datos.ReparacionTablas` sus consultas. Lista las tablas del catálogo, filtradas por el inicio del nombre, y tiene los dos modos de VB6. Reparar corre `REPAIR NO_WRITE_TO_BINLOG TABLE ... QUICK EXTENDED USE_FRM` en cada tabla marcada y muestra lo que responde MySQL. MyIsamCHK arma una línea de `myisamchk` por tabla, que se puede corregir a mano, y la corre en este equipo: solo sirve en el servidor y con MySQL detenido. Difiere de VB6 en que pide confirmación antes de empezar, muestra el motor de las tablas que no son MyISAM (`REPAIR` no sirve en InnoDB ni en vistas), propone la carpeta de datos del servidor (`@@datadir` y el catálogo), pone comillas a las rutas, toma `_` y `%` del filtro como texto y muestra lo que escribe `myisamchk`.
 
 **Reparar BD probado en el 3315 (2026-11-07):** lista las 1,306 tablas (874 MyISAM, 388 InnoDB y 44 vistas). Se reparó una tabla MyISAM sintética creada para la prueba: respondió `OK` con el aviso `Number of rows changed from 0 to 4`, que es normal con `USE_FRM` porque rehace el índice, y los datos y el `AUTO_INCREMENT` quedaron intactos. En InnoDB MySQL responde que no lo admite, y en una tabla inexistente devuelve el error como fila, sin excepción. Las tablas de prueba se borraron. No se corrió `myisamchk`: el servidor está en otro equipo.
+
+**Sincronizar no se migra:** `frmsync` copia tablas entre esta base y un servidor remoto (parámetros `AgServer`, `AgDB`, `AgPuerto` y `AgPass`) según la tabla `sync`, y menciona el catálogo `gyq` de otro cliente. En el 3315 no existen ni la tabla ni los parámetros, y el usuario confirmó el 2026-11-07 que Coopepalmares no la usa. Se quitó del menú.
+
+**Configuración de impresión y consecutivos:** `FrmConfiguracionImpresion` migra `Comun\FrmManImp.frm` (opción 048) y `Core.Impresion.ConfiguracionImpresion` sus sentencias sobre `gatimpresion`. Igual que VB6, se elige el documento (los de la tabla más los seis fijos de `Load_Tipos_Documentos`), se editan departamento, estación, impresora y consecutivo; Borrar marca la fila y Aplicar graba todo, sin replicar. La impresora se escribe libre, con sugerencias de las de este equipo y las ya configuradas.
+
+Difiere de VB6 en:
+
+- **Consecutivo:** se ve y se edita en todos los documentos. VB6 solo lo mostraba en `CHEQUES`, pero en el 3315 lo usan `CXCRECIBO`, `CXCRECIBOI`, `CXPRECIBO` y la cuenta de cheques `CHK2785`, que `ConsecutivoCheques` lee.
+- **Guardar:** el `UPDATE` graba la fila completa con la llave original. En VB6 cada campo cambiado pisaba al anterior en el `SET`, y con dos cambios la sentencia quedaba como `SET , impresora = ...` y fallaba.
+- **Validación:** avisa las filas repetidas antes de grabar, informa las que MySQL rechaza, borra antes de insertar para poder reusar una llave y pregunta antes de descartar cambios. Usa parámetros en lugar de concatenar.
+- **Códigos que ya no existen:** un departamento o una estación que está en `gatimpresion` pero no en su catálogo se muestra como `(NO EXISTE)` en lugar de perderse (hay una estación así en el 3315).
+
+**Probado en el 3315 (2026-11-07):** se leyeron las 59 filas de los 23 documentos. Con un documento sintético `ZZQ PRUEBA` se insertó, se cambiaron departamento, impresora y consecutivo a la vez, se rechazó una llave repetida y se borró e insertó con la misma llave; al final `gatimpresion` quedó idéntica (misma huella MD5). La pantalla se revisó a la escala del equipo sin aplicar cambios.
+
+**SD0001 queda completo** para Coopepalmares: solo faltan `ClsDP` y `FrmAgendaShow` (la entrada desde otros módulos), el modo de selección del padrón y `FrmCambioIdMasa`, cuya opción está comentada en VB6.
 
 ## SD1401 - Control de Cuentas Bancarias
 
