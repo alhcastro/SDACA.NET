@@ -86,7 +86,7 @@ Namespace SD0001
                         OpcionMenu.Pendiente("Configuración de Impresión y Consecutivos API", "1")),
                     OpcionMenu.Formulario("Agenda", "0", AddressOf Agenda, IconoMenu.Lista),
                     OpcionMenu.Grupo("Sistema", "0",
-                        OpcionMenu.Pendiente("Reparar BD", "1"),
+                        OpcionMenu.Formulario("Reparar BD", "1", Function(s) New FrmRepararTablas(New Core.Datos.ReparacionTablas(s.Fabrica)), IconoMenu.Configurar),
                         OpcionMenu.Pendiente("Sincronizar", "14"))
                 }
             End Get

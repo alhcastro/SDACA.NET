@@ -102,7 +102,7 @@ El panel `vista` de `FrmConfigCheque` representa el papel impreso y queda fuera 
 
 ## SD0001 - Gestión de Asistencia Técnica
 
-Está el menú de las opciones que atiende su `Accion`, con `FrmDatosPersonales`, `FrmAdminCodigos`, `FrmCambioId`, `FrmFallecido`, `FrmPadron`, `FrmAgenda`, `FrmBancos`, `FrmMonedas` y `FrmTipoCambio`; lo demás remite al sistema anterior. SD1401 y SD1501 abren Bancos y Monedas con su propio privilegio. Usuarios, departamentos y respaldos los atiende el menú de VB6, no este módulo.
+Está el menú de las opciones que atiende su `Accion`, con `FrmDatosPersonales`, `FrmAdminCodigos`, `FrmCambioId`, `FrmFallecido`, `FrmPadron`, `FrmAgenda`, `FrmRepararTablas`, `FrmBancos`, `FrmMonedas` y `FrmTipoCambio`; lo demás remite al sistema anterior. SD1401 y SD1501 abren Bancos y Monedas con su propio privilegio. Usuarios, departamentos y respaldos los atiende el menú de VB6, no este módulo.
 
 **La fuente es más nueva que la base:** `gatbancos` no tiene siglas ni web services, `gatmonedas` tiene `Iniciales` y `gattipocambio` es por moneda y día, sin banco ni hora. Se siguió la base. `Numloc` está vacío en todos los bancos y no se migró ese control. Guardar un banco conserva `Finport`, que usa la conciliación CSV.
 
@@ -159,6 +159,10 @@ Difiere de VB6 en:
 Difiere de VB6 en: busca con parámetros y escapa el HTML; la dirección omite el dato de ubicación que falta, en lugar de quedar en blanco (486 personas); los tipos 0 a 3 conservan el texto de VB6 y los demás salen de `gactiposid`, que en VB6 quedaban vacíos (165 con tipo 4). No toma en cuenta `GATDAE`, que en VB6 cambia el nombre del registro por el del local.
 
 **Agenda probada en el 3315 (2026-11-07), solo lecturas:** cada búsqueda tarda medio segundo, porque recorre las 115,544 personas activas y vivas, igual que VB6. Las 100 fichas de una lista salieron completas, sin identificaciones repetidas. La pantalla se revisó con datos ficticios a la escala del equipo.
+
+**Reparar BD:** `FrmRepararTablas` migra `frmRepararT` y `Core.Datos.ReparacionTablas` sus consultas. Lista las tablas del catálogo, filtradas por el inicio del nombre, y tiene los dos modos de VB6. Reparar corre `REPAIR NO_WRITE_TO_BINLOG TABLE ... QUICK EXTENDED USE_FRM` en cada tabla marcada y muestra lo que responde MySQL. MyIsamCHK arma una línea de `myisamchk` por tabla, que se puede corregir a mano, y la corre en este equipo: solo sirve en el servidor y con MySQL detenido. Difiere de VB6 en que pide confirmación antes de empezar, muestra el motor de las tablas que no son MyISAM (`REPAIR` no sirve en InnoDB ni en vistas), propone la carpeta de datos del servidor (`@@datadir` y el catálogo), pone comillas a las rutas, toma `_` y `%` del filtro como texto y muestra lo que escribe `myisamchk`.
+
+**Reparar BD probado en el 3315 (2026-11-07):** lista las 1,306 tablas (874 MyISAM, 388 InnoDB y 44 vistas). Se reparó una tabla MyISAM sintética creada para la prueba: respondió `OK` con el aviso `Number of rows changed from 0 to 4`, que es normal con `USE_FRM` porque rehace el índice, y los datos y el `AUTO_INCREMENT` quedaron intactos. En InnoDB MySQL responde que no lo admite, y en una tabla inexistente devuelve el error como fila, sin excepción. Las tablas de prueba se borraron. No se corrió `myisamchk`: el servidor está en otro equipo.
 
 ## SD1401 - Control de Cuentas Bancarias
 
