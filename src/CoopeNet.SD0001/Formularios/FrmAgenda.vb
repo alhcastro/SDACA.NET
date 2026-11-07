@@ -60,8 +60,8 @@ Namespace SD0001
             Dim datos As New ToolStripMenuItem("&Datos Personales")
             datos.DropDownItems.Add("Copiar", Nothing, AddressOf Copiar)
             datos.DropDownItems.Add(New ToolStripSeparator())
-            datos.DropDownItems.Add("Nuevo", Nothing, Sub() AbrirDatosPersonales(""))
-            Dim editar = datos.DropDownItems.Add("Editar", Nothing, Sub() If _idActual.Length > 0 Then AbrirDatosPersonales(_idActual))
+            datos.DropDownItems.Add("Nuevo", Nothing, Sub() MostrarDatosPersonales(""))
+            Dim editar = datos.DropDownItems.Add("Editar", Nothing, Sub() If _idActual.Length > 0 Then MostrarDatosPersonales(_idActual))
             datos.DropDownItems.Add("Exportar a HTML", Nothing, Sub() navegador.ShowSaveAsDialog())
             AddHandler datos.DropDownOpening, Sub() editar.Enabled = _idActual.Length > 0
             menuAgenda.Items.AddRange({archivo, datos})
@@ -89,8 +89,8 @@ Namespace SD0001
             AddHandler txtBuscar.KeyDown, AddressOf Buscar_Tecla
             AddHandler tmrBuscar.Tick, AddressOf Buscar_Tiempo
             AddHandler grid.SelectionChanged, AddressOf Persona_Seleccionada
-            AddHandler btnNuevo.Click, Sub() AbrirDatosPersonales("")
-            AddHandler btnModificar.Click, Sub() If _idActual.Length > 0 Then AbrirDatosPersonales(_idActual)
+            AddHandler btnNuevo.Click, Sub() MostrarDatosPersonales("")
+            AddHandler btnModificar.Click, Sub() If _idActual.Length > 0 Then MostrarDatosPersonales(_idActual)
             AddHandler btnImprimir.Click, Sub() navegador.ShowPrintPreviewDialog()
         End Sub
 
@@ -170,7 +170,7 @@ Namespace SD0001
             End Try
         End Function
 
-        Private Async Sub AbrirDatosPersonales(id As String)
+        Private Async Sub MostrarDatosPersonales(id As String)
             Using ventana = _abrirDatosPersonales(id)
                 Tema.Aplicar(ventana, Modulo.TituloModulo)
                 ventana.ShowDialog(Me)
