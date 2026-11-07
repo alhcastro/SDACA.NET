@@ -7,8 +7,8 @@ Namespace SD0502
 
     ''' <summary>
     ''' Catálogo de Artículos. Migración de Fuentes\SD0502(Coopepalmares)\frmMantArticulos.frm: la ficha, la
-    ''' navegación, la búsqueda, los precios, las imágenes, los proveedores, los códigos de barras, los alternos y el alta, la
-    ''' edición y el borrado. Catálogo CABYS, etiquetas, movimientos, utilidades históricas y existencias
+    ''' navegación, la búsqueda, los precios, las imágenes, los proveedores, los códigos de barras, los alternos, el buscador CABYS y el alta, la
+    ''' edición y el borrado. Etiquetas, movimientos, utilidades históricas y existencias
     ''' por local todavía no están. No se migran la pestaña Lista, que en VB6 nunca se llenaba, ni el cambio de
     ''' código, cuyo botón VB6 tiene oculto.
     ''' </summary>
@@ -75,6 +75,7 @@ Namespace SD0502
         Private ReadOnly txtEmpaque As New TextBox With {.Name = "txtEmpaque", .AccessibleName = "Código de empaque", .Location = New Point(370, 82), .Width = 140, .MaxLength = 16}
         Private ReadOnly txtMayor As New TextBox With {.Name = "txtMayor", .AccessibleName = "Cantidad por mayor", .Location = New Point(650, 82), .Width = 80}
         Private ReadOnly txtCabys As New TextBox With {.Name = "txtCabys", .AccessibleName = "Código de Hacienda (CABYS)", .Location = New Point(130, 116), .Width = 180, .MaxLength = 32}
+        Private ReadOnly btnCabys As New Button With {.Name = "btnCabys", .Text = "…", .AccessibleName = "Buscar en el catálogo CABYS", .Location = New Point(314, 114), .Size = New Size(34, 26)}
         Private ReadOnly txtEspecificacion As New TextBox With {.Name = "txtEspecificacion", .AccessibleName = "Especificación", .Multiline = True, .ScrollBars = ScrollBars.Vertical, .Location = New Point(130, 150), .Size = New Size(700, 120)}
         Private ReadOnly txtCreadoPor As New TextBox With {.Name = "txtCreadoPor", .AccessibleName = "Creado por", .ReadOnly = True, .TabStop = False, .Location = New Point(130, 284), .Width = 160}
         Private ReadOnly txtCreado As New TextBox With {.Name = "txtCreado", .AccessibleName = "Creado el", .ReadOnly = True, .TabStop = False, .Location = New Point(390, 284), .Width = 160}
@@ -133,6 +134,7 @@ Namespace SD0502
         Private ReadOnly _proveedores As ProveedoresArticuloRepositorio
         Private ReadOnly _codigosBarras As CodigosBarrasRepositorio
         Private ReadOnly _alternos As AlternosArticuloRepositorio
+        Private ReadOnly _cabys As CabysRepositorio
         ''' <summary>sdtCod: el número de la imagen que se ve; 0 si no hay.</summary>
         Private _imgConsec As Integer
         ''' <summary>El archivo elegido con Nueva que falta guardar.</summary>
@@ -142,12 +144,13 @@ Namespace SD0502
 
         Private ReadOnly barra As New BarraComandos With {.Name = "barra", .Location = New Point(420, 556), .Size = New Size(460, 32)}
 
-        Public Sub New(repositorio As ArticulosRepositorio, imagenes As ImagenesArticuloRepositorio, proveedores As ProveedoresArticuloRepositorio, codigosBarras As CodigosBarrasRepositorio, alternos As AlternosArticuloRepositorio, local As Long, uid As Long, login As String, estacion As String, localDescripcion As String, puedeEditar As Boolean, puedeUtilidades As Boolean)
+        Public Sub New(repositorio As ArticulosRepositorio, imagenes As ImagenesArticuloRepositorio, proveedores As ProveedoresArticuloRepositorio, codigosBarras As CodigosBarrasRepositorio, alternos As AlternosArticuloRepositorio, cabys As CabysRepositorio, local As Long, uid As Long, login As String, estacion As String, localDescripcion As String, puedeEditar As Boolean, puedeUtilidades As Boolean)
             _repo = repositorio
             _imagenes = imagenes
             _proveedores = proveedores
             _codigosBarras = codigosBarras
             _alternos = alternos
+            _cabys = cabys
             _local = local
             _uid = uid
             _login = If(login, "")
@@ -169,7 +172,7 @@ Namespace SD0502
                 Etiqueta("Unidad", 14, 17), cmbUnidad, Etiqueta("Marca", 470, 17), cmbMarca,
                 Etiqueta("Categorías", 14, 51), cmbCat, cmbSCat, cmbSSCat,
                 Etiqueta("Presentación", 14, 85), txtPresentacion, Etiqueta("Cód. empaque", 270, 85), txtEmpaque, Etiqueta("Cant. por mayor", 540, 85), txtMayor,
-                Etiqueta("Cód. Hacienda", 14, 119), txtCabys,
+                Etiqueta("Cód. Hacienda", 14, 119), txtCabys, btnCabys,
                 Etiqueta("Especificación", 14, 153), txtEspecificacion,
                 Etiqueta("Creado por", 14, 287), txtCreadoPor, Etiqueta("Creado el", 310, 287), txtCreado, Etiqueta("Modificado", 580, 287), txtModificado, lblSugerido, btnCodigosBarras, btnProveedores})
             gridPrecios.Columns.AddRange(colEtiqueta, colUtilidad, colExtra, colPrecio)
@@ -236,6 +239,7 @@ Namespace SD0502
             AddHandler btnProveedores.Click, AddressOf Proveedores_Clic
             AddHandler btnCodigosBarras.Click, AddressOf CodigosBarras_Clic
             AddHandler btnAlternos.Click, AddressOf Alternos_Clic
+            AddHandler btnCabys.Click, AddressOf Cabys_Clic
             Anclar()
             Habilitar(False)
         End Sub
@@ -616,7 +620,7 @@ Namespace SD0502
 
         ''' <summary>SD_Habilitar y SD_Mandos: qué se puede tocar según el modo y los privilegios 5037 y 5056.</summary>
         Private Sub Habilitar(editando As Boolean)
-            For Each c As Control In New Control() {txtDescripcion, txtDescCorta, cmbUnidad, cmbMarca, cmbCat, cmbSCat, cmbSSCat, txtPresentacion, txtEmpaque, txtMayor, txtCabys, txtEspecificacion,
+            For Each c As Control In New Control() {txtDescripcion, txtDescCorta, cmbUnidad, cmbMarca, cmbCat, cmbSCat, cmbSSCat, txtPresentacion, txtEmpaque, txtMayor, txtCabys, btnCabys, txtEspecificacion,
                                                      cmbIva, txtDescMax, txtPorcOtros, txtMontoOtros, gbFacturar, gbOtros}
                 c.Enabled = editando
             Next
@@ -656,6 +660,17 @@ Namespace SD0502
             Catch ex As MySqlException
                 Mensajes.NoConecta()
             End Try
+        End Sub
+
+        ' ---- CABYS ----
+
+        ''' <summary>cmdCABYS_Click: el buscador devuelve el código al campo; se guarda con el artículo.</summary>
+        Private Sub Cabys_Clic(sender As Object, e As EventArgs)
+            Using f As New FrmCabys(_cabys, _local, txtCabys.Text)
+                Tema.Aplicar(f, Modulo.TituloModulo)
+                If f.ShowDialog(Me) = DialogResult.OK Then txtCabys.Text = f.Codigo
+            End Using
+            txtCabys.Focus()
         End Sub
 
         ' ---- Alternos ----
