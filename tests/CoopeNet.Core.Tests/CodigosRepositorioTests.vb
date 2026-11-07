@@ -35,15 +35,22 @@ Public Class CodigosRepositorioTests
     End Function
 
     <Fact>
-    Public Sub La_busqueda_solo_toma_asociados_activos()
-        Assert.Contains("A.ACTIVO = '1' AND A.CODIGO = @clave", CodigosRepositorio.SqlAsociadoExacto)
+    Public Sub La_busqueda_por_coincidencias_solo_toma_asociados_activos()
         Assert.Contains("A.ACTIVO = '1' AND A.CODIGO LIKE @patron", CodigosRepositorio.SqlCoincidencias)
     End Sub
 
     <Fact>
+    Public Sub El_codigo_exacto_usa_la_funcion_con_el_local_de_VB6()
+        Assert.Equal("SELECT gac_fun_asociados(0, @clave)", CodigosRepositorio.SqlCodigoExacto)
+    End Sub
+
+    <Fact>
     Public Sub La_primera_columna_de_la_busqueda_es_la_identificacion()
-        Assert.StartsWith("SELECT A.ID AS 'Identificación'", CodigosRepositorio.SqlAsociadoExacto)
         Assert.StartsWith("SELECT C.ID AS 'Identificación'", CodigosRepositorio.SqlCoincidencias)
+        Using tabla = CodigosRepositorio.TablaDeIdentificacion("999999901")
+            Assert.Equal(1, tabla.Rows.Count)
+            Assert.Equal("999999901", tabla.Rows(0)(0))
+        End Using
     End Sub
 
     <Theory>

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Herramienta de consola: no forma parte de CoopeNet.sln ni se publica. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>$(CoopeNetTfm)</TargetFramework>
+    <RootNamespace>VerificarBase</RootNamespace>
+    <StartupObject>VerificarBase.Programa</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\CoopeNet.Core\CoopeNet.Core.vbproj" />
+  </ItemGroup>
+
+</Project>

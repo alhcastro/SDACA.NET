@@ -41,9 +41,8 @@ Namespace Catalogos
         Private Const NombreSql As String = "IFNULL(UCASE(TRIM(CONCAT(D.apellido1, ' ', D.apellido2, ' ', D.nombre))), '')"
         Private Const CamposTipo As String = "TIPO AS Tipo, DESCRIPCION AS Descripcion, IF(SISTEMA = '1', '1', '0') AS Sistema, IF(ACTIVO = '1', '1', '0') AS Activo"
 
-        Friend Const SqlAsociadoExacto As String =
-            "SELECT A.ID AS 'Identificación', A.CODIGO AS 'Código', 'ASOC' AS 'Tipo', " & NombreSql & " AS 'Nombre' " &
-            "FROM gacasociados A LEFT JOIN gacdp D ON D.id = A.ID WHERE A.ACTIVO = '1' AND A.CODIGO = @clave"
+        ''' <summary>VB6 llama SD_Obtener_ID sin local, así que la función recibe 0.</summary>
+        Friend Const SqlCodigoExacto As String = "SELECT gac_fun_asociados(0, @clave)"
 
         Friend Const SqlCoincidencias As String =
             "SELECT C.ID AS 'Identificación', C.CODIGO AS 'Código', 'INTE' AS 'Tipo', " & NombreSql & " AS 'Nombre' " &
@@ -78,19 +77,27 @@ Namespace Catalogos
         ' ---- Personas y sus códigos ----
 
         ''' <summary>
-        ''' Equivale a SD_Obtener_ID: la primera columna es la identificación. Una clave corta que es
-        ''' exactamente un código de asociado gana; si no, se busca en códigos, identificaciones y asociados.
+        ''' Equivale a SD_Obtener_ID: la primera columna es la identificación. Una clave corta que es un
+        ''' código exacto gana, aunque el asociado esté inactivo, igual que gac_fun_asociados. Si no, se
+        ''' busca en códigos, identificaciones y asociados activos.
         ''' </summary>
         Public Async Function CoincidenciasAsync(clave As String, Optional ct As CancellationToken = Nothing) As Task(Of DataTable)
             clave = If(clave, "").Trim()
             Using cn = Await _fabrica.AbrirAsync(ct).ConfigureAwait(False)
                 If clave.Length <= LargoCodigoAsociado Then
-                    Dim exacto = Await TablaAsync(cn, SqlAsociadoExacto, New With {clave}, ct).ConfigureAwait(False)
-                    If exacto.Rows.Count > 0 Then Return exacto
-                    exacto.Dispose()
+                    Dim id = Await cn.ExecuteScalarAsync(Of String)(New CommandDefinition(SqlCodigoExacto, New With {clave}, cancellationToken:=ct)).ConfigureAwait(False)
+                    If Not String.IsNullOrEmpty(id) Then Return TablaDeIdentificacion(id)
                 End If
                 Return Await TablaAsync(cn, SqlCoincidencias, New With {.patron = $"%{clave}%"}, ct).ConfigureAwait(False)
             End Using
+        End Function
+
+        ''' <summary>Con una sola fila no se abre el buscador, así que basta la identificación.</summary>
+        Friend Shared Function TablaDeIdentificacion(id As String) As DataTable
+            Dim tabla As New DataTable()
+            tabla.Columns.Add("Identificación", GetType(String))
+            tabla.Rows.Add(id)
+            Return tabla
         End Function
 
         ''' <summary>Código de asociado para el detalle, aunque esté inactivo. Vacío si no tiene.</summary>

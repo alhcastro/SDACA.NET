@@ -16,6 +16,7 @@ Namespace Catalogos
 
     Public Enum EstadoCambioId
         Actualizada
+        Parcial
         NoExiste
         Fallo
     End Enum
@@ -25,11 +26,16 @@ Namespace Catalogos
         Public Property Tabla As String = ""
         Public Property Estado As EstadoCambioId = EstadoCambioId.Actualizada
 
+        ''' <summary>Filas que siguen con la identificación original después del cambio.</summary>
+        Public Property Pendientes As Long
+
         Public ReadOnly Property Mensaje As String
             Get
                 Select Case Estado
                     Case EstadoCambioId.Actualizada
                         Return $"Se actualizó correctamente {Tabla}..."
+                    Case EstadoCambioId.Parcial
+                        Return $"Filas sin cambiar en {Tabla}: {Pendientes}..."
                     Case EstadoCambioId.NoExiste
                         Return $"No se encontró en {Tabla}..."
                     Case Else
@@ -43,6 +49,8 @@ Namespace Catalogos
     ''' Cambio de Identificación. Migración de SD_CambiarID de SD0001\FrmCambioID.frm. Recorre gatcambioid
     ''' y cambia cada columna con UPDATE IGNORE, replicado como DP. No hay transacción: las tablas son
     ''' MyISAM. Se replica aunque falle aquí, igual que en VB6, porque cada local tiene sus propias tablas.
+    ''' IGNORE se salta sin error las filas que chocan con una llave: a diferencia de VB6, después de cada
+    ''' UPDATE se cuentan las que quedaron con la identificación original.
     ''' </summary>
     Public NotInheritable Class CambioIdentificacionRepositorio
 
@@ -58,16 +66,26 @@ Namespace Catalogos
             Return $"'{LibroBancos.Literal(texto)}'"
         End Function
 
-        Friend Shared Function Sentencia(fila As TablaCambioId, anterior As String, nueva As String) As String
+        Private Shared Function Filtro(fila As TablaCambioId, anterior As String) As String
             Dim condicion = If(fila.Condicion, "").Trim()
-            Dim sql = $"UPDATE IGNORE {fila.Tabla} SET {fila.Campo} = {Q(nueva)} WHERE {fila.Campo} = {Q(anterior)}"
+            Dim sql = $"WHERE {fila.Campo} = {Q(anterior)}"
             Return If(condicion.Length = 0, sql, $"{sql} AND {condicion}")
+        End Function
+
+        Friend Shared Function Sentencia(fila As TablaCambioId, anterior As String, nueva As String) As String
+            Return $"UPDATE IGNORE {fila.Tabla} SET {fila.Campo} = {Q(nueva)} {Filtro(fila, anterior)}"
+        End Function
+
+        Friend Shared Function SentenciaPendientes(fila As TablaCambioId, anterior As String) As String
+            Return $"SELECT COUNT(*) FROM {fila.Tabla} {Filtro(fila, anterior)}"
         End Function
 
         ''' <summary>En VB6 el mensaje decía los errores como si fueran los cambios exitosos.</summary>
         Public Shared Function Resumen(resultados As IReadOnlyCollection(Of ResultadoCambioId)) As String
             Dim exitos = resultados.Where(Function(r) r.Estado = EstadoCambioId.Actualizada).Count()
-            Return $"{exitos} de {resultados.Count} fueron realizados exitosamente."
+            Dim parciales = resultados.Where(Function(r) r.Estado = EstadoCambioId.Parcial).Count()
+            Dim texto = $"{exitos} de {resultados.Count} fueron realizados exitosamente."
+            Return If(parciales = 0, texto, $"{texto} En {parciales} quedaron filas sin cambiar.")
         End Function
 
         ''' <summary>Texto de la persona para confirmar el cambio.</summary>
@@ -82,6 +100,8 @@ Namespace Catalogos
             Dim sql = Sentencia(fila, anterior, nueva)
             Try
                 Await cn.ExecuteAsync(New CommandDefinition(sql, cancellationToken:=ct)).ConfigureAwait(False)
+                resultado.Pendientes = Await cn.ExecuteScalarAsync(Of Long)(New CommandDefinition(SentenciaPendientes(fila, anterior), cancellationToken:=ct)).ConfigureAwait(False)
+                If resultado.Pendientes > 0 Then resultado.Estado = EstadoCambioId.Parcial
             Catch ex As MySqlException When ex.ErrorCode = MySqlErrorCode.NoSuchTable
                 resultado.Estado = EstadoCambioId.NoExiste
             Catch ex As MySqlException

@@ -145,12 +145,12 @@ Difiere de VB6 en:
 
 Difiere de VB6 en:
 
-- **Búsqueda:** `SD_Obtener_ID` llama a la función `gac_fun_asociados`; aquí se busca el código exacto en `gacasociados`.
+- **Búsqueda:** el código exacto usa `gac_fun_asociados` con local 0, igual que VB6, y encuentra asociados inactivos. Después `SD_Obtener_ID` busca solo la clave exacta; aquí se buscan coincidencias parciales.
 - **Detalle:** los contactos salen de `gacdptel` y `gacdpteltipos`, no de la vista `vtel`.
 - **Códigos:** se listan también los de empleado, como en Datos Personales, y `uidc` graba el usuario real, no 0. Se replican solo si la sentencia funcionó. Un código que la persona ya tiene se rechaza, en lugar de avisar éxito sin hacer nada.
 - **Tipos:** piden tipo y descripción, y borrar pide confirmación.
 
-**Sin probar contra la base:** solo tiene pruebas de sentencias y de compilación. Falta confirmar con `SHOW CREATE TABLE` las columnas `SISTEMA`, `UIDC`, `FE` y `FC` de `gactiposcodigos`, que salen de `Fuentes`, y que `gacasociados` da el mismo resultado que `gac_fun_asociados`.
+**Repositorios probados, pantallas sin probar:** `herramientas/VerificarBase` confirmó en el 3315 las columnas de `gactiposcodigos` y `gatcambioid`, y los repositorios de Códigos, Cambio de Identificación y Fallecidos se probaron ahí con datos sintéticos en el local 7. Cada cambio de identificación tardó unos 40 segundos. Falta la prueba de pantallas que describe el `LEEME.md` de esa herramienta. Si la identificación nueva ya existe, el resumen cuenta `gacdp` y también `dp`, que es una vista de `gacdp`. `gacdptel` tiene triggers que escriben en `gacdptel_bitac`: al borrar personas de prueba hay que limpiar también esa tabla.
 
 ## SD1401 - Control de Cuentas Bancarias
 

@@ -34,6 +34,22 @@ Public Class CambioIdentificacionTests
         Assert.Equal("2 de 4 fueron realizados exitosamente.", CambioIdentificacionRepositorio.Resumen(resultados))
     End Sub
 
+    <Fact>
+    Public Sub Las_pendientes_usan_el_mismo_filtro_que_el_cambio()
+        Dim fila As New TablaCambioId With {.Tabla = "t", .Campo = "c", .Condicion = "tipo = 1"}
+        Assert.Equal("SELECT COUNT(*) FROM t WHERE c = 'V\'1' AND tipo = 1", CambioIdentificacionRepositorio.SentenciaPendientes(fila, "V'1"))
+    End Sub
+
+    <Fact>
+    Public Sub Un_cambio_parcial_no_cuenta_como_exito()
+        Dim resultados = {
+            New ResultadoCambioId With {.Tabla = "a"},
+            New ResultadoCambioId With {.Tabla = "b", .Estado = EstadoCambioId.Parcial, .Pendientes = 2}
+        }
+        Assert.Equal("1 de 2 fueron realizados exitosamente. En 1 quedaron filas sin cambiar.", CambioIdentificacionRepositorio.Resumen(resultados))
+        Assert.Equal("Filas sin cambiar en b: 2...", resultados(1).Mensaje)
+    End Sub
+
     <Theory>
     <InlineData(EstadoCambioId.Actualizada, "Se actualizó correctamente t...")>
     <InlineData(EstadoCambioId.NoExiste, "No se encontró en t...")>
