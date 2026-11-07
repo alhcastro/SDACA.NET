@@ -61,6 +61,13 @@ Namespace SD0502
                 New Label With {.Text = "Código", .AutoSize = True, .Location = New Point(482, 24)}, txtCodigo,
                 New Label With {.Text = "Empaque", .AutoSize = True, .Location = New Point(588, 24)}, txtEmpaque, btnAgregar})
             Controls.AddRange(New Control() {lblArticulo, grid, gbAgregar, btnQuitar, btnListo, btnCancelar})
+            lblArticulo.Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right
+            grid.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
+            gbAgregar.Anchor = AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
+            btnQuitar.Anchor = AnchorStyles.Bottom Or AnchorStyles.Left
+            btnListo.Anchor = AnchorStyles.Bottom Or AnchorStyles.Right
+            btnCancelar.Anchor = AnchorStyles.Bottom Or AnchorStyles.Right
+            Ventanas.Recordar(Me)
 
             AddHandler Load, AddressOf Cargar
             AddHandler txtId.KeyDown, AddressOf Id_Tecla

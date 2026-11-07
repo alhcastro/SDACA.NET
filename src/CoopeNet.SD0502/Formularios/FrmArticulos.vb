@@ -7,8 +7,8 @@ Namespace SD0502
 
     ''' <summary>
     ''' Catálogo de Artículos. Migración de Fuentes\SD0502(Coopepalmares)\frmMantArticulos.frm: la ficha, la
-    ''' navegación, la búsqueda, los precios, las imágenes, los proveedores, los códigos de barras y el alta, la
-    ''' edición y el borrado. Catálogo CABYS, alternos, etiquetas, movimientos, utilidades históricas y existencias
+    ''' navegación, la búsqueda, los precios, las imágenes, los proveedores, los códigos de barras, los alternos y el alta, la
+    ''' edición y el borrado. Catálogo CABYS, etiquetas, movimientos, utilidades históricas y existencias
     ''' por local todavía no están. No se migran la pestaña Lista, que en VB6 nunca se llenaba, ni el cambio de
     ''' código, cuyo botón VB6 tiene oculto.
     ''' </summary>
@@ -115,6 +115,7 @@ Namespace SD0502
         Private ReadOnly chkNoFacturar As New CheckBox With {.Name = "chkNoFacturar", .Text = "No facturar", .AutoSize = True, .Location = New Point(14, 54)}
         Private ReadOnly chkNegativos As New CheckBox With {.Name = "chkNegativos", .Text = "Permite negativos", .AutoSize = True, .Location = New Point(14, 82)}
         Private ReadOnly chkConsignacion As New CheckBox With {.Name = "chkConsignacion", .Text = "Consignación", .AutoSize = True, .Location = New Point(14, 110)}
+        Private ReadOnly btnAlternos As New Button With {.Name = "btnAlternos", .Text = "Asignar alternos", .Location = New Point(590, 214), .Size = New Size(240, 30)}
         Private ReadOnly cmbMoneda As New ComboBox With {.Name = "cmbMoneda", .AccessibleName = "Moneda", .DropDownStyle = ComboBoxStyle.DropDownList, .Location = New Point(90, 146), .Width = 70}
 
         ' ---- Imágenes ----
@@ -131,6 +132,7 @@ Namespace SD0502
         Private ReadOnly _imagenes As ImagenesArticuloRepositorio
         Private ReadOnly _proveedores As ProveedoresArticuloRepositorio
         Private ReadOnly _codigosBarras As CodigosBarrasRepositorio
+        Private ReadOnly _alternos As AlternosArticuloRepositorio
         ''' <summary>sdtCod: el número de la imagen que se ve; 0 si no hay.</summary>
         Private _imgConsec As Integer
         ''' <summary>El archivo elegido con Nueva que falta guardar.</summary>
@@ -140,11 +142,12 @@ Namespace SD0502
 
         Private ReadOnly barra As New BarraComandos With {.Name = "barra", .Location = New Point(420, 556), .Size = New Size(460, 32)}
 
-        Public Sub New(repositorio As ArticulosRepositorio, imagenes As ImagenesArticuloRepositorio, proveedores As ProveedoresArticuloRepositorio, codigosBarras As CodigosBarrasRepositorio, local As Long, uid As Long, login As String, estacion As String, localDescripcion As String, puedeEditar As Boolean, puedeUtilidades As Boolean)
+        Public Sub New(repositorio As ArticulosRepositorio, imagenes As ImagenesArticuloRepositorio, proveedores As ProveedoresArticuloRepositorio, codigosBarras As CodigosBarrasRepositorio, alternos As AlternosArticuloRepositorio, local As Long, uid As Long, login As String, estacion As String, localDescripcion As String, puedeEditar As Boolean, puedeUtilidades As Boolean)
             _repo = repositorio
             _imagenes = imagenes
             _proveedores = proveedores
             _codigosBarras = codigosBarras
+            _alternos = alternos
             _local = local
             _uid = uid
             _login = If(login, "")
@@ -181,7 +184,7 @@ Namespace SD0502
             tabOtros.Controls.AddRange(New Control() {
                 Etiqueta("Descuento en compra %", 14, 17), txtDescCompra, Etiqueta("Descuento a aplicar en venta %", 14, 49), txtDescVenta,
                 Etiqueta("Descuento de venta máximo %", 14, 81), txtDescMax, Etiqueta("Otros impuestos %", 14, 113), txtPorcOtros,
-                Etiqueta("Monto de otros impuestos", 14, 145), txtMontoOtros, gbFacturar, gbOtros})
+                Etiqueta("Monto de otros impuestos", 14, 145), txtMontoOtros, gbFacturar, gbOtros, btnAlternos})
             tabImagenes.Controls.AddRange(New Control() {picImagen, lblImgNumero, Etiqueta("Descripción", 590, 44), txtImgDesc,
                 btnImgAnterior, btnImgSiguiente, btnImgNueva, btnImgGuardar, btnImgModificar, btnImgEliminar})
             tabs.TabPages.AddRange({tabDetalle, tabPrecio, tabOtros, tabImagenes})
@@ -232,7 +235,37 @@ Namespace SD0502
             AddHandler FormClosed, Sub() PintarImagen(Nothing)
             AddHandler btnProveedores.Click, AddressOf Proveedores_Clic
             AddHandler btnCodigosBarras.Click, AddressOf CodigosBarras_Clic
+            AddHandler btnAlternos.Click, AddressOf Alternos_Clic
+            Anclar()
             Habilitar(False)
+        End Sub
+
+        ''' <summary>
+        ''' La ficha se puede agrandar o maximizar (y recuerda cómo quedó): crecen las pestañas, la especificación, los
+        ''' precios y la imagen. Lo de la última fila de Detalle baja con la ventana; lo de la derecha de Imágenes se corre.
+        ''' </summary>
+        Private Sub Anclar()
+            lblPrecioDia.Anchor = AnchorStyles.Top Or AnchorStyles.Right
+            tabs.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
+            barra.Anchor = AnchorStyles.Bottom Or AnchorStyles.Right
+            ' Dentro de las pestañas se ancla al cargar: antes, las páginas aún no tienen su tamaño y los controles
+            ' crecerían de más. Va antes que Ventanas.Recordar, que restaura el tamaño también en Load.
+            AddHandler Load, Sub() AnclarPestanas()
+            Ventanas.Recordar(Me)
+        End Sub
+
+        Private Sub AnclarPestanas()
+            txtEspecificacion.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
+            For Each c As Control In tabDetalle.Controls
+                If c.Top >= txtCreadoPor.Top - 5 Then c.Anchor = AnchorStyles.Bottom Or AnchorStyles.Left
+            Next
+            btnCodigosBarras.Anchor = AnchorStyles.Bottom Or AnchorStyles.Right
+            btnProveedores.Anchor = AnchorStyles.Bottom Or AnchorStyles.Right
+            gridPrecios.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
+            picImagen.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
+            For Each c As Control In tabImagenes.Controls
+                If c IsNot picImagen Then c.Anchor = AnchorStyles.Top Or AnchorStyles.Right
+            Next
         End Sub
 
         Private Shared Function Etiqueta(texto As String, x As Integer, y As Integer) As Label
@@ -604,6 +637,8 @@ Namespace SD0502
             btnProveedores.Enabled = editando AndAlso _modo = ModoFicha.Editar AndAlso _articulo IsNot Nothing
             ' cmdCodBarra: igual que proveedores.
             btnCodigosBarras.Enabled = btnProveedores.Enabled
+            ' cmdAlternos: igual que proveedores.
+            btnAlternos.Enabled = btnProveedores.Enabled
         End Sub
 
         ' ---- Códigos de barras ----
@@ -621,6 +656,16 @@ Namespace SD0502
             Catch ex As MySqlException
                 Mensajes.NoConecta()
             End Try
+        End Sub
+
+        ' ---- Alternos ----
+
+        Private Sub Alternos_Clic(sender As Object, e As EventArgs)
+            If _articulo Is Nothing Then Return
+            Using f As New FrmAlternosArticulo(_repo, _alternos, _articulo.CodigoArt, _articulo.Descripcion, _local, _uid)
+                Tema.Aplicar(f, Modulo.TituloModulo)
+                f.ShowDialog(Me)
+            End Using
         End Sub
 
         ' ---- Proveedores ----

@@ -56,6 +56,13 @@ Namespace SD0502
                 New Label With {.Text = "Código", .AutoSize = True, .Location = New Point(12, 45)}, txtCodigo,
                 New Label With {.Text = "Unidades", .AutoSize = True, .Location = New Point(300, 45)}, txtUnidades,
                 grid, lblCantidad, btnQuitar, btnAceptar, btnCancelar})
+            lblArticulo.Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right
+            grid.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
+            lblCantidad.Anchor = AnchorStyles.Bottom Or AnchorStyles.Left
+            btnQuitar.Anchor = AnchorStyles.Bottom Or AnchorStyles.Left
+            btnAceptar.Anchor = AnchorStyles.Bottom Or AnchorStyles.Right
+            btnCancelar.Anchor = AnchorStyles.Bottom Or AnchorStyles.Right
+            Ventanas.Recordar(Me)
 
             AddHandler Load, AddressOf Cargar
             AddHandler txtCodigo.KeyDown, AddressOf Codigo_Tecla

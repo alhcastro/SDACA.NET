@@ -217,10 +217,12 @@ Public NotInheritable Class Tema
         cuerpo.Controls.AddRange(hijos)
         Dim encabezado As New EncabezadoVentana(formulario, modulo)
         Dim alto = encabezado.Height
+        ' Primero el área y después el mínimo: si el mínimo crece antes y supera el tamaño actual, Windows agranda
+        ' la ventana para cumplirlo y el encabezado se sumaba dos veces.
+        formulario.ClientSize = New Size(formulario.ClientSize.Width, formulario.ClientSize.Height + alto)
         If formulario.MinimumSize.Height > 0 Then
             formulario.MinimumSize = New Size(formulario.MinimumSize.Width, formulario.MinimumSize.Height + alto)
         End If
-        formulario.ClientSize = New Size(formulario.ClientSize.Width, formulario.ClientSize.Height + alto)
         cuerpo.Dock = DockStyle.Fill
         formulario.Controls.Add(cuerpo)
         formulario.Controls.Add(encabezado)

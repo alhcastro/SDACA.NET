@@ -45,6 +45,7 @@ Public Class FrmBuscador
         CancelButton = cancelar
         AcceptButton = aceptar
         Controls.AddRange(New Control() {etiqueta, _filtro, _rejilla, aceptar, cancelar})
+        Ventanas.Recordar(Me)
         Tema.Aplicar(Me)
     End Sub
 
