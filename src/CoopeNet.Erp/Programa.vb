@@ -7,7 +7,7 @@ Public Module Programa
 
     ''' <summary>Módulos migrados. El menú muestra los que estén en la licencia y el usuario pueda abrir.</summary>
     Public Function Modulos() As IReadOnlyList(Of IModulo)
-        Return New IModulo() {New SD0001.Modulo(), New SD1101.Modulo(), New SD1401.Modulo(), New SD1501.Modulo()}
+        Return New IModulo() {New SD0001.Modulo(), New SD0502.Modulo(), New SD1101.Modulo(), New SD1401.Modulo(), New SD1501.Modulo()}
     End Function
 
     <STAThread>

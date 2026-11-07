@@ -15,6 +15,7 @@
     <ProjectReference Include="..\CoopeNet.Ui\CoopeNet.Ui.vbproj" />
     <ProjectReference Include="..\CoopeNet.SD1101\CoopeNet.SD1101.vbproj" />
     <ProjectReference Include="..\CoopeNet.SD0001\CoopeNet.SD0001.vbproj" />
+    <ProjectReference Include="..\CoopeNet.SD0502\CoopeNet.SD0502.vbproj" />
     <ProjectReference Include="..\CoopeNet.SD1401\CoopeNet.SD1401.vbproj" />
     <ProjectReference Include="..\CoopeNet.SD1501\CoopeNet.SD1501.vbproj" />
   </ItemGroup>

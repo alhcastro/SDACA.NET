@@ -179,6 +179,30 @@ Difiere de VB6 en:
 
 **SD0001 queda completo** para Coopepalmares: solo faltan `ClsDP` y `FrmAgendaShow` (la entrada desde otros módulos), el modo de selección del padrón y `FrmCambioIdMasa`, cuya opción está comentada en VB6.
 
+## SD0502 - Facturación e Inventarios (POS)
+
+Proyecto `CoopeNet.SD0502`, migrado de `Fuentes\SD0502(Coopepalmares)`, que según el usuario es el único módulo cuyas fuentes están al día. Por ahora solo tiene el Catálogo de Artículos; las demás opciones del `Menu_Order` (unas 80) se agregan al migrarlas. SD0501 es el POS genérico de otros clientes y no se migra.
+
+**Catálogo de Artículos (opción 003, privilegio 5009):** `FrmArticulos` migra `frmMantArticulos`, `Core.Pos.ArticulosRepositorio` sus consultas y `Core.Pos.PreciosArticulo` el cálculo de `SD_ConsPrecImp`, `SD_DevUtilidad` y `SD_Rnd`. Tiene la ficha con las pestañas Detalle, Precio e Impuestos y otros, la navegación por código (filtrada por categorías), la búsqueda por código de barras o código corto (con las etiquetas de balanza 26 y 28), el buscador, y Nuevo, Editar y Borrar con el privilegio 5037. Utilidades, precios, extras, flete y descuentos piden el 5056. Cambiar una utilidad o un extra recalcula el precio, y cambiar el precio recalcula la utilidad. Al guardar replica `posarticulos` como `ARTICULOS` y el alta del local (`posarticuloslocal` y `posinventario`) como `posarticuloslocal`, y anota en `posvitmovimientos` los campos y las utilidades que cambiaron. Antes de guardar avisa si otro usuario cambió el artículo, como `SD_CompReg`.
+
+Varias columnas de `posarticulos` se usan para otra cosa que su nombre: `CodAlterno` es el CABYS, `Grupo` la presentación, `SubGrupo` la canasta básica, `CodArtProv` la marca, `Recomendada` el monto de otros impuestos, `Exento` el porcentaje de IVA, `Porcentaje` el descuento máximo, `Gasto` permite negativos y `Consumo` es No facturar. Los precios se guardan sin IVA. `Moneda` guarda el símbolo.
+
+Difiere de VB6 en:
+
+- **Categorías:** se exigen al guardar, como dice el mensaje. En VB6 una línea posterior pisaba la validación y solo quedaba la de unidad. Todos los artículos del local 1 tienen categoría, así que no bloquea ediciones.
+- **Buscador:** filtra por categorías. En VB6 el filtro quedaba dentro del `LEFT JOIN` de los códigos de barras y no filtraba.
+- **Precio a utilidad:** usa el mismo IVA con que se muestra el precio. VB6 siempre quitaba el IVA, aunque la casilla estuviera desmarcada. Con costo 0 la utilidad queda en 0, donde VB6 mostraba un error.
+- **Código nuevo:** se calcula como `pos_fun_obt_codigo2` (el primer hueco desde 10000) sin crear la tabla `postmpcodigos`, que VB6 creaba con el mismo nombre para todos los usuarios.
+- **Bitácora de utilidades:** se anota al guardar. VB6 la anotaba al salir de cada campo, aunque no se guardara.
+- **Altas en el local:** usan la lista de columnas en lugar de `VALUES` por posición. Las sentencias van parametrizadas o escapadas.
+- **Cancelar un Nuevo:** vuelve al artículo que se veía.
+
+Igual que VB6: el costo no se edita aquí (lo fijan las compras), borrar no replica y deja `posarticuloslocal` y `posinventario`, y las fórmulas `G_ORDCOMPVAR` no se usan, porque solo las llenan Compras y Órdenes. `SD_Rnd` se portó con punto decimal: las utilidades guardadas son múltiplos de 0.005 en 82,169 de 82,174 artículos. El precio recalculado desde la utilidad coincide al centavo con 23,858 de 79,106 artículos, más que cualquier variante de la fórmula; los demás tuvieron cambios de costo posteriores en otras pantallas.
+
+No migrado todavía: proveedores del artículo, imágenes, cambio de código (29 tablas), catálogo CABYS, códigos de barras y alternos, etiquetas, sincronizar con el centro, existencias por local, movimientos y utilidades históricas (DLL `REP`), y el lector de código serial. La pestaña Lista no se migra: en VB6 nunca se llenaba. `SDInventarioHistorico`, que VB6 corre al abrir, tampoco.
+
+**Probado en el 3315 (2026-11-07):** lecturas en el local 1 (catálogos, categorías, carga, navegación, buscador de 31,929 artículos en 1.8 s, códigos de barras, código nuevo y validación de borrado) y escrituras con el artículo sintético `ZZQ9001` en el local 7, que no replica: alta, edición, aviso de cambio de otro usuario, bitácora, borrado y limpieza, sin nada en `gatreplica`. La pantalla se manejó en el local 1 sin guardar (cargar, navegar, editar y cancelar, nuevo y cancelar) y el artículo quedó igual. sdprincipal es la base del local 1: unidades, marcas y categorías solo existen ahí, y `ARTICULOS` se replica a los locales 1, 2, 3 y 9. No probar escrituras en el local 1.
+
 ## SD1401 - Control de Cuentas Bancarias
 
 Todas las opciones están migradas. Bancos y Monedas son de SD0001 y se abren desde aquí. `FrmCuentasBancarias` y sus subpantallas también las abre SD1501. La opción 016 ("Pruebas no usar") no se migra; las 008 y 010 están comentadas en `Menu_Order`.
