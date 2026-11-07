@@ -55,6 +55,17 @@ Namespace SD0001
             Return New FrmAdminCodigos(New DatosPersonalesRepositorio(s.Fabrica), New CodigosRepositorio(s.Fabrica), s.Uid, s.Local, s.Puede("12"), Function() TiposCodigo(s))
         End Function
 
+        ''' <summary>Todos entran. Nuevo y Editar abren Datos Personales, que pide sus propios privilegios para editar.</summary>
+        Private Shared Function Agenda(s As Sesion) As Form
+            Dim marco As New MarcoAgenda With {.Empresa = s.Empresa, .Cedula = s.Cedula, .Usuario = s.Nombre}
+            Return New FrmAgenda(New AgendaRepositorio(s.Fabrica), s.Local, marco,
+                Function(id)
+                    Dim ventana = CType(DatosPersonales(s), FrmDatosPersonales)
+                    ventana.IdInicial = id
+                    Return ventana
+                End Function)
+        End Function
+
         Public ReadOnly Property Opciones As IReadOnlyList(Of OpcionMenu) Implements IModulo.Opciones
             Get
                 Return {
@@ -73,7 +84,7 @@ Namespace SD0001
                         OpcionMenu.Formulario("Fallecidos", "13",
                             Function(s) New FrmFallecido(New DatosPersonalesRepositorio(s.Fabrica), New CodigosRepositorio(s.Fabrica), s.Local), IconoMenu.Lista),
                         OpcionMenu.Pendiente("Configuración de Impresión y Consecutivos API", "1")),
-                    OpcionMenu.Pendiente("Agenda", "0"),
+                    OpcionMenu.Formulario("Agenda", "0", AddressOf Agenda, IconoMenu.Lista),
                     OpcionMenu.Grupo("Sistema", "0",
                         OpcionMenu.Pendiente("Reparar BD", "1"),
                         OpcionMenu.Pendiente("Sincronizar", "14"))

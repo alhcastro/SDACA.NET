@@ -128,6 +128,9 @@ Namespace SD0001
         Private ReadOnly btnImagenes As New Button With {.Name = "btnImagenes", .Text = "Imágenes", .Location = New Point(290, 600), .Size = New Size(100, 32)}
         Private ReadOnly barra As New BarraComandos With {.Name = "barra", .Location = New Point(530, 600), .Size = New Size(460, 32)}
 
+        ''' <summary>Persona que se muestra al abrir, como FrmDatosPersonales.Init de VB6 desde la Agenda.</summary>
+        Public Property IdInicial As String = ""
+
         Public Sub New(repositorio As DatosPersonalesRepositorio, uid As Long, local As Long, puedeEditar As Boolean, esAdministrador As Boolean, puedeImagenes As Boolean, puedeCalcular As Boolean, abrirTipos As Func(Of Form))
             _repo = repositorio
             _abrirTipos = abrirTipos
@@ -249,6 +252,7 @@ Namespace SD0001
                 Await LimpiarAsync()
                 Await ListarAsync()
                 Editable()
+                If IdInicial.Length > 0 Then Await CargarPersonaAsync(IdInicial)
             Catch ex As MySqlException
                 Mensajes.NoConecta()
             End Try

@@ -102,7 +102,7 @@ El panel `vista` de `FrmConfigCheque` representa el papel impreso y queda fuera 
 
 ## SD0001 - Gestión de Asistencia Técnica
 
-Está el menú de las opciones que atiende su `Accion`, con `FrmDatosPersonales`, `FrmAdminCodigos`, `FrmCambioId`, `FrmFallecido`, `FrmPadron`, `FrmBancos`, `FrmMonedas` y `FrmTipoCambio`; lo demás remite al sistema anterior. SD1401 y SD1501 abren Bancos y Monedas con su propio privilegio. Usuarios, departamentos y respaldos los atiende el menú de VB6, no este módulo.
+Está el menú de las opciones que atiende su `Accion`, con `FrmDatosPersonales`, `FrmAdminCodigos`, `FrmCambioId`, `FrmFallecido`, `FrmPadron`, `FrmAgenda`, `FrmBancos`, `FrmMonedas` y `FrmTipoCambio`; lo demás remite al sistema anterior. SD1401 y SD1501 abren Bancos y Monedas con su propio privilegio. Usuarios, departamentos y respaldos los atiende el menú de VB6, no este módulo.
 
 **La fuente es más nueva que la base:** `gatbancos` no tiene siglas ni web services, `gatmonedas` tiene `Iniciales` y `gattipocambio` es por moneda y día, sin banco ni hora. Se siguió la base. `Numloc` está vacío en todos los bancos y no se migró ese control. Guardar un banco conserva `Finport`, que usa la conciliación CSV.
 
@@ -153,6 +153,12 @@ Difiere de VB6 en:
 **Padrón Nacional y Jurídico:** `FrmPadron` migra `FrmBuscaPadron` en el modo del menú, que solo consulta, y `PadronRepositorio` migra `SD_Padron` y `SD_PadronJ`. Como en VB6, la cédula manda sobre los demás campos y busca por el inicio, los apellidos son exactos, el nombre se busca en cualquier parte y se muestran hasta 500 filas, con un aviso si hay más. Difiere en que no consulta sin criterio (en VB6 la sentencia fallaba), usa parámetros en lugar de concatenar el texto, ignora los guiones de la cédula y avisa si el servidor no tiene la base `padron`. `Sexo` se muestra tal como está: `M`, `F` y unas pocas filas con `0` o `3`. Las 1,414 personas con `Nacimiento` en cero se muestran sin fecha. Falta el modo de selección que usa `LblPadron` en Datos Personales.
 
 **Padrón probado en el 3315 (2026-11-07), solo lecturas:** `padron.padron` (unos 4 millones de filas) tiene índices por cédula, cada apellido, nombre y los tres juntos; `padron.padronj` (259,065) solo por cédula. Por cédula, apellidos o apellidos y nombre responde en menos de 0.2 s, y el jurídico por nombre en 0.1 s. Buscar solo por nombre no usa índice porque busca en cualquier parte: con un nombre común tarda unos 3 s, y con uno que no existe recorre todo el padrón y tarda unos 47 s, igual que en VB6.
+
+**Agenda Telefónica:** `FrmAgenda` migra `FrmAgenda` y `AgendaRepositorio` migra `SD_Cargar_Lista` y `SD_Agenda_Telefonicai` de `ModPrin.bas`. Igual que VB6, lista hasta 100 personas activas y no fallecidas, con el código de asociado y el alias. Busca sola desde 3 letras, y cada espacio separa partes que deben aparecer en ese orden. La ficha se arma en HTML en un `WebBrowser`, con el menú de VB6: imprimir, vista previa, configurar página, copiar y exportar. El encabezado lleva el teléfono del local (`gacdptel` con id `local{n}` y tipo 0). Nuevo y Editar abren Datos Personales, que ahora acepta `IdInicial` para abrir en una persona; no entran directo a editar como en VB6, sino que la editan con su propio botón y sus privilegios. Los enlaces Nuevo, Modificar e Imprimir de la ficha pasan a botones. `FrmAgendaShow` no se migró: es la entrada desde otros módulos por `ClsDP`.
+
+Difiere de VB6 en: busca con parámetros y escapa el HTML; la dirección omite el dato de ubicación que falta, en lugar de quedar en blanco (486 personas); los tipos 0 a 3 conservan el texto de VB6 y los demás salen de `gactiposid`, que en VB6 quedaban vacíos (165 con tipo 4). No toma en cuenta `GATDAE`, que en VB6 cambia el nombre del registro por el del local.
+
+**Agenda probada en el 3315 (2026-11-07), solo lecturas:** cada búsqueda tarda medio segundo, porque recorre las 115,544 personas activas y vivas, igual que VB6. Las 100 fichas de una lista salieron completas, sin identificaciones repetidas. La pantalla se revisó con datos ficticios a la escala del equipo.
 
 ## SD1401 - Control de Cuentas Bancarias
 
