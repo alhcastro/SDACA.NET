@@ -9,7 +9,7 @@ Imports CoopeNet.Core.Seguridad
 Imports CoopeNet.Ui
 
 ''' <summary>
-''' Inicio de sesión. Ofrece los perfiles de sdcnn007.ini sin modificarlo y aplica las reglas de
+''' Inicio de sesión. Ofrece los perfiles de sdcnn007.ini (se administran en <see cref="FrmConexiones"/>) y aplica las reglas de
 ''' <see cref="ServicioEntrada"/>. Migración de SDACAERP\FrmEntrada.frm.
 ''' </summary>
 Partial Public Class FrmEntrada
@@ -56,12 +56,33 @@ Partial Public Class FrmEntrada
         If txtUsuario.TextLength = 0 Then txtUsuario.Focus() Else txtClave.Focus()
     End Sub
 
-    Private Sub CargarPerfiles()
-        Dim ini = Path.Combine(_directorioIni, $"sdcnn{_licencia.Registro.NumeroCliente:000}.ini")
+    Private Function RutaIni() As String
+        Return Path.Combine(_directorioIni, $"sdcnn{_licencia.Registro.NumeroCliente:000}.ini")
+    End Function
+
+    ''' <summary>CmdOpciones_Click del original ("..."): abre la configuración del servidor.</summary>
+    Private Sub LnkAdministrar_LinkClicked(sender As Object, e As LinkLabelLinkClickedEventArgs) Handles lnkAdministrar.LinkClicked
+        Using ventana As New FrmConexiones(RutaIni(), cmbPerfil.Text, txtUsuario.Text, txtClave.Text)
+            ventana.ShowDialog(Me)
+            If Not ventana.HuboCambios Then Return
+            Dim usuario = txtUsuario.Text
+            CargarPerfiles(ventana.PerfilElegido)
+            If txtUsuario.TextLength = 0 Then txtUsuario.Text = usuario
+        End Using
+        If cmbPerfil.SelectedIndex >= 0 Then txtClave.Focus()
+    End Sub
+
+    ''' <param name="elegir">Perfil que debe quedar seleccionado; si no se indica, el último usado o el predeterminado.</param>
+    Private Sub CargarPerfiles(Optional elegir As String = Nothing)
+        Dim ini = RutaIni()
         If Not File.Exists(ini) Then Return
         cmbPerfil.DisplayMember = NameOf(PerfilConexion.Nombre)
         cmbPerfil.DataSource = ConexionesIni.Leer(ini).Where(Function(p) p.Servidor.Length > 0).ToList()
         cmbPerfil.SelectedIndex = -1
+        If Not String.IsNullOrEmpty(elegir) AndAlso cmbPerfil.FindStringExact(elegir) >= 0 Then
+            cmbPerfil.SelectedIndex = cmbPerfil.FindStringExact(elegir)
+            Return
+        End If
         Dim ultimo = cmbPerfil.FindStringExact(_preferencias.UltimoPerfil)
         If ultimo >= 0 Then
             cmbPerfil.SelectedIndex = ultimo

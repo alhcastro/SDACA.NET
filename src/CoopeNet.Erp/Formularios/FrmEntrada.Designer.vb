@@ -7,6 +7,7 @@ Partial Class FrmEntrada
     Private lblLicencia As Label
     Private WithEvents cmbPerfil As ComboBox
     Private WithEvents lnkConexion As LinkLabel
+    Private WithEvents lnkAdministrar As LinkLabel
     Private pnlConexion As Panel
     Private WithEvents txtServidor As TextBox
     Private WithEvents txtPuerto As TextBox
@@ -29,8 +30,17 @@ Partial Class FrmEntrada
         btnSalir = New Button() With {.Name = "btnSalir", .Text = "&Salir", .Size = New Size(94, 36), .Margin = Padding.Empty}
         lnkConexion = New LinkLabel() With {
             .Name = "lnkConexion", .AutoSize = True, .Text = "Mostrar datos de conexión", .LinkColor = Tema.Acento, .ActiveLinkColor = Tema.AcentoOscuro,
-            .VisitedLinkColor = Tema.Acento, .LinkBehavior = LinkBehavior.HoverUnderline, .Margin = New Padding(0, 0, 0, 12)
+            .VisitedLinkColor = Tema.Acento, .LinkBehavior = LinkBehavior.HoverUnderline, .Anchor = AnchorStyles.Left, .Margin = Padding.Empty
         }
+        lnkAdministrar = New LinkLabel() With {
+            .Name = "lnkAdministrar", .AutoSize = True, .Text = "Administrar conexiones", .LinkColor = Tema.Acento, .ActiveLinkColor = Tema.AcentoOscuro,
+            .VisitedLinkColor = Tema.Acento, .LinkBehavior = LinkBehavior.HoverUnderline, .Anchor = AnchorStyles.Right, .Margin = Padding.Empty
+        }
+        Dim enlaces As New TableLayoutPanel() With {.Size = New Size(AnchoCampos, 22), .ColumnCount = 2, .RowCount = 1, .Margin = New Padding(0, 0, 0, 12)}
+        enlaces.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 50))
+        enlaces.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 50))
+        enlaces.Controls.Add(lnkConexion, 0, 0)
+        enlaces.Controls.Add(lnkAdministrar, 1, 0)
         SuspendLayout()
 
         pnlConexion = New Panel() With {.Name = "pnlConexion", .Size = New Size(AnchoCampos, 116), .Margin = Padding.Empty, .Visible = False}
@@ -53,7 +63,7 @@ Partial Class FrmEntrada
             .Dock = DockStyle.Fill, .FlowDirection = FlowDirection.TopDown, .WrapContents = False, .Padding = New Padding(40, 32, 40, 24), .BackColor = Tema.Superficie
         }
         columna.Controls.AddRange(New Control() {
-            titulo, subtitulo, Campo("Conexión", cmbPerfil, 0), lnkConexion, pnlConexion,
+            titulo, subtitulo, Campo("Conexión", cmbPerfil, 0), enlaces, pnlConexion,
             Campo("Usuario", txtUsuario, 6), Campo("Contraseña", txtClave, 6), Campo("Departamento", cmbLocal, 6), botones
         })
 
