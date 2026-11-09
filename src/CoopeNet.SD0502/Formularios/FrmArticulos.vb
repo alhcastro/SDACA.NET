@@ -49,7 +49,7 @@ Namespace SD0502
         Private ReadOnly btnAnterior As New Button With {.Name = "btnAnterior", .Text = "◀", .AccessibleName = "Artículo anterior", .Location = New Point(206, 10), .Size = New Size(34, 26)}
         Private ReadOnly btnSiguiente As New Button With {.Name = "btnSiguiente", .Text = "▶", .AccessibleName = "Artículo siguiente", .Location = New Point(244, 10), .Size = New Size(34, 26)}
         Private ReadOnly lblCorto As New Label With {.Name = "lblCorto", .AutoSize = True, .Location = New Point(292, 15)}
-        Private ReadOnly lblExistencia As New Label With {.Name = "lblExistencia", .AutoSize = True, .Location = New Point(410, 15)}
+        Private ReadOnly lblExistencia As New LinkLabel With {.Name = "lblExistencia", .AutoSize = True, .Location = New Point(410, 15), .LinkBehavior = LinkBehavior.HoverUnderline, .LinkColor = Tema.Acento, .ActiveLinkColor = Tema.AcentoOscuro, .VisitedLinkColor = Tema.Acento}
         Private ReadOnly lblPrecioDia As New Label With {.Name = "lblPrecioDia", .AutoSize = False, .TextAlign = ContentAlignment.MiddleRight, .Location = New Point(560, 4), .Size = New Size(320, 34)}
         Private ReadOnly txtDescripcion As New TextBox With {.Name = "txtDescripcion", .AccessibleName = "Descripción", .CharacterCasing = CharacterCasing.Upper, .Location = New Point(90, 46), .Width = 470, .MaxLength = 255}
         Private ReadOnly txtDescCorta As New TextBox With {.Name = "txtDescCorta", .AccessibleName = "Descripción corta", .CharacterCasing = CharacterCasing.Upper, .Location = New Point(660, 46), .Width = 220, .MaxLength = 30}
@@ -245,6 +245,7 @@ Namespace SD0502
             AddHandler btnAlternos.Click, AddressOf Alternos_Clic
             AddHandler btnCabys.Click, AddressOf Cabys_Clic
             AddHandler btnEtiqueta.Click, AddressOf Etiqueta_Clic
+            AddHandler lblExistencia.LinkClicked, AddressOf Existencia_Clic
             Anclar()
             Habilitar(False)
         End Sub
@@ -669,6 +670,38 @@ Namespace SD0502
             Catch ex As MySqlException
                 Mensajes.NoConecta()
             End Try
+        End Sub
+
+        ' ---- Existencias por local ----
+
+        ''' <summary>Crea la pantalla de existencias para un código. La asigna el módulo.</summary>
+        Public Property AbrirExistencias As Func(Of String, Form)
+
+        ''' <summary>Privilegio 5008. Sin él, el clic avisa como NoPrivilegio.</summary>
+        Public Property PuedeExistencias As Boolean
+
+        ''' <summary>Para el aviso de NoPrivilegio.</summary>
+        Public Property NombreUsuario As String = ""
+
+        ''' <summary>lblStock_Click: abre FrmMantLocales con el artículo; al volver se refresca la existencia.</summary>
+        Private Async Sub Existencia_Clic(sender As Object, e As LinkLabelLinkClickedEventArgs)
+            Dim codigo = txtCodigo.Text.Trim()
+            If codigo.Length = 0 OrElse AbrirExistencias Is Nothing Then Return
+            If Not PuedeExistencias Then
+                Mensajes.NoPrivilegio(NombreUsuario, Text)
+                Return
+            End If
+            Using f = AbrirExistencias(codigo)
+                Tema.Aplicar(f, Modulo.TituloModulo)
+                f.ShowDialog(Me)
+            End Using
+            If _modo = ModoFicha.Normal AndAlso _articulo IsNot Nothing Then
+                Try
+                    Await CargarArticuloAsync(_articulo.CodigoArt)
+                Catch ex As MySqlException
+                    Mensajes.NoConecta()
+                End Try
+            End If
         End Sub
 
         ' ---- Etiqueta ----

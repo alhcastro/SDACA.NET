@@ -262,9 +262,14 @@ Namespace Pos
             End Using
         End Function
 
-        Private Shared Async Function FotoAsync(cn As MySqlConnection, codigo As String, ct As CancellationToken) As Task(Of Dictionary(Of String, String))
+        Private Shared Function FotoAsync(cn As MySqlConnection, codigo As String, ct As CancellationToken) As Task(Of Dictionary(Of String, String))
+            Return FotoDeAsync(cn, "SELECT * FROM posarticulos WHERE CodigoArt = @codigo", New With {codigo}, ct)
+        End Function
+
+        ''' <summary>SD_RespReg sobre cualquier fila: sus campos como texto, sin las fechas.</summary>
+        Friend Shared Async Function FotoDeAsync(cn As MySqlConnection, sql As String, parametros As Object, ct As CancellationToken) As Task(Of Dictionary(Of String, String))
             Dim foto As New Dictionary(Of String, String)(StringComparer.OrdinalIgnoreCase)
-            Using lector = Await cn.ExecuteReaderAsync(New CommandDefinition("SELECT * FROM posarticulos WHERE CodigoArt = @codigo", New With {codigo}, cancellationToken:=ct)).ConfigureAwait(False)
+            Using lector = Await cn.ExecuteReaderAsync(New CommandDefinition(sql, parametros, cancellationToken:=ct)).ConfigureAwait(False)
                 If Not Await lector.ReadAsync(ct).ConfigureAwait(False) Then Return foto
                 For i = 0 To lector.FieldCount - 1
                     If lector.GetFieldType(i) = GetType(Date) Then Continue For
