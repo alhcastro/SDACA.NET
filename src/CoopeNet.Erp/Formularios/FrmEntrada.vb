@@ -185,6 +185,7 @@ Partial Public Class FrmEntrada
         End Try
         If respuesta.Resultado = ResultadoEntrada.Correcto Then
             respuesta.Sesion.Fabrica = fabrica
+            respuesta.Sesion.DirectorioSdaca = If(Directory.GetParent(Path.TrimEndingDirectorySeparator(_directorioIni))?.FullName, _directorioIni)
             _preferencias.RecordarLocal(LlaveConexion(), local.Local)
             _preferencias.UltimoPerfil = cmbPerfil.Text
             _preferencias.UltimoUsuario = login

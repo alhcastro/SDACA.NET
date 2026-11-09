@@ -1,3 +1,4 @@
+Imports System.Drawing.Printing
 Imports System.Globalization
 Imports MySqlConnector
 Imports CoopeNet.Core.Pos
@@ -82,6 +83,7 @@ Namespace SD0502
         Private ReadOnly txtModificado As New TextBox With {.Name = "txtModificado", .AccessibleName = "Modificado el", .ReadOnly = True, .TabStop = False, .Location = New Point(670, 284), .Width = 160}
         Private ReadOnly lblSugerido As New Label With {.Name = "lblSugerido", .AutoSize = True, .Location = New Point(130, 322)}
         Private ReadOnly btnProveedores As New Button With {.Name = "btnProveedores", .Text = "Proveedores", .Location = New Point(700, 316), .Size = New Size(130, 30)}
+        Private ReadOnly btnEtiqueta As New Button With {.Name = "btnEtiqueta", .Text = "Etiqueta", .Location = New Point(420, 316), .Size = New Size(134, 30)}
         Private ReadOnly btnCodigosBarras As New Button With {.Name = "btnCodigosBarras", .Text = "Códigos de barras", .Location = New Point(560, 316), .Size = New Size(134, 30)}
 
         ' ---- Precio ----
@@ -135,6 +137,7 @@ Namespace SD0502
         Private ReadOnly _codigosBarras As CodigosBarrasRepositorio
         Private ReadOnly _alternos As AlternosArticuloRepositorio
         Private ReadOnly _cabys As CabysRepositorio
+        Private ReadOnly _directorioSdaca As String
         ''' <summary>sdtCod: el número de la imagen que se ve; 0 si no hay.</summary>
         Private _imgConsec As Integer
         ''' <summary>El archivo elegido con Nueva que falta guardar.</summary>
@@ -144,13 +147,14 @@ Namespace SD0502
 
         Private ReadOnly barra As New BarraComandos With {.Name = "barra", .Location = New Point(420, 556), .Size = New Size(460, 32)}
 
-        Public Sub New(repositorio As ArticulosRepositorio, imagenes As ImagenesArticuloRepositorio, proveedores As ProveedoresArticuloRepositorio, codigosBarras As CodigosBarrasRepositorio, alternos As AlternosArticuloRepositorio, cabys As CabysRepositorio, local As Long, uid As Long, login As String, estacion As String, localDescripcion As String, puedeEditar As Boolean, puedeUtilidades As Boolean)
+        Public Sub New(repositorio As ArticulosRepositorio, imagenes As ImagenesArticuloRepositorio, proveedores As ProveedoresArticuloRepositorio, codigosBarras As CodigosBarrasRepositorio, alternos As AlternosArticuloRepositorio, cabys As CabysRepositorio, directorioSdaca As String, local As Long, uid As Long, login As String, estacion As String, localDescripcion As String, puedeEditar As Boolean, puedeUtilidades As Boolean)
             _repo = repositorio
             _imagenes = imagenes
             _proveedores = proveedores
             _codigosBarras = codigosBarras
             _alternos = alternos
             _cabys = cabys
+            _directorioSdaca = If(directorioSdaca, "")
             _local = local
             _uid = uid
             _login = If(login, "")
@@ -174,7 +178,7 @@ Namespace SD0502
                 Etiqueta("Presentación", 14, 85), txtPresentacion, Etiqueta("Cód. empaque", 270, 85), txtEmpaque, Etiqueta("Cant. por mayor", 540, 85), txtMayor,
                 Etiqueta("Cód. Hacienda", 14, 119), txtCabys, btnCabys,
                 Etiqueta("Especificación", 14, 153), txtEspecificacion,
-                Etiqueta("Creado por", 14, 287), txtCreadoPor, Etiqueta("Creado el", 310, 287), txtCreado, Etiqueta("Modificado", 580, 287), txtModificado, lblSugerido, btnCodigosBarras, btnProveedores})
+                Etiqueta("Creado por", 14, 287), txtCreadoPor, Etiqueta("Creado el", 310, 287), txtCreado, Etiqueta("Modificado", 580, 287), txtModificado, lblSugerido, btnEtiqueta, btnCodigosBarras, btnProveedores})
             gridPrecios.Columns.AddRange(colEtiqueta, colUtilidad, colExtra, colPrecio)
             For Each col In {colUtilidad, colExtra, colPrecio}
                 col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight
@@ -240,6 +244,7 @@ Namespace SD0502
             AddHandler btnCodigosBarras.Click, AddressOf CodigosBarras_Clic
             AddHandler btnAlternos.Click, AddressOf Alternos_Clic
             AddHandler btnCabys.Click, AddressOf Cabys_Clic
+            AddHandler btnEtiqueta.Click, AddressOf Etiqueta_Clic
             Anclar()
             Habilitar(False)
         End Sub
@@ -264,6 +269,7 @@ Namespace SD0502
                 If c.Top >= txtCreadoPor.Top - 5 Then c.Anchor = AnchorStyles.Bottom Or AnchorStyles.Left
             Next
             btnCodigosBarras.Anchor = AnchorStyles.Bottom Or AnchorStyles.Right
+            btnEtiqueta.Anchor = AnchorStyles.Bottom Or AnchorStyles.Right
             btnProveedores.Anchor = AnchorStyles.Bottom Or AnchorStyles.Right
             gridPrecios.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
             picImagen.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
@@ -534,6 +540,7 @@ Namespace SD0502
             lblCostoNeto.Text = ""
             _imgArticulo = Nothing
             MostrarImagen(Nothing)
+            HabilitarEtiqueta()
             _pintando = False
         End Sub
 
@@ -614,6 +621,7 @@ Namespace SD0502
             MostrarCostoNeto()
             btnAnterior.Enabled = True
             btnSiguiente.Enabled = True
+            HabilitarEtiqueta()
             Await MostrarImagenesAsync()
             Return True
         End Function
@@ -643,6 +651,7 @@ Namespace SD0502
             btnCodigosBarras.Enabled = btnProveedores.Enabled
             ' cmdAlternos: igual que proveedores.
             btnAlternos.Enabled = btnProveedores.Enabled
+            HabilitarEtiqueta()
         End Sub
 
         ' ---- Códigos de barras ----
@@ -659,6 +668,25 @@ Namespace SD0502
                 Await SugeridoAsync()
             Catch ex As MySqlException
                 Mensajes.NoConecta()
+            End Try
+        End Sub
+
+        ' ---- Etiqueta ----
+
+        Private Sub HabilitarEtiqueta()
+            btnEtiqueta.Enabled = _articulo IsNot Nothing AndAlso _modo <> ModoFicha.Nuevo
+        End Sub
+
+        ''' <summary>cmdCodPUK_Click y SD_ETIQ: imprime la etiqueta en PRINTER_ETIQ de CONFIG.INI, sin vista previa.</summary>
+        Private Sub Etiqueta_Clic(sender As Object, e As EventArgs)
+            If _articulo Is Nothing Then Return
+            Try
+                Using documento As New EtiquetaArticulo(_articulo.CodigoArt, _articulo.Descripcion)
+                    documento.Elegir(EtiquetaArticulo.Impresora(_directorioSdaca))
+                    documento.Print()
+                End Using
+            Catch ex As Exception When TypeOf ex Is InvalidPrinterException OrElse TypeOf ex Is ComponentModel.Win32Exception
+                MessageBox.Show(Me, $"Imposible imprimir la etiqueta.{Environment.NewLine}Error: {ex.Message}", Text, MessageBoxButtons.OK, MessageBoxIcon.Information)
             End Try
         End Sub
 
