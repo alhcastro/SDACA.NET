@@ -9,6 +9,9 @@
     <UseWindowsForms>true</UseWindowsForms>
     <MyType>Empty</MyType>
     <StartupObject>CoopeNet.Erp.Programa</StartupObject>
+    <ApplicationIcon>CoopeNet.ico</ApplicationIcon>
+    <!-- Al publicar, solo los recursos de .NET en español: el resto de idiomas pesa sin usarse. -->
+    <SatelliteResourceLanguages>es</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <ItemGroup>

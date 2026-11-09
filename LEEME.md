@@ -27,6 +27,24 @@ dotnet run --project src\CoopeNet.Erp -c Release
 
 `CoopeNet.Erp` lee los `.ini` de `C:\Program Files (x86)\SDACA\Bin`. Se cambia con `-inipath <carpeta>`, igual que en SDACAERP.
 
+## Instalador
+
+```powershell
+.\instalador\Construir-Instalador.ps1          # pruebas, publicación e instalador
+.\instalador\Construir-Instalador.ps1 -SinPruebas
+```
+
+Deja `artefactos\instalador\CoopeNet-<versión>-Instalador.exe` (unos 47 MB). Requiere Inno Setup 6 (`winget install JRSoftware.InnoSetup`). La versión es `<Version>` de `Directory.Build.props`; súbala antes de armar uno nuevo. No cambie el `AppId` de `instalador\CoopeNet.iss`: con él Windows trata cada instalador como actualización del anterior.
+
+- La aplicación va autocontenida, con .NET 8 incluido, para Windows 10 u 11 de 64 bits. No hace falta instalar nada más.
+- Se instala en `C:\Program Files\CoopeNet`, con acceso en el menú Inicio y, si se marca, en el escritorio.
+- Pregunta dónde está la carpeta `Bin` de SDACA. Si no es `C:\Program Files (x86)\SDACA\Bin`, los accesos directos llevan `-inipath`.
+- La tarea marcada por defecto da permiso de Modificar al grupo Usuarios sobre la carpeta de SDACA. Hace falta para guardar conexiones y `CONFIG.INI`, y para que SDACAERP corra sin elevar (el error 75).
+- Si CoopeNet está abierto, pide cerrarlo antes de instalar.
+- Al desinstalar no toca SDACA ni las preferencias de cada usuario (`%LOCALAPPDATA%\SDACA`).
+
+Instalación desatendida: `CoopeNet-1.0.0-Instalador.exe /VERYSILENT /TASKS="permisos"`; con `/DIR="..."` cambia la carpeta.
+
 ## Agregar un módulo
 
 1. Crear `src/CoopeNet.SDxxxx` con una clase `Modulo` que implemente `IModulo` (ver `SD1101\Modulo.vb`). Las opciones que falten se declaran con `OpcionMenu.Pendiente`.

@@ -17,3 +17,6 @@ publicado/
 pruebas-com/**/*.exe
 pruebas-com/**/*.log
 pruebas-com/resultado_*.txt
+
+# Publicación y el instalador (instalador\Construir-Instalador.ps1)
+artefactos/

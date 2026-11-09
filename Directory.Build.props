@@ -11,6 +11,8 @@
     <OptionCompare>Binary</OptionCompare>
     <Company>Desarrollo Integral CP</Company>
     <Product>CoopeNet ERP</Product>
+    <!-- La del ejecutable y la del instalador (instalador\Construir-Instalador.ps1 la lee de aquí). -->
+    <Version>1.0.0</Version>
   </PropertyGroup>
 
 </Project>
