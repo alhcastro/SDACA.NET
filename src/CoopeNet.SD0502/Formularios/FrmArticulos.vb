@@ -120,6 +120,7 @@ Namespace SD0502
         Private ReadOnly chkConsignacion As New CheckBox With {.Name = "chkConsignacion", .Text = "Consignación", .AutoSize = True, .Location = New Point(14, 110)}
         Private ReadOnly btnAlternos As New Button With {.Name = "btnAlternos", .Text = "Asignar alternos", .Location = New Point(590, 214), .Size = New Size(240, 30)}
         Private ReadOnly btnMovimientos As New Button With {.Name = "btnMovimientos", .Text = "Ver movimientos", .Location = New Point(590, 250), .Size = New Size(240, 30)}
+        Private ReadOnly btnUtilidades As New Button With {.Name = "btnUtilidades", .Text = "Histórico utilidades", .Location = New Point(14, 246), .Size = New Size(240, 30)}
         Private ReadOnly cmbMoneda As New ComboBox With {.Name = "cmbMoneda", .AccessibleName = "Moneda", .DropDownStyle = ComboBoxStyle.DropDownList, .Location = New Point(90, 146), .Width = 70}
 
         ' ---- Imágenes ----
@@ -186,7 +187,7 @@ Namespace SD0502
             Next
             tabPrecio.Controls.AddRange(New Control() {
                 Etiqueta("Precio de costo", 14, 17), txtCosto, Etiqueta("C. ponderado", 14, 49), txtPonderado, Etiqueta("C. promedio", 14, 81), txtPromedio,
-                Etiqueta("Flete", 14, 113), txtFlete, Etiqueta("I.V.A. %", 14, 145), cmbIva, chkConIva, lblCostoNeto, gridPrecios})
+                Etiqueta("Flete", 14, 113), txtFlete, Etiqueta("I.V.A. %", 14, 145), cmbIva, chkConIva, lblCostoNeto, btnUtilidades, gridPrecios})
             gbFacturar.Controls.AddRange(New Control() {chkSinCantidad, chkSinPrecio, chkSinPeso, chkServicio})
             gbOtros.Controls.AddRange(New Control() {chkCanasta, chkNoFacturar, chkNegativos, chkConsignacion, Etiqueta("Moneda", 14, 149), cmbMoneda})
             tabOtros.Controls.AddRange(New Control() {
@@ -245,6 +246,7 @@ Namespace SD0502
             AddHandler btnCodigosBarras.Click, AddressOf CodigosBarras_Clic
             AddHandler btnAlternos.Click, AddressOf Alternos_Clic
             AddHandler btnMovimientos.Click, AddressOf Movimientos_Clic
+            AddHandler btnUtilidades.Click, AddressOf Utilidades_Clic
             AddHandler btnCabys.Click, AddressOf Cabys_Clic
             AddHandler btnEtiqueta.Click, AddressOf Etiqueta_Clic
             AddHandler lblExistencia.LinkClicked, AddressOf Existencia_Clic
@@ -711,6 +713,27 @@ Namespace SD0502
         Private Sub HabilitarEtiqueta()
             btnEtiqueta.Enabled = _articulo IsNot Nothing AndAlso _modo <> ModoFicha.Nuevo
             btnMovimientos.Enabled = btnEtiqueta.Enabled
+            btnUtilidades.Enabled = btnEtiqueta.Enabled
+        End Sub
+
+        ' ---- Histórico de utilidades ----
+
+        ''' <summary>Crea la pantalla de consultas (frmConsultas del REP) para un código. La asigna el módulo.</summary>
+        Public Property AbrirUtilidades As Func(Of String, Form)
+
+        ''' <summary>cmdUtilidades_Click: SD0502REP.ConsultasMod con la consulta 1 filtrada por el artículo.</summary>
+        Private Sub Utilidades_Clic(sender As Object, e As EventArgs)
+            Dim codigo = txtCodigo.Text.Trim()
+            If codigo.Length = 0 OrElse AbrirUtilidades Is Nothing Then Return
+            btnUtilidades.Enabled = False
+            Try
+                Using f = AbrirUtilidades(codigo)
+                    Tema.Aplicar(f, Modulo.TituloModulo)
+                    f.ShowDialog(Me)
+                End Using
+            Finally
+                btnUtilidades.Enabled = True
+            End Try
         End Sub
 
         ' ---- Movimientos ----

@@ -41,7 +41,13 @@ Namespace SD0502
             f.PuedeExistencias = s.Puede("5008")
             f.NombreUsuario = s.Nombre
             f.AbrirMovimientos = Function(codigo) Movimientos(s, codigo)
+            f.AbrirUtilidades = Function(codigo) Consultas(s, 1, codigo)
             Return f
+        End Function
+
+        ''' <summary>SD0502REP.ConsultasMod (frmConsultas): las consultas de posconsultas, con la pedida ya ejecutada.</summary>
+        Public Shared Function Consultas(s As Sesion, consulta As Long, filtro As String) As Form
+            Return New FrmConsultas(New Core.Datos.ConsultasGuardadasRepositorio(s.Fabrica), s.Local, s.DirectorioSdaca, consulta, filtro)
         End Function
 
         ''' <summary>SD0502REP.ConsultaMovimientos (frmVentDetall): movimientos y gráfico del artículo.</summary>
