@@ -89,6 +89,20 @@ Public Class ConfiguracionTests
         End Try
     End Sub
 
+    <Fact>
+    Public Sub Guardar_crea_el_archivo_y_la_carpeta_si_no_existen()
+        Dim carpeta = Path.Combine(Path.GetTempPath(), $"sdaca-{Guid.NewGuid():N}")
+        Dim ruta = Path.Combine(carpeta, "Bin", "sdcnn007.ini")
+        Try
+            ConexionesIni.GuardarPerfil(ruta, "NUEVA", "10.0.0.1", 3306UI, "sdprincipal")
+            ConexionesIni.FijarValor(ruta, "GENERAL", "DEFAULT", "NUEVA")
+            Assert.Equal({"NUEVA", "GENERAL"}, ConexionesIni.LeerSecciones(ruta).ToArray())
+            Assert.Equal("10.0.0.1", ConexionesIni.Leer(ruta).Single().Servidor)
+        Finally
+            If Directory.Exists(carpeta) Then Directory.Delete(carpeta, True)
+        End Try
+    End Sub
+
     <Theory>
     <InlineData("", False)>
     <InlineData("General", False)>

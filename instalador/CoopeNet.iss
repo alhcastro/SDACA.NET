@@ -46,6 +46,11 @@ Name: "es"; MessagesFile: "compiler:Languages\Spanish.isl"
 Name: "escritorio"; Description: "Crear un acceso directo en el escritorio"; GroupDescription: "Accesos directos:"
 Name: "permisos"; Description: "Dar permiso de modificar a los usuarios del equipo sobre la carpeta de SDACA (hace falta para guardar conexiones y para SDACAERP sin elevar)"; GroupDescription: "SDACA:"; Check: HaySdaca
 
+[Dirs]
+; En un equipo sin SDACA la carpeta Bin no existe, y CoopeNet, que corre sin elevar, no puede crearla en Program
+; Files para guardar las conexiones. Se crea aquí con permiso de modificar y se conserva al desinstalar.
+Name: "{code:CarpetaBin}"; Permissions: users-modify; Flags: uninsneveruninstall; Check: FaltaBin
+
 [Files]
 Source: "{#Publicado}\*"; DestDir: "{app}"; Excludes: "*.pdb,*.xml"; Flags: ignoreversion recursesubdirs createallsubdirs
 
@@ -83,13 +88,19 @@ begin
     'CoopeNet usa los mismos perfiles de conexión (sdcnnNNN.ini) y el CONFIG.INI que SDACA ERP. ' +
     'Indique la carpeta Bin de SDACA y haga clic en Siguiente.', False, '');
   PaginaSdaca.Add('Carpeta Bin de SDACA:');
-  PaginaSdaca.Values[0] := GetPreviousData('CarpetaBin', BinPredeterminado);
+  { /BIN="carpeta" en la línea de comandos manda sobre lo recordado: sirve para instalar sin preguntas. }
+  PaginaSdaca.Values[0] := ExpandConstant('{param:BIN|' + GetPreviousData('CarpetaBin', BinPredeterminado) + '}');
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
-  if (CurPageID = PaginaSdaca.ID) and not TieneConexiones(PaginaSdaca.Values[0]) then
+  if CurPageID <> PaginaSdaca.ID then Exit;
+  if not DirExists(PaginaSdaca.Values[0]) then
+    Result := MsgBox('La carpeta ' + PaginaSdaca.Values[0] + ' no existe.' + #13#10#13#10 +
+      'Se creará con permiso de modificar para los usuarios del equipo, y las conexiones se crearán en ella con ' +
+      '"Administrar conexiones". ¿Desea continuar?', mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES
+  else if not TieneConexiones(PaginaSdaca.Values[0]) then
     Result := MsgBox('No se encontró ningún archivo sdcnn*.ini en ' + PaginaSdaca.Values[0] + '.' + #13#10#13#10 +
       'Sin él no habrá perfiles de conexión para elegir al entrar; se podrán crear con "Administrar conexiones". ' +
       '¿Desea continuar con esta carpeta?', mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES;
@@ -118,6 +129,16 @@ end;
 function CarpetaSdaca(Param: String): String;
 begin
   Result := ExtractFileDir(Bin);
+end;
+
+function CarpetaBin(Param: String): String;
+begin
+  Result := Bin;
+end;
+
+function FaltaBin: Boolean;
+begin
+  Result := not DirExists(Bin);
 end;
 
 function HaySdaca: Boolean;

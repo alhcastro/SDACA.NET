@@ -223,7 +223,10 @@ Namespace Configuracion
             Return If(File.Exists(ruta), File.ReadAllText(ruta, CodificacionWindows1252()), "")
         End Function
 
+        ''' <summary>Crea la carpeta si falta: en un equipo sin SDACA todavía no existe la carpeta Bin.</summary>
         Private Shared Sub EscribirTexto(ruta As String, texto As String)
+            Dim carpeta = Path.GetDirectoryName(ruta)
+            If Not String.IsNullOrEmpty(carpeta) Then Directory.CreateDirectory(carpeta)
             File.WriteAllText(ruta, texto, CodificacionWindows1252())
         End Sub
 
