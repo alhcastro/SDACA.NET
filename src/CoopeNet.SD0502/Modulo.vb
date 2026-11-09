@@ -40,7 +40,13 @@ Namespace SD0502
             f.AbrirExistencias = Function(codigo) Existencias(s, codigo)
             f.PuedeExistencias = s.Puede("5008")
             f.NombreUsuario = s.Nombre
+            f.AbrirMovimientos = Function(codigo) Movimientos(s, codigo)
             Return f
+        End Function
+
+        ''' <summary>SD0502REP.ConsultaMovimientos (frmVentDetall): movimientos y gráfico del artículo.</summary>
+        Public Shared Function Movimientos(s As Sesion, codigo As String) As Form
+            Return New FrmMovimientos(New MovimientosArticuloRepositorio(s.Fabrica), New ArticulosRepositorio(s.Fabrica), codigo, s.Local, s.LocalDescripcion, s.Empresa, s.DirectorioSdaca)
         End Function
 
         ''' <summary>FrmMantLocales: existencias del artículo por local.</summary>

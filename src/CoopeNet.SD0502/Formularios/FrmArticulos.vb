@@ -119,6 +119,7 @@ Namespace SD0502
         Private ReadOnly chkNegativos As New CheckBox With {.Name = "chkNegativos", .Text = "Permite negativos", .AutoSize = True, .Location = New Point(14, 82)}
         Private ReadOnly chkConsignacion As New CheckBox With {.Name = "chkConsignacion", .Text = "Consignación", .AutoSize = True, .Location = New Point(14, 110)}
         Private ReadOnly btnAlternos As New Button With {.Name = "btnAlternos", .Text = "Asignar alternos", .Location = New Point(590, 214), .Size = New Size(240, 30)}
+        Private ReadOnly btnMovimientos As New Button With {.Name = "btnMovimientos", .Text = "Ver movimientos", .Location = New Point(590, 250), .Size = New Size(240, 30)}
         Private ReadOnly cmbMoneda As New ComboBox With {.Name = "cmbMoneda", .AccessibleName = "Moneda", .DropDownStyle = ComboBoxStyle.DropDownList, .Location = New Point(90, 146), .Width = 70}
 
         ' ---- Imágenes ----
@@ -191,7 +192,7 @@ Namespace SD0502
             tabOtros.Controls.AddRange(New Control() {
                 Etiqueta("Descuento en compra %", 14, 17), txtDescCompra, Etiqueta("Descuento a aplicar en venta %", 14, 49), txtDescVenta,
                 Etiqueta("Descuento de venta máximo %", 14, 81), txtDescMax, Etiqueta("Otros impuestos %", 14, 113), txtPorcOtros,
-                Etiqueta("Monto de otros impuestos", 14, 145), txtMontoOtros, gbFacturar, gbOtros, btnAlternos})
+                Etiqueta("Monto de otros impuestos", 14, 145), txtMontoOtros, gbFacturar, gbOtros, btnAlternos, btnMovimientos})
             tabImagenes.Controls.AddRange(New Control() {picImagen, lblImgNumero, Etiqueta("Descripción", 590, 44), txtImgDesc,
                 btnImgAnterior, btnImgSiguiente, btnImgNueva, btnImgGuardar, btnImgModificar, btnImgEliminar})
             tabs.TabPages.AddRange({tabDetalle, tabPrecio, tabOtros, tabImagenes})
@@ -243,6 +244,7 @@ Namespace SD0502
             AddHandler btnProveedores.Click, AddressOf Proveedores_Clic
             AddHandler btnCodigosBarras.Click, AddressOf CodigosBarras_Clic
             AddHandler btnAlternos.Click, AddressOf Alternos_Clic
+            AddHandler btnMovimientos.Click, AddressOf Movimientos_Clic
             AddHandler btnCabys.Click, AddressOf Cabys_Clic
             AddHandler btnEtiqueta.Click, AddressOf Etiqueta_Clic
             AddHandler lblExistencia.LinkClicked, AddressOf Existencia_Clic
@@ -708,6 +710,22 @@ Namespace SD0502
 
         Private Sub HabilitarEtiqueta()
             btnEtiqueta.Enabled = _articulo IsNot Nothing AndAlso _modo <> ModoFicha.Nuevo
+            btnMovimientos.Enabled = btnEtiqueta.Enabled
+        End Sub
+
+        ' ---- Movimientos ----
+
+        ''' <summary>Crea la pantalla de movimientos (frmVentDetall del REP) para un código. La asigna el módulo.</summary>
+        Public Property AbrirMovimientos As Func(Of String, Form)
+
+        ''' <summary>cmdMovimientos_Click: SD0502REP.ConsultaMovimientos con el artículo.</summary>
+        Private Sub Movimientos_Clic(sender As Object, e As EventArgs)
+            Dim codigo = txtCodigo.Text.Trim()
+            If codigo.Length = 0 OrElse AbrirMovimientos Is Nothing Then Return
+            Using f = AbrirMovimientos(codigo)
+                Tema.Aplicar(f, Modulo.TituloModulo)
+                f.ShowDialog(Me)
+            End Using
         End Sub
 
         ''' <summary>cmdCodPUK_Click y SD_ETIQ: imprime la etiqueta en PRINTER_ETIQ de CONFIG.INI, sin vista previa.</summary>
