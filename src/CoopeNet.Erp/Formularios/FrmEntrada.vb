@@ -9,7 +9,7 @@ Imports CoopeNet.Core.Seguridad
 Imports CoopeNet.Ui
 
 ''' <summary>
-''' Inicio de sesión. Ofrece los perfiles de sdcnn007.ini (se administran en <see cref="FrmConexiones"/>) y aplica las reglas de
+''' Inicio de sesión. Ofrece los perfiles del sdcnn007.ini de CoopeNet (CarpetaDatos; se administran en <see cref="FrmConexiones"/>) y aplica las reglas de
 ''' <see cref="ServicioEntrada"/>. Migración de SDACAERP\FrmEntrada.frm.
 ''' </summary>
 Partial Public Class FrmEntrada
@@ -185,7 +185,7 @@ Partial Public Class FrmEntrada
         End Try
         If respuesta.Resultado = ResultadoEntrada.Correcto Then
             respuesta.Sesion.Fabrica = fabrica
-            respuesta.Sesion.DirectorioSdaca = If(Directory.GetParent(Path.TrimEndingDirectorySeparator(_directorioIni))?.FullName, _directorioIni)
+            respuesta.Sesion.DirectorioDatos = _directorioIni
             _preferencias.RecordarLocal(LlaveConexion(), local.Local)
             _preferencias.UltimoPerfil = cmbPerfil.Text
             _preferencias.UltimoUsuario = login

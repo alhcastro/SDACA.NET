@@ -44,30 +44,33 @@ Name: "es"; MessagesFile: "compiler:Languages\Spanish.isl"
 
 [Tasks]
 Name: "escritorio"; Description: "Crear un acceso directo en el escritorio"; GroupDescription: "Accesos directos:"
-Name: "permisos"; Description: "Dar permiso de modificar a los usuarios del equipo sobre la carpeta de SDACA (hace falta para guardar conexiones y para SDACAERP sin elevar)"; GroupDescription: "SDACA:"; Check: HaySdaca
 
 [Dirs]
-; En un equipo sin SDACA la carpeta Bin no existe, y CoopeNet, que corre sin elevar, no puede crearla en Program
-; Files para guardar las conexiones. Se crea aquí con permiso de modificar y se conserva al desinstalar.
-Name: "{code:CarpetaBin}"; Permissions: users-modify; Flags: uninsneveruninstall; Check: FaltaBin
+; Los .ini de CoopeNet (conexiones, sdconfig.ini, CONFIG.INI y temp), de todos los usuarios del equipo. CoopeNet
+; corre sin elevar, por eso la carpeta lleva permiso de modificar. Se conserva al desinstalar para no perder las
+; conexiones. CarpetaDatos.Predeterminada en CoopeNet.Core debe apuntar al mismo lugar.
+Name: "{commonappdata}\CoopeNet"; Permissions: users-modify; Flags: uninsneveruninstall
 
 [Files]
 Source: "{#Publicado}\*"; DestDir: "{app}"; Excludes: "*.pdb,*.xml"; Flags: ignoreversion recursesubdirs createallsubdirs
+; La primera vez, CoopeNet empieza con las conexiones y la configuración de SDACA. Nunca reemplaza las suyas ni
+; escribe en la carpeta de SDACA. Si el instalador no las encuentra, CoopeNet intenta lo mismo al iniciar.
+Source: "{code:CarpetaBin}\sdcnn*.ini"; DestDir: "{commonappdata}\CoopeNet"; Flags: external onlyifdoesntexist skipifsourcedoesntexist uninsneveruninstall
+Source: "{code:CarpetaBin}\sdconfig.ini"; DestDir: "{commonappdata}\CoopeNet"; Flags: external onlyifdoesntexist skipifsourcedoesntexist uninsneveruninstall
+Source: "{code:CarpetaSdaca}\CONFIG.INI"; DestDir: "{commonappdata}\CoopeNet"; Flags: external onlyifdoesntexist skipifsourcedoesntexist uninsneveruninstall
 
 [Icons]
-Name: "{autoprograms}\{#Producto}"; Filename: "{app}\{#Ejecutable}"; Parameters: "{code:Parametros}"; WorkingDir: "{app}"
-Name: "{autodesktop}\{#Producto}"; Filename: "{app}\{#Ejecutable}"; Parameters: "{code:Parametros}"; WorkingDir: "{app}"; Tasks: escritorio
+Name: "{autoprograms}\{#Producto}"; Filename: "{app}\{#Ejecutable}"; WorkingDir: "{app}"
+Name: "{autodesktop}\{#Producto}"; Filename: "{app}\{#Ejecutable}"; WorkingDir: "{app}"; Tasks: escritorio
 
 [Run]
-; *S-1-5-32-545 es el grupo Usuarios con cualquier idioma de Windows. /C sigue aunque un archivo esté en uso.
-Filename: "{sys}\icacls.exe"; Parameters: """{code:CarpetaSdaca}"" /grant *S-1-5-32-545:(OI)(CI)M /T /C /Q"; Flags: runhidden waituntilterminated; StatusMsg: "Dando permisos sobre la carpeta de SDACA..."; Tasks: permisos
-Filename: "{app}\{#Ejecutable}"; Parameters: "{code:Parametros}"; Description: "Abrir {#Producto}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#Ejecutable}"; Description: "Abrir {#Producto}"; Flags: nowait postinstall skipifsilent
 
 [Code]
 var
   PaginaSdaca: TInputDirWizardPage;
 
-{ La carpeta de los .ini de SDACA que CoopeNet usa si no recibe -inipath (Programa.DirectorioIni). }
+{ Donde instala SDACA ERP sus .ini (CarpetaDatos.BinSdaca en CoopeNet.Core). }
 function BinPredeterminado: String;
 begin
   Result := ExpandConstant('{commonpf32}\SDACA\Bin');
@@ -83,9 +86,10 @@ end;
 
 procedure InitializeWizard;
 begin
-  PaginaSdaca := CreateInputDirPage(wpSelectDir, 'Carpeta de SDACA',
-    '¿Dónde están los archivos de conexión de SDACA?',
-    'CoopeNet usa los mismos perfiles de conexión (sdcnnNNN.ini) y el CONFIG.INI que SDACA ERP. ' +
+  PaginaSdaca := CreateInputDirPage(wpSelectDir, 'Conexiones de SDACA',
+    '¿De dónde se copian las conexiones la primera vez?',
+    'CoopeNet guarda sus propias conexiones y configuración en ' + ExpandConstant('{commonappdata}\CoopeNet') + '. ' +
+    'Si SDACA ERP está instalado, la primera vez se copian de su carpeta Bin; después cada sistema tiene las suyas. ' +
     'Indique la carpeta Bin de SDACA y haga clic en Siguiente.', False, '');
   PaginaSdaca.Add('Carpeta Bin de SDACA:');
   { /BIN="carpeta" en la línea de comandos manda sobre lo recordado: sirve para instalar sin preguntas. }
@@ -95,15 +99,10 @@ end;
 function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   Result := True;
-  if CurPageID <> PaginaSdaca.ID then Exit;
-  if not DirExists(PaginaSdaca.Values[0]) then
-    Result := MsgBox('La carpeta ' + PaginaSdaca.Values[0] + ' no existe.' + #13#10#13#10 +
-      'Se creará con permiso de modificar para los usuarios del equipo, y las conexiones se crearán en ella con ' +
-      '"Administrar conexiones". ¿Desea continuar?', mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES
-  else if not TieneConexiones(PaginaSdaca.Values[0]) then
+  if (CurPageID = PaginaSdaca.ID) and not TieneConexiones(PaginaSdaca.Values[0]) then
     Result := MsgBox('No se encontró ningún archivo sdcnn*.ini en ' + PaginaSdaca.Values[0] + '.' + #13#10#13#10 +
-      'Sin él no habrá perfiles de conexión para elegir al entrar; se podrán crear con "Administrar conexiones". ' +
-      '¿Desea continuar con esta carpeta?', mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES;
+      'No se copiará ninguna conexión: se crearán en CoopeNet con "Administrar conexiones". ' +
+      '¿Desea continuar?', mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES;
 end;
 
 procedure RegisterPreviousData(PreviousDataKey: Integer);
@@ -111,37 +110,13 @@ begin
   SetPreviousData(PreviousDataKey, 'CarpetaBin', PaginaSdaca.Values[0]);
 end;
 
-function Bin: String;
+function CarpetaBin(Param: String): String;
 begin
   Result := RemoveBackslashUnlessRoot(PaginaSdaca.Values[0]);
 end;
 
-{ Solo hace falta -inipath cuando SDACA no está en la carpeta de siempre. }
-function Parametros(Param: String): String;
-begin
-  if CompareText(Bin, BinPredeterminado) = 0 then
-    Result := ''
-  else
-    Result := '-inipath "' + Bin + '"';
-end;
-
-{ Los permisos van sobre la carpeta de SDACA (la que contiene Bin), como se resolvió el error 75 de SDACAERP. }
+{ CONFIG.INI está en la carpeta de SDACA, la que contiene Bin. }
 function CarpetaSdaca(Param: String): String;
 begin
-  Result := ExtractFileDir(Bin);
-end;
-
-function CarpetaBin(Param: String): String;
-begin
-  Result := Bin;
-end;
-
-function FaltaBin: Boolean;
-begin
-  Result := not DirExists(Bin);
-end;
-
-function HaySdaca: Boolean;
-begin
-  Result := DirExists(Bin) and DirExists(ExtractFileDir(Bin));
+  Result := ExtractFileDir(CarpetaBin(''));
 end;

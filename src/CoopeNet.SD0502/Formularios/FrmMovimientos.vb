@@ -53,14 +53,14 @@ Namespace SD0502
         Private ReadOnly cmbTipo As New ComboBox With {.Name = "cmbTipo", .AccessibleName = "Tipo de gráfico", .DropDownStyle = ComboBoxStyle.DropDownList, .Location = New Point(100, 290), .Width = 156}
         Private ReadOnly grafico As New GraficoSeries With {.Name = "grafico", .Dock = DockStyle.Fill, .Margin = Padding.Empty}
 
-        Public Sub New(repositorio As MovimientosArticuloRepositorio, articulos As ArticulosRepositorio, codigo As String, local As Long, localDescripcion As String, empresa As String, directorioSdaca As String)
+        Public Sub New(repositorio As MovimientosArticuloRepositorio, articulos As ArticulosRepositorio, codigo As String, local As Long, localDescripcion As String, empresa As String, directorioDatos As String)
             _repo = repositorio
             _articulos = articulos
             _codigoInicial = If(codigo, "").Trim()
             _local = local
             _localDescripcion = If(localDescripcion, "")
             _empresa = If(empresa, "")
-            _configIni = IO.Path.Combine(If(directorioSdaca, ""), "CONFIG.INI")
+            _configIni = IO.Path.Combine(If(directorioDatos, ""), "CONFIG.INI")
 
             Text = "Ventas por artículo"
             ClientSize = New Size(960, 640)

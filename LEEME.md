@@ -25,7 +25,7 @@ dotnet test -c Release
 dotnet run --project src\CoopeNet.Erp -c Release
 ```
 
-`CoopeNet.Erp` lee los `.ini` de `C:\Program Files (x86)\SDACA\Bin`. Se cambia con `-inipath <carpeta>`, igual que en SDACAERP.
+`CoopeNet.Erp` tiene sus propios `.ini` en `C:\ProgramData\CoopeNet` (`CarpetaDatos`): las conexiones (`sdcnn007.ini`), `sdconfig.ini`, `CONFIG.INI` y `temp`. No escribe en la carpeta de SDACA. Al iniciar copia de SDACA los que le falten: `sdcnn*.ini` y `sdconfig.ini` de `C:\Program Files (x86)\SDACA\Bin` (otra carpeta con `-inipath <carpeta>`, igual que en SDACAERP) y `CONFIG.INI` de la carpeta de SDACA. Lo que ya tiene no se reemplaza, así que después cada sistema mantiene los suyos.
 
 ## Instalador
 
@@ -38,12 +38,12 @@ Deja `artefactos\instalador\CoopeNet-<versión>-Instalador.exe` (unos 47 MB). Re
 
 - La aplicación va autocontenida, con .NET 8 incluido, para Windows 10 u 11 de 64 bits. No hace falta instalar nada más.
 - Se instala en `C:\Program Files\CoopeNet`, con acceso en el menú Inicio y, si se marca, en el escritorio.
-- Pregunta dónde está la carpeta `Bin` de SDACA. Si no es `C:\Program Files (x86)\SDACA\Bin`, los accesos directos llevan `-inipath`. Si la carpeta no existe (un equipo sin SDACA), la crea con permiso de Modificar para Usuarios y la conserva al desinstalar: ahí "Administrar conexiones" crea el `sdcnnNNN.ini`.
-- La tarea marcada por defecto da permiso de Modificar al grupo Usuarios sobre la carpeta de SDACA. Hace falta para guardar conexiones y `CONFIG.INI`, y para que SDACAERP corra sin elevar (el error 75).
+- Crea `C:\ProgramData\CoopeNet` con permiso de Modificar para el grupo Usuarios, porque CoopeNet corre sin elevar y guarda ahí sus conexiones y su configuración.
+- Pregunta dónde está la carpeta `Bin` de SDACA y, solo si a CoopeNet le faltan, copia de ahí `sdcnn*.ini` y `sdconfig.ini`, y de la carpeta de SDACA `CONFIG.INI`. No escribe ni cambia permisos en la carpeta de SDACA. Sin SDACA, las conexiones se crean con "Administrar conexiones".
 - Si CoopeNet está abierto, pide cerrarlo antes de instalar.
-- Al desinstalar no toca SDACA ni las preferencias de cada usuario (`%LOCALAPPDATA%\SDACA`).
+- Al desinstalar no toca SDACA, ni `C:\ProgramData\CoopeNet` (para no perder las conexiones), ni las preferencias de cada usuario (`%LOCALAPPDATA%\SDACA`).
 
-Instalación desatendida: `CoopeNet-1.0.0-Instalador.exe /VERYSILENT /TASKS="permisos"`. Con `/DIR="..."` cambia la carpeta de CoopeNet y con `/BIN="..."`, la de SDACA.
+Instalación desatendida: `CoopeNet-1.0.1-Instalador.exe /VERYSILENT`. Con `/DIR="..."` cambia la carpeta de CoopeNet y con `/BIN="..."`, la de SDACA de donde se copian las conexiones.
 
 ## Agregar un módulo
 

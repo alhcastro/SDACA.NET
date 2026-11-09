@@ -60,12 +60,12 @@ Namespace SD0502
 
         ''' <param name="consulta">El código que se ejecuta al abrir (iConsulta); 0 para ninguno.</param>
         ''' <param name="filtro">El texto que se busca en la primera columna (iFiltro).</param>
-        Public Sub New(repositorio As ConsultasGuardadasRepositorio, local As Long, directorioSdaca As String, consulta As Long, filtro As String)
+        Public Sub New(repositorio As ConsultasGuardadasRepositorio, local As Long, directorioDatos As String, consulta As Long, filtro As String)
             _repo = repositorio
             _local = local
             _consultaInicial = consulta
             _filtroInicial = If(filtro, "").Trim()
-            _archivoTemporal = Path.Combine(If(directorioSdaca, ""), "temp", "tmpConsulta.txt")
+            _archivoTemporal = Path.Combine(If(directorioDatos, ""), "temp", "tmpConsulta.txt")
 
             Text = "Consultas"
             ClientSize = New Size(1000, 660)

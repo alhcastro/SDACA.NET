@@ -41,9 +41,9 @@ Namespace SD0502
             Return Math.Min(T(252 * (If(codigo, "").Trim().Length + 2)), T(4200))
         End Function
 
-        ''' <summary>INI_Read(SDACADIR\CONFIG.INI, "POS", "PRINTER_ETIQ", la predeterminada).</summary>
-        Public Shared Function Impresora(directorioSdaca As String) As String
-            Dim ruta = IO.Path.Combine(If(directorioSdaca, ""), "CONFIG.INI")
+        ''' <summary>INI_Read(SDACADIR\CONFIG.INI, "POS", "PRINTER_ETIQ", la predeterminada), con el CONFIG.INI de CoopeNet.</summary>
+        Public Shared Function Impresora(directorioDatos As String) As String
+            Dim ruta = IO.Path.Combine(If(directorioDatos, ""), "CONFIG.INI")
             Return ConexionesIni.LeerValor(ruta, "POS", "PRINTER_ETIQ").Trim()
         End Function
 

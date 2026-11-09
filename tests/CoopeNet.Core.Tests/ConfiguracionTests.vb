@@ -90,6 +90,43 @@ Public Class ConfiguracionTests
     End Sub
 
     <Fact>
+    Public Sub La_carpeta_de_datos_copia_de_SDACA_solo_lo_que_falta()
+        Dim raiz = Path.Combine(Path.GetTempPath(), $"coopenet-{Guid.NewGuid():N}")
+        Dim bin = Path.Combine(raiz, "SDACA", "Bin")
+        Dim datos = Path.Combine(raiz, "ProgramData", "CoopeNet")
+        Try
+            Directory.CreateDirectory(bin)
+            File.WriteAllText(Path.Combine(bin, "sdcnn007.ini"), "[SDACA]" & vbCrLf & "SERVIDOR=1.1.1.1" & vbCrLf)
+            File.WriteAllText(Path.Combine(bin, "sdconfig.ini"), "[GENERAL]" & vbCrLf & "IDEstacion=7" & vbCrLf)
+            File.WriteAllText(Path.Combine(raiz, "SDACA", "CONFIG.INI"), "[POS]" & vbCrLf & "MESES=3" & vbCrLf)
+            File.WriteAllText(Path.Combine(bin, "otro.ini"), "")
+
+            Assert.Equal({"sdcnn007.ini", "sdconfig.ini", "CONFIG.INI"}, CarpetaDatos.Preparar(datos, bin).ToArray())
+            Assert.Equal("3", ConexionesIni.LeerValor(Path.Combine(datos, "CONFIG.INI"), "POS", "MESES"))
+            Assert.False(File.Exists(Path.Combine(datos, "otro.ini")))
+
+            ' Lo que CoopeNet ya tiene no se reemplaza, y SDACA no se toca.
+            ConexionesIni.GuardarPerfil(Path.Combine(datos, "sdcnn007.ini"), "PROPIA", "2.2.2.2", 3306UI, "sdprincipal")
+            Assert.Empty(CarpetaDatos.Preparar(datos, bin))
+            Assert.Contains("PROPIA", ConexionesIni.LeerSecciones(Path.Combine(datos, "sdcnn007.ini")))
+            Assert.DoesNotContain("PROPIA", ConexionesIni.LeerSecciones(Path.Combine(bin, "sdcnn007.ini")))
+        Finally
+            If Directory.Exists(raiz) Then Directory.Delete(raiz, True)
+        End Try
+    End Sub
+
+    <Fact>
+    Public Sub Sin_SDACA_solo_crea_la_carpeta()
+        Dim datos = Path.Combine(Path.GetTempPath(), $"coopenet-{Guid.NewGuid():N}")
+        Try
+            Assert.Empty(CarpetaDatos.Preparar(datos, Path.Combine(datos, "no-existe")))
+            Assert.True(Directory.Exists(datos))
+        Finally
+            If Directory.Exists(datos) Then Directory.Delete(datos, True)
+        End Try
+    End Sub
+
+    <Fact>
     Public Sub Guardar_crea_el_archivo_y_la_carpeta_si_no_existen()
         Dim carpeta = Path.Combine(Path.GetTempPath(), $"sdaca-{Guid.NewGuid():N}")
         Dim ruta = Path.Combine(carpeta, "Bin", "sdcnn007.ini")

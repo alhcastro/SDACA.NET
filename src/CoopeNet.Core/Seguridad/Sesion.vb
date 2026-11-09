@@ -24,8 +24,8 @@ Namespace Seguridad
         Public Property Empresa As String = ""
         Public Property Permisos As ISet(Of String) = New HashSet(Of String)()
         Public Property Fabrica As IFabricaConexiones
-        ''' <summary>Conexion.SDACADIR de VB6: la carpeta de SDACA, padre de Bin, donde está CONFIG.INI.</summary>
-        Public Property DirectorioSdaca As String = ""
+        ''' <summary>La carpeta de los .ini de CoopeNet (CarpetaDatos), con CONFIG.INI y temp. Hace de Conexion.SDACADIR de VB6.</summary>
+        Public Property DirectorioDatos As String = ""
 
         ''' <summary>Igual que <c>SD_ValidarPriv(Usuario.Privilegios, requeridos)</c>.</summary>
         Public Function Puede(requeridos As String) As Boolean

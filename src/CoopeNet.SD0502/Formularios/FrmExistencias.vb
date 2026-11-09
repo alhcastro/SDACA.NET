@@ -89,7 +89,7 @@ Namespace SD0502
         Private ReadOnly barra As New BarraComandos With {.Name = "barra", .Modo = ModoBarra.Imprimir, .Location = New Point(428, 562), .Size = New Size(460, 32)}
 
         ''' <param name="codigo">El artículo que se ve en el catálogo; vacío para empezar sin artículo.</param>
-        Public Sub New(repositorio As ExistenciasLocalRepositorio, articulos As ArticulosRepositorio, codigo As String, local As Long, uid As Long, estacion As String, directorioSdaca As String)
+        Public Sub New(repositorio As ExistenciasLocalRepositorio, articulos As ArticulosRepositorio, codigo As String, local As Long, uid As Long, estacion As String, directorioDatos As String)
             _repo = repositorio
             _articulos = articulos
             _datos = repositorio.Principal
@@ -97,7 +97,7 @@ Namespace SD0502
             _local = local
             _uid = uid
             _estacion = If(estacion, "")
-            _configIni = IO.Path.Combine(If(directorioSdaca, ""), "CONFIG.INI")
+            _configIni = IO.Path.Combine(If(directorioDatos, ""), "CONFIG.INI")
 
             Text = "Mantenimiento de existencias en local"
             ClientSize = New Size(900, 606)

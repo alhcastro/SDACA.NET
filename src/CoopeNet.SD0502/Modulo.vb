@@ -36,7 +36,7 @@ Namespace SD0502
         ''' existencias por local, el 5008.
         ''' </summary>
         Public Shared Function Articulos(s As Sesion) As Form
-            Dim f = New FrmArticulos(New ArticulosRepositorio(s.Fabrica), New ImagenesArticuloRepositorio(s.Fabrica), New ProveedoresArticuloRepositorio(s.Fabrica), New CodigosBarrasRepositorio(s.Fabrica), New AlternosArticuloRepositorio(s.Fabrica), New CabysRepositorio(s.Fabrica), s.DirectorioSdaca, s.Local, s.Uid, s.Login, s.Estacion, s.LocalDescripcion, s.Puede("5037"), s.Puede("5056"))
+            Dim f = New FrmArticulos(New ArticulosRepositorio(s.Fabrica), New ImagenesArticuloRepositorio(s.Fabrica), New ProveedoresArticuloRepositorio(s.Fabrica), New CodigosBarrasRepositorio(s.Fabrica), New AlternosArticuloRepositorio(s.Fabrica), New CabysRepositorio(s.Fabrica), s.DirectorioDatos, s.Local, s.Uid, s.Login, s.Estacion, s.LocalDescripcion, s.Puede("5037"), s.Puede("5056"))
             f.AbrirExistencias = Function(codigo) Existencias(s, codigo)
             f.PuedeExistencias = s.Puede("5008")
             f.NombreUsuario = s.Nombre
@@ -47,17 +47,17 @@ Namespace SD0502
 
         ''' <summary>SD0502REP.ConsultasMod (frmConsultas): las consultas de posconsultas, con la pedida ya ejecutada.</summary>
         Public Shared Function Consultas(s As Sesion, consulta As Long, filtro As String) As Form
-            Return New FrmConsultas(New Core.Datos.ConsultasGuardadasRepositorio(s.Fabrica), s.Local, s.DirectorioSdaca, consulta, filtro)
+            Return New FrmConsultas(New Core.Datos.ConsultasGuardadasRepositorio(s.Fabrica), s.Local, s.DirectorioDatos, consulta, filtro)
         End Function
 
         ''' <summary>SD0502REP.ConsultaMovimientos (frmVentDetall): movimientos y gráfico del artículo.</summary>
         Public Shared Function Movimientos(s As Sesion, codigo As String) As Form
-            Return New FrmMovimientos(New MovimientosArticuloRepositorio(s.Fabrica), New ArticulosRepositorio(s.Fabrica), codigo, s.Local, s.LocalDescripcion, s.Empresa, s.DirectorioSdaca)
+            Return New FrmMovimientos(New MovimientosArticuloRepositorio(s.Fabrica), New ArticulosRepositorio(s.Fabrica), codigo, s.Local, s.LocalDescripcion, s.Empresa, s.DirectorioDatos)
         End Function
 
         ''' <summary>FrmMantLocales: existencias del artículo por local.</summary>
         Public Shared Function Existencias(s As Sesion, codigo As String) As Form
-            Return New FrmExistencias(New ExistenciasLocalRepositorio(s.Fabrica), New ArticulosRepositorio(s.Fabrica), codigo, s.Local, s.Uid, s.Estacion, s.DirectorioSdaca)
+            Return New FrmExistencias(New ExistenciasLocalRepositorio(s.Fabrica), New ArticulosRepositorio(s.Fabrica), codigo, s.Local, s.Uid, s.Estacion, s.DirectorioDatos)
         End Function
 
         Public ReadOnly Property Opciones As IReadOnlyList(Of OpcionMenu) Implements IModulo.Opciones

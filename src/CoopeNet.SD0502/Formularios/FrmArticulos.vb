@@ -139,7 +139,7 @@ Namespace SD0502
         Private ReadOnly _codigosBarras As CodigosBarrasRepositorio
         Private ReadOnly _alternos As AlternosArticuloRepositorio
         Private ReadOnly _cabys As CabysRepositorio
-        Private ReadOnly _directorioSdaca As String
+        Private ReadOnly _directorioDatos As String
         ''' <summary>sdtCod: el número de la imagen que se ve; 0 si no hay.</summary>
         Private _imgConsec As Integer
         ''' <summary>El archivo elegido con Nueva que falta guardar.</summary>
@@ -149,14 +149,14 @@ Namespace SD0502
 
         Private ReadOnly barra As New BarraComandos With {.Name = "barra", .Location = New Point(420, 556), .Size = New Size(460, 32)}
 
-        Public Sub New(repositorio As ArticulosRepositorio, imagenes As ImagenesArticuloRepositorio, proveedores As ProveedoresArticuloRepositorio, codigosBarras As CodigosBarrasRepositorio, alternos As AlternosArticuloRepositorio, cabys As CabysRepositorio, directorioSdaca As String, local As Long, uid As Long, login As String, estacion As String, localDescripcion As String, puedeEditar As Boolean, puedeUtilidades As Boolean)
+        Public Sub New(repositorio As ArticulosRepositorio, imagenes As ImagenesArticuloRepositorio, proveedores As ProveedoresArticuloRepositorio, codigosBarras As CodigosBarrasRepositorio, alternos As AlternosArticuloRepositorio, cabys As CabysRepositorio, directorioDatos As String, local As Long, uid As Long, login As String, estacion As String, localDescripcion As String, puedeEditar As Boolean, puedeUtilidades As Boolean)
             _repo = repositorio
             _imagenes = imagenes
             _proveedores = proveedores
             _codigosBarras = codigosBarras
             _alternos = alternos
             _cabys = cabys
-            _directorioSdaca = If(directorioSdaca, "")
+            _directorioDatos = If(directorioDatos, "")
             _local = local
             _uid = uid
             _login = If(login, "")
@@ -756,7 +756,7 @@ Namespace SD0502
             If _articulo Is Nothing Then Return
             Try
                 Using documento As New EtiquetaArticulo(_articulo.CodigoArt, _articulo.Descripcion)
-                    documento.Elegir(EtiquetaArticulo.Impresora(_directorioSdaca))
+                    documento.Elegir(EtiquetaArticulo.Impresora(_directorioDatos))
                     documento.Print()
                 End Using
             Catch ex As Exception When TypeOf ex Is InvalidPrinterException OrElse TypeOf ex Is ComponentModel.Win32Exception

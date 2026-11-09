@@ -26,7 +26,9 @@ Public Module Programa
 
             Dim licencia As New LicenciaCoopepalmares()
             Dim preferencias = Core.Configuracion.Preferencias.Cargar(Core.Configuracion.Preferencias.RutaPredeterminada)
-            Using entrada As New FrmEntrada(licencia, DirectorioIni(argumentos), preferencias)
+            Dim datos = Core.Configuracion.CarpetaDatos.Predeterminada
+            Core.Configuracion.CarpetaDatos.Preparar(datos, BinSdaca(argumentos))
+            Using entrada As New FrmEntrada(licencia, datos, preferencias)
                 If entrada.ShowDialog() <> DialogResult.OK Then Return
                 Dim sesion = entrada.Sesion
                 Dim servicio = entrada.Servicio
@@ -44,11 +46,14 @@ Public Module Programa
         End Using
     End Sub
 
-    ''' <summary>Carpeta de los .ini de VB6. Se cambia con -inipath, igual que en SDACAERP.</summary>
-    Private Function DirectorioIni(argumentos As String()) As String
+    ''' <summary>
+    ''' La carpeta Bin de SDACA, de donde se copian la primera vez las conexiones y la configuración. Se cambia con
+    ''' -inipath, igual que en SDACAERP. CoopeNet trabaja con sus propios .ini (CarpetaDatos).
+    ''' </summary>
+    Private Function BinSdaca(argumentos As String()) As String
         Dim i = Array.FindIndex(argumentos, Function(a) String.Equals(a, "-inipath", StringComparison.OrdinalIgnoreCase))
         If i >= 0 AndAlso i < argumentos.Length - 1 Then Return argumentos(i + 1)
-        Return "C:\Program Files (x86)\SDACA\Bin"
+        Return Core.Configuracion.CarpetaDatos.BinSdaca
     End Function
 
 End Module
