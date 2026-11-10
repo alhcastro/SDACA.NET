@@ -55,7 +55,9 @@ Partial Public Class FrmMenu
             txtBuscar.Visible = False
             MostrarVacio("No hay módulos migrados disponibles para este usuario en este departamento.")
         Else
-            Seleccionar(_modulos(0))
+            ' El módulo de la última vez, si este usuario todavía lo tiene; si no, el primero.
+            Dim anterior = _modulos.Find(Function(m) String.Equals(m.Codigo, preferencias.MenuModulo, StringComparison.OrdinalIgnoreCase))
+            Seleccionar(If(anterior, _modulos(0)))
         End If
     End Sub
 
@@ -88,9 +90,11 @@ Partial Public Class FrmMenu
     End Sub
 
     Private Sub FrmMenu_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
+        If _actual IsNot Nothing Then _preferencias.MenuModulo = _actual.Codigo
         ' Cerrar desde la barra de tareas con la ventana minimizada no dice nada de cómo la quiere.
-        If WindowState = FormWindowState.Minimized Then Return
-        _preferencias.MenuMaximizado = WindowState = FormWindowState.Maximized
+        If WindowState <> FormWindowState.Minimized Then
+            _preferencias.MenuMaximizado = WindowState = FormWindowState.Maximized
+        End If
         _preferencias.Guardar()
     End Sub
 
