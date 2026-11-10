@@ -55,6 +55,14 @@ Namespace SD0502
             Return New FrmMovimientos(New MovimientosArticuloRepositorio(s.Fabrica), New ArticulosRepositorio(s.Fabrica), codigo, s.Local, s.LocalDescripcion, s.Empresa, s.DirectorioDatos)
         End Function
 
+        ''' <summary>
+        ''' Datos personales (opción 055, privilegio 5085): VB6 abre la de SD0001 con clsDP.ShowDP, sin cédula ni
+        ''' acción de módulo, así que es la misma pantalla. Editar e imágenes piden los privilegios de SD0001.
+        ''' </summary>
+        Public Shared Function DatosPersonales(s As Sesion) As Form
+            Return SD0001.Modulo.DatosPersonales(s)
+        End Function
+
         ''' <summary>frmMantArticulos2: precio por unidad de medida y presentación del artículo. Entra con el 5057.</summary>
         Public Shared Function Presentacion(s As Sesion) As Form
             Return New FrmPresentacion(New PresentacionesRepositorio(s.Fabrica), New ArticulosRepositorio(s.Fabrica), s.Local)
@@ -76,6 +84,7 @@ Namespace SD0502
                     OpcionMenu.Grupo("Mantenimiento", "5059",
                         OpcionMenu.Formulario("Catálogo de Artículos", "5009", AddressOf Articulos, IconoMenu.Lista),
                         OpcionMenu.Formulario("Cajas", "5018", AddressOf Cajas, IconoMenu.Caja),
+                        OpcionMenu.Formulario("Datos personales", "5085", AddressOf DatosPersonales, IconoMenu.Editar),
                         OpcionMenu.Formulario("Verificador de Presentación", "5057", AddressOf Presentacion, IconoMenu.Consultar))
                 }
             End Get
