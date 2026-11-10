@@ -468,12 +468,118 @@ Public NotInheritable Class Tema
             Dim control = c
             Dim nombre = temaOscuro
             If control.IsHandleCreated Then
-                SetWindowTheme(control.Handle, If(Oscuro, nombre, "Explorer"), Nothing)
+                AplicarTemaNativo(control, nombre)
             Else
-                AddHandler control.HandleCreated, Sub() SetWindowTheme(control.Handle, If(Oscuro, nombre, "Explorer"), Nothing)
+                AddHandler control.HandleCreated, Sub() AplicarTemaNativo(control, nombre)
             End If
         Next
     End Sub
+
+    ''' <summary>
+    ''' En un combo editable (DropDown) también la caja de texto interna: si no, al desactivarlo Windows la pinta
+    ''' blanca en la oscura.
+    ''' </summary>
+    Private Shared Sub AplicarTemaNativo(control As Control, nombre As String)
+        Dim tema = If(Oscuro, nombre, "Explorer")
+        SetWindowTheme(control.Handle, tema, Nothing)
+        Dim combo = TryCast(control, ComboBox)
+        If combo Is Nothing OrElse combo.DropDownStyle <> ComboBoxStyle.DropDown Then Return
+        Dim info As New COMBOBOXINFO With {.cbSize = Marshal.SizeOf(Of COMBOBOXINFO)()}
+        If Not GetComboBoxInfo(combo.Handle, info) OrElse info.hwndItem = IntPtr.Zero Then Return
+        SetWindowTheme(info.hwndItem, tema, Nothing)
+        If Not CajasCombo.ContainsKey(combo) Then
+            CajasCombo(combo) = New CajaCombo(combo, info.hwndItem)
+            AddHandler combo.HandleDestroyed, Sub() CajasCombo.Remove(combo)
+        End If
+    End Sub
+
+    Private Shared ReadOnly CajasCombo As New Dictionary(Of ComboBox, CajaCombo)
+
+    ''' <summary>
+    ''' La caja de texto de un combo editable. Desactivada, Windows la pinta con sus colores (un bloque claro en la
+    ''' oscura) sin importar BackColor; aquí se pinta con el fondo y el texto tenue del tema.
+    ''' </summary>
+    Private NotInheritable Class CajaCombo
+        Inherits NativeWindow
+
+        Private Const WM_PAINT As Integer = &HF
+        Private Const WM_ERASEBKGND As Integer = &H14
+        Private ReadOnly _combo As ComboBox
+
+        Public Sub New(combo As ComboBox, caja As IntPtr)
+            _combo = combo
+            AssignHandle(caja)
+        End Sub
+
+        Protected Overrides Sub WndProc(ByRef m As Message)
+            If _combo.Enabled OrElse (m.Msg <> WM_PAINT AndAlso m.Msg <> WM_ERASEBKGND) Then
+                MyBase.WndProc(m)
+                Return
+            End If
+            If m.Msg = WM_ERASEBKGND Then
+                m.Result = New IntPtr(1)
+                Return
+            End If
+            Dim ps As PAINTSTRUCT
+            Dim hdc = BeginPaint(Handle, ps)
+            Try
+                Dim area As RECTW
+                GetClientRect(Handle, area)
+                Using g = Graphics.FromHdc(hdc)
+                    Dim r = Rectangle.FromLTRB(area.Left, area.Top, area.Right, area.Bottom)
+                    Using fondo As New SolidBrush(CampoLectura)
+                        g.FillRectangle(fondo, r)
+                    End Using
+                    TextRenderer.DrawText(g, _combo.Text, _combo.Font, r, TextoTenue, TextFormatFlags.Left Or TextFormatFlags.VerticalCenter Or TextFormatFlags.NoPrefix Or TextFormatFlags.SingleLine)
+                End Using
+            Finally
+                EndPaint(Handle, ps)
+            End Try
+            m.Result = IntPtr.Zero
+        End Sub
+    End Class
+
+    <StructLayout(LayoutKind.Sequential)>
+    Private Structure PAINTSTRUCT
+        Public hdc As IntPtr
+        Public fErase As Integer
+        Public rcPaint As RECTW
+        Public fRestore As Integer
+        Public fIncUpdate As Integer
+        <MarshalAs(UnmanagedType.ByValArray, SizeConst:=32)> Public rgbReserved As Byte()
+    End Structure
+
+    <DllImport("user32.dll")>
+    Private Shared Function BeginPaint(hwnd As IntPtr, ByRef ps As PAINTSTRUCT) As IntPtr
+    End Function
+
+    <DllImport("user32.dll")>
+    Private Shared Function EndPaint(hwnd As IntPtr, ByRef ps As PAINTSTRUCT) As Boolean
+    End Function
+
+    <DllImport("user32.dll")>
+    Private Shared Function GetClientRect(hwnd As IntPtr, ByRef r As RECTW) As Boolean
+    End Function
+
+    <StructLayout(LayoutKind.Sequential)>
+    Private Structure RECTW
+        Public Left, Top, Right, Bottom As Integer
+    End Structure
+
+    <StructLayout(LayoutKind.Sequential)>
+    Private Structure COMBOBOXINFO
+        Public cbSize As Integer
+        Public rcItem As RECTW
+        Public rcButton As RECTW
+        Public stateButton As Integer
+        Public hwndCombo As IntPtr
+        Public hwndItem As IntPtr
+        Public hwndList As IntPtr
+    End Structure
+
+    <DllImport("user32.dll")>
+    Private Shared Function GetComboBoxInfo(hwnd As IntPtr, ByRef info As COMBOBOXINFO) As Boolean
+    End Function
 
     Private Shared Iterator Function Descendientes(raiz As Control) As IEnumerable(Of Control)
         For Each c In raiz.Controls.Cast(Of Control)().ToList()
