@@ -69,6 +69,34 @@ Public Class ConfiguracionTests
     End Sub
 
     <Fact>
+    Public Sub Recordar_usuario_como_SD_Procesar_Entrada()
+        Dim ruta = Path.Combine(Path.GetTempPath(), $"sdcnn-{Guid.NewGuid():N}.ini")
+        Try
+            File.WriteAllText(ruta, "[CP]" & vbCrLf & "SERVIDOR=10.0.0.9" & vbCrLf & "USUARIO0=ana" & vbCrLf & "USUARIO1=luis" & vbCrLf & "USUARIO2=" & vbCrLf, ConexionesIni.CodificacionWindows1252())
+            Assert.Equal({"ana", "luis"}, ConexionesIni.Leer(ruta).Single().Usuarios)
+
+            ' Uno nuevo entra de primero; uno que ya estaba conserva su lugar.
+            ConexionesIni.RecordarUsuario(ruta, "CP", "Peña")
+            ConexionesIni.RecordarUsuario(ruta, "cp", "LUIS")
+            Dim perfil = ConexionesIni.Leer(ruta).Single()
+            Assert.Equal({"Peña", "ana", "luis"}, perfil.Usuarios)
+            Assert.Equal("LUIS", perfil.UltimoUsuario)
+            Assert.Equal("10.0.0.9", perfil.Servidor)
+
+            ' Solo caben 10: el más viejo sale.
+            For i = 1 To 10
+                ConexionesIni.RecordarUsuario(ruta, "CP", $"u{i}")
+            Next
+            perfil = ConexionesIni.Leer(ruta).Single()
+            Assert.Equal(ConexionesIni.MaximoUsuarios, perfil.Usuarios.Count)
+            Assert.Equal("u10", perfil.Usuarios(0))
+            Assert.Equal("u1", perfil.Usuarios(9))
+        Finally
+            File.Delete(ruta)
+        End Try
+    End Sub
+
+    <Fact>
     Public Sub Guardar_y_eliminar_perfil_en_archivo()
         Dim ruta = Path.Combine(Path.GetTempPath(), $"sdcnn-{Guid.NewGuid():N}.ini")
         Try

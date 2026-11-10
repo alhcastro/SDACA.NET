@@ -12,7 +12,7 @@ Partial Class FrmEntrada
     Private WithEvents txtServidor As TextBox
     Private WithEvents txtPuerto As TextBox
     Private WithEvents txtCatalogo As TextBox
-    Private WithEvents txtUsuario As TextBox
+    Private WithEvents cmbUsuario As ComboBox
     Private WithEvents txtClave As TextBox
     Private WithEvents cmbLocal As ComboBox
     Private WithEvents btnEntrar As Button
@@ -23,7 +23,11 @@ Partial Class FrmEntrada
         txtServidor = New TextBox() With {.Name = "txtServidor", .AccessibleName = "Servidor"}
         txtPuerto = New TextBox() With {.Name = "txtPuerto", .AccessibleName = "Puerto"}
         txtCatalogo = New TextBox() With {.Name = "txtCatalogo", .AccessibleName = "Catálogo"}
-        txtUsuario = New TextBox() With {.Name = "txtUsuario", .AccessibleName = "Usuario"}
+        ' Se puede escribir otro usuario o elegir uno de los últimos que entraron con la conexión (CmbUsr).
+        cmbUsuario = New ComboBox() With {
+            .Name = "cmbUsuario", .AccessibleName = "Usuario", .DropDownStyle = ComboBoxStyle.DropDown,
+            .AutoCompleteMode = AutoCompleteMode.SuggestAppend, .AutoCompleteSource = AutoCompleteSource.ListItems
+        }
         txtClave = New TextBox() With {.Name = "txtClave", .AccessibleName = "Contraseña", .UseSystemPasswordChar = True}
         cmbLocal = New ComboBox() With {.Name = "cmbLocal", .AccessibleName = "Departamento", .DropDownStyle = ComboBoxStyle.DropDownList}
         btnEntrar = New Button() With {.Name = "btnEntrar", .Text = "&Entrar", .Size = New Size(258, 36), .Margin = New Padding(0, 0, 8, 0)}
@@ -64,7 +68,7 @@ Partial Class FrmEntrada
         }
         columna.Controls.AddRange(New Control() {
             titulo, subtitulo, Campo("Conexión", cmbPerfil, 0), enlaces, pnlConexion,
-            Campo("Usuario", txtUsuario, 6), Campo("Contraseña", txtClave, 6), Campo("Departamento", cmbLocal, 6), botones
+            Campo("Usuario", cmbUsuario, 6), Campo("Contraseña", txtClave, 6), Campo("Departamento", cmbLocal, 6), botones
         })
 
         Controls.Add(columna)

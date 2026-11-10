@@ -30,7 +30,7 @@ Namespace Configuracion
         ''' <summary>Perfil de sdcnn007.ini con el que se entró la última vez; "" si no había perfil.</summary>
         Public Property UltimoPerfil As String = ""
 
-        ''' <summary>Usuario de esa última entrada. El USUARIO= del .ini solo lo actualiza VB6.</summary>
+        ''' <summary>Usuario de esa última entrada en este equipo; el USUARIO= del .ini es el del perfil.</summary>
         Public Property UltimoUsuario As String = ""
 
         Private Sub New(ruta As String)

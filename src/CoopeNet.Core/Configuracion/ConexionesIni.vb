@@ -58,8 +58,9 @@ Namespace Configuracion
                         actual.Puerto = If(UInteger.TryParse(valor, p) AndAlso p > 0UI, p, 3306UI)
                     Case "USUARIO" : actual.UltimoUsuario = valor
                     Case Else
+                        ' VB6 deja en blanco las posiciones que sobran (USUARIO7=).
                         If clave.StartsWith("USUARIO") AndAlso clave.Substring(7).All(AddressOf Char.IsDigit) AndAlso
-                           Not actual.Usuarios.Contains(valor, StringComparer.OrdinalIgnoreCase) Then
+                           valor.Length > 0 AndAlso Not actual.Usuarios.Contains(valor, StringComparer.OrdinalIgnoreCase) Then
                             actual.Usuarios.Add(valor)
                         End If
                 End Select
@@ -122,6 +123,29 @@ Namespace Configuracion
                 Dim primero = Parsear(texto).FirstOrDefault(Function(p) p.Servidor.Length > 0)
                 texto = ConValor(texto, "GENERAL", "DEFAULT", If(primero?.Nombre, ""))
             End If
+            EscribirTexto(ruta, texto)
+        End Sub
+
+        ''' <summary>Cuántos usuarios recientes guarda cada perfil: USUARIO0 a USUARIO9.</summary>
+        Public Const MaximoUsuarios As Integer = 10
+
+        ''' <summary>
+        ''' Recuerda al usuario que acaba de entrar, como SD_Procesar_Entrada y
+        ''' SD_GUARDAR_LISTA_USUARIOS de Module01.bas: queda como USUARIO= del perfil y, si no estaba
+        ''' en la lista, entra de primero. Uno que ya estaba conserva su lugar. La lista guarda 10 y
+        ''' deja en blanco las posiciones que sobran.
+        ''' </summary>
+        Public Shared Sub RecordarUsuario(ruta As String, perfil As String, login As String)
+            login = If(login, "").Trim()
+            If String.IsNullOrWhiteSpace(perfil) OrElse login.Length = 0 Then Return
+            Dim texto = LeerTexto(ruta)
+            Dim actual = Parsear(texto).FirstOrDefault(Function(p) Coincide(p.Nombre, perfil))
+            Dim usuarios = If(actual?.Usuarios.ToList(), New List(Of String)())
+            If Not usuarios.Contains(login, StringComparer.OrdinalIgnoreCase) Then usuarios.Insert(0, login)
+            For i = 0 To MaximoUsuarios - 1
+                texto = ConValor(texto, perfil, $"USUARIO{i}", If(i < usuarios.Count, usuarios(i), ""))
+            Next
+            texto = ConValor(texto, perfil, "USUARIO", login)
             EscribirTexto(ruta, texto)
         End Sub
 
