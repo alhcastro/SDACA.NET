@@ -86,6 +86,18 @@ Namespace SD0502
             Return SD0001.Modulo.AdministrarCodigos(s, "Administración de códigos de cliente")
         End Function
 
+        ''' <summary>
+        ''' FrmMantProveedores (opción 016, privilegio 5022): proveedores del local y sus cuentas de pago. La cuenta
+        ''' contable es obligatoria porque la licencia trae contabilidad (SD1301). Una cédula que no está en Datos
+        ''' personales se registra abriendo esa pantalla.
+        ''' </summary>
+        Public Shared Function Proveedores(s As Sesion) As Form
+            Dim cheques As New Core.Cheques.ChequesRepositorio(s.Fabrica)
+            Return New FrmProveedores(New ProveedoresRepositorio(s.Fabrica), Function() cheques.ObtenerFormatoCuentaAsync(s.Cedula), s.Local, s.Uid, s.Cedula, exigeContable:=True) With {
+                .AbrirDatosPersonales = Function() SD0001.Modulo.DatosPersonales(s)
+            }
+        End Function
+
         ''' <summary>FrmMantLocales: existencias del artículo por local.</summary>
         Public Shared Function Existencias(s As Sesion, codigo As String) As Form
             Return New FrmExistencias(New ExistenciasLocalRepositorio(s.Fabrica), New ArticulosRepositorio(s.Fabrica), codigo, s.Local, s.Uid, s.Estacion, s.DirectorioDatos)
@@ -100,6 +112,7 @@ Namespace SD0502
                         OpcionMenu.Formulario("Datos personales", "5085", AddressOf DatosPersonales, IconoMenu.Editar),
                         OpcionMenu.Formulario("Clientes", "5038", AddressOf Clientes, IconoMenu.Personas),
                         OpcionMenu.Formulario("Código de asociados y clientes", "5038", AddressOf CodigosClientes, IconoMenu.Lista),
+                        OpcionMenu.Formulario("Proveedores", "5022", AddressOf Proveedores, IconoMenu.Entregar),
                         OpcionMenu.Formulario("Verificador de Presentación", "5057", AddressOf Presentacion, IconoMenu.Consultar))
                 }
             End Get

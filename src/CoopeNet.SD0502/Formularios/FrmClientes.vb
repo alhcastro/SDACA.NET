@@ -112,10 +112,10 @@ Namespace SD0502
             })
 
             barra.AlHacerClic = AddressOf Barra_Clic
-            AddHandler btnPrimero.Click, Async Sub() Await NavegarAsync(DireccionCliente.Primero)
-            AddHandler btnAnterior.Click, Async Sub() Await NavegarAsync(DireccionCliente.Anterior)
-            AddHandler btnSiguiente.Click, Async Sub() Await NavegarAsync(DireccionCliente.Siguiente)
-            AddHandler btnUltimo.Click, Async Sub() Await NavegarAsync(DireccionCliente.Ultimo)
+            AddHandler btnPrimero.Click, Async Sub() Await NavegarAsync(DireccionNavegacion.Primero)
+            AddHandler btnAnterior.Click, Async Sub() Await NavegarAsync(DireccionNavegacion.Anterior)
+            AddHandler btnSiguiente.Click, Async Sub() Await NavegarAsync(DireccionNavegacion.Siguiente)
+            AddHandler btnUltimo.Click, Async Sub() Await NavegarAsync(DireccionNavegacion.Ultimo)
             AddHandler btnCliente.Click, Async Sub() Await BuscarPersonaAsync(txtCliente, lblCliente, "Seleccione al cliente", soloFisicas:=False)
             AddHandler btnVendedor.Click, Async Sub() Await BuscarVendedorAsync()
             AddHandler btnContacto1.Click, Async Sub() Await BuscarPersonaAsync(txtContacto1, lblContacto1, "Seleccione al primer contacto", soloFisicas:=True)
@@ -368,7 +368,7 @@ Namespace SD0502
         ' ---- Navegación ----
 
         ''' <summary>CmdMandos_Click.</summary>
-        Private Async Function NavegarAsync(direccion As DireccionCliente) As Task
+        Private Async Function NavegarAsync(direccion As DireccionNavegacion) As Task
             Try
                 Dim id = Await _repo.VecinoAsync(_local, txtCliente.Text, direccion)
                 If id.Length = 0 Then

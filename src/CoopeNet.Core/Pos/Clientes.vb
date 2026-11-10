@@ -16,8 +16,8 @@ Namespace Pos
         NoSujeto = 2
     End Enum
 
-    ''' <summary>Los botones &lt;&lt; &lt; &gt; &gt;&gt; de frmClientes (CmdMandos).</summary>
-    Public Enum DireccionCliente
+    ''' <summary>Los botones &lt;&lt; &lt; &gt; &gt;&gt; de las pantallas con navegación (CmdMandos de frmClientes, SD_Move de FrmMantProveedores).</summary>
+    Public Enum DireccionNavegacion
         Primero
         Anterior
         Siguiente
@@ -124,17 +124,17 @@ Namespace Pos
         ''' identificación. Sin cliente actual, Anterior va al primero y Siguiente al último, como en VB6. Vacío si
         ''' no hay.
         ''' </summary>
-        Public Async Function VecinoAsync(local As Long, actual As String, direccion As DireccionCliente, Optional ct As CancellationToken = Nothing) As Task(Of String)
+        Public Async Function VecinoAsync(local As Long, actual As String, direccion As DireccionNavegacion, Optional ct As CancellationToken = Nothing) As Task(Of String)
             actual = If(actual, "").Trim()
             Dim sql As String
             Select Case direccion
-                Case DireccionCliente.Anterior
+                Case DireccionNavegacion.Anterior
                     sql = If(actual.Length = 0, "SELECT MIN(Cliente) FROM posclientes WHERE local = @local",
                              "SELECT MAX(Cliente) FROM posclientes WHERE local = @local AND Cliente < @actual")
-                Case DireccionCliente.Siguiente
+                Case DireccionNavegacion.Siguiente
                     sql = If(actual.Length = 0, "SELECT MAX(Cliente) FROM posclientes WHERE local = @local",
                              "SELECT MIN(Cliente) FROM posclientes WHERE local = @local AND Cliente > @actual")
-                Case DireccionCliente.Ultimo
+                Case DireccionNavegacion.Ultimo
                     sql = "SELECT MAX(Cliente) FROM posclientes WHERE local = @local"
                 Case Else
                     sql = "SELECT MIN(Cliente) FROM posclientes WHERE local = @local"
