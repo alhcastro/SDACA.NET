@@ -52,7 +52,15 @@ Namespace SD0001
         End Function
 
         Private Shared Function AdminCodigos(s As Sesion) As Form
-            Return New FrmAdminCodigos(New DatosPersonalesRepositorio(s.Fabrica), New CodigosRepositorio(s.Fabrica), s.Uid, s.Local, s.Puede("12"), Function() TiposCodigo(s))
+            Return AdministrarCodigos(s, "Administración de códigos")
+        End Function
+
+        ''' <summary>
+        ''' clsDP.ShowCodigos: el administrador de códigos con el título que pida el módulo (SD0502 lo abre como
+        ''' "Administración de códigos de cliente").
+        ''' </summary>
+        Public Shared Function AdministrarCodigos(s As Sesion, titulo As String) As Form
+            Return New FrmAdminCodigos(New DatosPersonalesRepositorio(s.Fabrica), New CodigosRepositorio(s.Fabrica), s.Uid, s.Local, s.Puede("12"), Function() TiposCodigo(s)) With {.Text = titulo}
         End Function
 
         ''' <summary>Todos entran. Nuevo y Editar abren Datos Personales, que pide sus propios privilegios para editar.</summary>

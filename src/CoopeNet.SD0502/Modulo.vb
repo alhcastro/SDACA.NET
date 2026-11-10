@@ -78,6 +78,14 @@ Namespace SD0502
             Return New FrmClientes(New ClientesRepositorio(s.Fabrica), s.Local)
         End Function
 
+        ''' <summary>
+        ''' Código de asociados y clientes (opción 031, privilegio 5038): VB6 abre el administrador de códigos de
+        ''' SD0001 con clsDP.ShowCodigos, sin cédula, solo con otro título.
+        ''' </summary>
+        Public Shared Function CodigosClientes(s As Sesion) As Form
+            Return SD0001.Modulo.AdministrarCodigos(s, "Administración de códigos de cliente")
+        End Function
+
         ''' <summary>FrmMantLocales: existencias del artículo por local.</summary>
         Public Shared Function Existencias(s As Sesion, codigo As String) As Form
             Return New FrmExistencias(New ExistenciasLocalRepositorio(s.Fabrica), New ArticulosRepositorio(s.Fabrica), codigo, s.Local, s.Uid, s.Estacion, s.DirectorioDatos)
@@ -91,6 +99,7 @@ Namespace SD0502
                         OpcionMenu.Formulario("Cajas", "5018", AddressOf Cajas, IconoMenu.Caja),
                         OpcionMenu.Formulario("Datos personales", "5085", AddressOf DatosPersonales, IconoMenu.Editar),
                         OpcionMenu.Formulario("Clientes", "5038", AddressOf Clientes, IconoMenu.Personas),
+                        OpcionMenu.Formulario("Código de asociados y clientes", "5038", AddressOf CodigosClientes, IconoMenu.Lista),
                         OpcionMenu.Formulario("Verificador de Presentación", "5057", AddressOf Presentacion, IconoMenu.Consultar))
                 }
             End Get
