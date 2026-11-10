@@ -30,7 +30,7 @@ Namespace SD0502
 
         Private Shared ReadOnly Cultura As CultureInfo = CultureInfo.CurrentCulture
 
-        Private ReadOnly gbFiltro As New GroupBox With {.Name = "gbFiltro", .Location = New Point(135, 4), .Size = New Size(287, 52)}
+        Private ReadOnly gbFiltro As New GroupBox With {.Name = "gbFiltro", .Text = "Filtrado", .Location = New Point(135, 4), .Size = New Size(287, 52)}
         Private ReadOnly txtBarras As New TextBox With {.Name = "txtBarras", .AccessibleName = "Código o código de barras", .Location = New Point(46, 20), .Width = 230}
         Private ReadOnly logo As New LogoEmpresa With {.Name = "logoEmpresa", .Location = New Point(433, 8), .Size = New Size(169, 66), .Padding = New Padding(8, 6, 8, 6)}
         Private ReadOnly txtCodigo As New TextBox With {.Name = "txtCodigo", .AccessibleName = "Código del artículo", .ReadOnly = True, .TabStop = False, .Location = New Point(135, 82), .Width = 107}
@@ -57,10 +57,7 @@ Namespace SD0502
 
             lblPrecio.ForeColor = Tema.AcentoOscuro
             lblPrecioUnidad.ForeColor = Tema.AcentoOscuro
-            ' El título va en un rótulo y no en Text, para que crezca con la ventana como los demás.
-            gbFiltro.Controls.AddRange(New Control() {
-                New Label With {.Text = "Filtrado", .AutoSize = True, .Font = New Font("Segoe UI Semibold", 8.25F), .Location = New Point(8, 3)},
-                New Label With {.Text = "Cód.", .AutoSize = True, .Location = New Point(10, 23)}, txtBarras})
+            gbFiltro.Controls.AddRange(New Control() {New Label With {.Text = "Cód.", .AutoSize = True, .Location = New Point(10, 23)}, txtBarras})
             Controls.AddRange(New Control() {
                 gbFiltro, logo,
                 Rotulo("Código artículo", 135, 82), txtCodigo, Rotulo("Desc. corta", 355, 82), txtDescCorta,

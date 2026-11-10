@@ -23,7 +23,12 @@ Public Class GraficoSeries
     Private _series As IReadOnlyList(Of IReadOnlyList(Of Double)) = Array.Empty(Of IReadOnlyList(Of Double))()
     Private _nombres As IReadOnlyList(Of String) = Array.Empty(Of String)()
 
-    Private Shared ReadOnly Colores As Color() = {Tema.Acento, ColorTranslator.FromHtml("#D97706")}
+    ''' <summary>Se lee al pintar, para seguir el modo claro u oscuro.</summary>
+    Private Shared ReadOnly Property Colores As Color()
+        Get
+            Return {Tema.Acento, ColorTranslator.FromHtml("#D97706")}
+        End Get
+    End Property
 
     Public Sub New()
         SetStyle(ControlStyles.AllPaintingInWmPaint Or ControlStyles.OptimizedDoubleBuffer Or ControlStyles.ResizeRedraw Or ControlStyles.UserPaint, True)

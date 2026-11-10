@@ -456,7 +456,7 @@ Namespace SD0502
             For Each t In New TextBox() {txtMin, txtMax, txtRecom}
                 t.ReadOnly = Not editando
                 t.TabStop = editando
-                t.BackColor = If(editando, SystemColors.Window, Tema.CampoLectura)
+                t.BackColor = If(editando, Tema.Superficie, Tema.CampoLectura)
             Next
             txtInicial.ReadOnly = True
             txtInicial.BackColor = Tema.CampoLectura
@@ -588,7 +588,7 @@ Namespace SD0502
                 cmbLinea.Enabled = False
                 cmbLocalizacion.Enabled = False
                 txtInicial.ReadOnly = False
-                txtInicial.BackColor = SystemColors.Window
+                txtInicial.BackColor = Tema.Superficie
                 _inicialAnterior = txtInicial.Text
                 dtpInicial.Enabled = True
                 txtCodigo.Enabled = False

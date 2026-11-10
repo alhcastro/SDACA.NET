@@ -15,6 +15,7 @@ Namespace Configuracion
 
         Private Const LlaveMaximizado As String = "MENU.MAXIMIZADO"
         Private Const LlaveModulo As String = "MENU.MODULO"
+        Private Const LlaveTema As String = "TEMA.MODO"
         Private Const LlavePerfil As String = "CONEXION.PERFIL"
         Private Const LlaveUsuario As String = "CONEXION.USUARIO"
         Private Const PrefijoLocal As String = "LOCAL:"
@@ -26,6 +27,9 @@ Namespace Configuracion
 
         ''' <summary>Código del módulo que estaba abierto en el menú al cerrar, ej. "SD0502"; "" si ninguno.</summary>
         Public Property MenuModulo As String = ""
+
+        ''' <summary>Modo de color: CLARO, OSCURO o SISTEMA; vacío es claro.</summary>
+        Public Property TemaModo As String = ""
 
         ''' <summary>Perfil de sdcnn007.ini con el que se entró la última vez; "" si no había perfil.</summary>
         Public Property UltimoPerfil As String = ""
@@ -71,6 +75,9 @@ Namespace Configuracion
                     Case LlaveModulo
                         MenuModulo = texto
                         Return
+                    Case LlaveTema
+                        TemaModo = texto
+                        Return
                 End Select
             End If
             ' La última "=": la llave lleva datos de conexión y el valor siempre es un número.
@@ -101,6 +108,7 @@ Namespace Configuracion
             Dim lineas As New List(Of String) From {
                 $"{LlaveMaximizado}={If(MenuMaximizado, 1, 0)}",
                 $"{LlaveModulo}={MenuModulo}",
+                $"{LlaveTema}={TemaModo}",
                 $"{LlavePerfil}={UltimoPerfil}",
                 $"{LlaveUsuario}={UltimoUsuario}"
             }

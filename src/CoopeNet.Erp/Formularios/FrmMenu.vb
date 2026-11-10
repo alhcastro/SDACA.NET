@@ -37,6 +37,7 @@ Partial Public Class FrmMenu
         InitializeComponent()
         If preferencias.MenuMaximizado Then WindowState = FormWindowState.Maximized
         Tema.ColorearVentana(Me)
+        PrepararModoColor()
         Text = $"{Tema.Producto} - {licencia.Registro.NombreCorto}"
         lblEmpresa.Text = licencia.Registro.NombreCorto
         lblUsuario.Text = $"{sesion.Nombre} {sesion.Apellidos} ({sesion.Login})".Replace("  ", " ")
@@ -87,6 +88,55 @@ Partial Public Class FrmMenu
     Private Sub FrmMenu_Shown(sender As Object, e As EventArgs) Handles Me.Shown
         ' Sin foco inicial: con foco, el buscador esconde su texto de ayuda.
         ActiveControl = Nothing
+    End Sub
+
+    ' ---- Modo claro u oscuro ----
+
+    Private ReadOnly _menuTema As New ContextMenuStrip With {.Renderer = New RenderizadorMenu(), .ShowImageMargin = False, .ShowCheckMargin = True}
+
+    Private Sub PrepararModoColor()
+        Tema.PintarBoton(btnTema, EstiloBoton.Normal)
+        For Each opcion In {(PreferenciaTema.Claro, "Claro"), (PreferenciaTema.Oscuro, "Oscuro"), (PreferenciaTema.Sistema, "Según Windows")}
+            Dim preferencia = opcion.Item1
+            Dim item As New ToolStripMenuItem(opcion.Item2) With {.Tag = preferencia}
+            AddHandler item.Click, Sub() ElegirModo(preferencia)
+            _menuTema.Items.Add(item)
+        Next
+        AddHandler Tema.Cambio, AddressOf Tema_Cambio
+        AddHandler FormClosed, Sub() RemoveHandler Tema.Cambio, AddressOf Tema_Cambio
+        MostrarModo()
+    End Sub
+
+    Private Sub MostrarModo()
+        btnTema.Text = If(Tema.Oscuro, ChrW(&HE708), ChrW(&HE706)).ToString()
+        _ayuda.SetToolTip(btnTema, "Modo de color: " & If(Tema.Preferencia = PreferenciaTema.Sistema, "según Windows", Tema.Preferencia.ToString().ToLowerInvariant()))
+        For Each item In _menuTema.Items.OfType(Of ToolStripMenuItem)()
+            item.Checked = CType(item.Tag, PreferenciaTema) = Tema.Preferencia
+        Next
+    End Sub
+
+    Private Sub BtnTema_Click(sender As Object, e As EventArgs) Handles btnTema.Click
+        _menuTema.Show(btnTema, New Point(btnTema.Width - _menuTema.PreferredSize.Width, btnTema.Height))
+    End Sub
+
+    Private Sub ElegirModo(preferencia As PreferenciaTema)
+        _preferencias.TemaModo = Tema.TextoPreferencia(preferencia)
+        _preferencias.Guardar()
+        Tema.Establecer(preferencia)
+        MostrarModo()
+    End Sub
+
+    ''' <summary>Repinta el menú y las ventanas abiertas; con "Según Windows" puede llegar desde otro hilo.</summary>
+    Private Sub Tema_Cambio(anterior As Paleta)
+        If InvokeRequired Then
+            BeginInvoke(Sub() Tema_Cambio(anterior))
+            Return
+        End If
+        For Each ventana In Application.OpenForms.Cast(Of Form)().ToList()
+            Tema.Recolorear(ventana, anterior, ocultarTitulo:=ventana IsNot Me)
+        Next
+        Tema.PintarBoton(btnTema, EstiloBoton.Normal)
+        MostrarModo()
     End Sub
 
     Private Sub FrmMenu_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing

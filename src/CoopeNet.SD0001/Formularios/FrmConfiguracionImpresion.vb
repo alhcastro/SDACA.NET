@@ -15,7 +15,12 @@ Namespace SD0001
     Public Class FrmConfiguracionImpresion
         Inherits Form
 
-        Private Shared ReadOnly ColorBorrar As Color = Color.FromArgb(255, 192, 192)
+        ''' <summary>Fila marcada para borrar: el rojo suave del tema, que sigue el modo claro u oscuro.</summary>
+        Private Shared ReadOnly Property ColorBorrar As Color
+            Get
+                Return Tema.PeligroSuave
+            End Get
+        End Property
 
         Private ReadOnly _repo As ConfiguracionImpresion
         Private _documento As String = ""
@@ -215,7 +220,7 @@ Namespace SD0001
             End If
             f.Borrar = Not f.Borrar
             r.DefaultCellStyle.BackColor = If(f.Borrar, ColorBorrar, Color.Empty)
-            r.DefaultCellStyle.ForeColor = If(f.Borrar, SystemColors.GrayText, Color.Empty)
+            r.DefaultCellStyle.ForeColor = If(f.Borrar, Tema.TextoTenue, Color.Empty)
         End Sub
 
         Private Async Sub Refrescar_Clic(sender As Object, e As EventArgs)

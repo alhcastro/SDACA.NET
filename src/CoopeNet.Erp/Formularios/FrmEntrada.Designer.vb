@@ -121,7 +121,8 @@ Partial Class FrmEntrada
     ''' <summary>Rótulo arriba y campo abajo, en un bloque del ancho de la columna.</summary>
     Private Shared Function Campo(texto As String, control As Control, margenInferior As Integer) As Panel
         Dim bloque As New Panel() With {.Size = New Size(AnchoCampos, 50), .Margin = New Padding(0, 0, 0, margenInferior)}
-        bloque.Controls.AddRange(New Control() {Rotulo(texto, 0, 0), Colocar(control, 0, 20, AnchoCampos)})
+        ' El campo primero, para que quede encima del rótulo: si no, el rótulo tapa su borde superior.
+        bloque.Controls.AddRange(New Control() {Colocar(control, 0, 20, AnchoCampos), Rotulo(texto, 0, 0)})
         Return bloque
     End Function
 

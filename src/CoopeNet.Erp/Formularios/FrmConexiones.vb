@@ -94,7 +94,7 @@ Partial Public Class FrmConexiones
     End Sub
 
     Private Sub ActualizarApariencia()
-        txtNombre.BackColor = If(txtNombre.ReadOnly, Tema.CampoLectura, SystemColors.Window)
+        txtNombre.BackColor = If(txtNombre.ReadOnly, Tema.CampoLectura, Tema.Superficie)
     End Sub
 
     Private Sub FrmConexiones_Shown(sender As Object, e As EventArgs) Handles Me.Shown

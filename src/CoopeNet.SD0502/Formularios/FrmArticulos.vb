@@ -209,10 +209,7 @@ Namespace SD0502
             barra.Estado(BotonBarra.Borrar, _puedeEditar)
 
             AddHandler Load, AddressOf Cargar
-            AddHandler Shown, Sub()
-                                  lblPrecioDia.Font = New Font(Font.FontFamily, Font.Size * 1.8F, FontStyle.Bold)
-                                  txtBarras.Focus()
-                              End Sub
+            AddHandler Shown, Sub() txtBarras.Focus()
             AddHandler btnAnterior.Click, Async Sub() Await NavegarAsync(False)
             AddHandler btnSiguiente.Click, Async Sub() Await NavegarAsync(True)
             AddHandler txtBarras.KeyDown, AddressOf Barras_Tecla
@@ -224,6 +221,7 @@ Namespace SD0502
             AddHandler txtDescripcion.Leave, Sub() If txtDescCorta.Text.Trim().Length = 0 AndAlso _modo <> ModoFicha.Normal Then txtDescCorta.Text = Strings.Left(txtDescripcion.Text.Trim(), 20)
             AddHandler gridPrecios.CellEndEdit, AddressOf Precio_Editado
             AddHandler gridPrecios.CellValidating, AddressOf Precio_Validar
+            AddHandler gridPrecios.CellFormatting, AddressOf Precio_Formato
             For Each caja In {txtFlete, txtDescVenta, txtPorcOtros, txtMontoOtros}
                 AddHandler caja.Leave, Sub() RecalcularPrecios()
             Next
@@ -255,32 +253,18 @@ Namespace SD0502
         End Sub
 
         ''' <summary>
-        ''' La ficha se puede agrandar o maximizar (y recuerda cómo quedó): crecen las pestañas, la especificación, los
-        ''' precios y la imagen. Lo de la última fila de Detalle baja con la ventana; lo de la derecha de Imágenes se corre.
+        ''' La ficha se puede agrandar o maximizar (y recuerda cómo quedó). Como SDSizer en VB6, todos los controles
+        ''' crecen y se mueven en proporción, con la letra más grande.
         ''' </summary>
         Private Sub Anclar()
-            lblPrecioDia.Anchor = AnchorStyles.Top Or AnchorStyles.Right
-            tabs.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
-            barra.Anchor = AnchorStyles.Bottom Or AnchorStyles.Right
-            ' Dentro de las pestañas se ancla al cargar: antes, las páginas aún no tienen su tamaño y los controles
-            ' crecerían de más. Va antes que Ventanas.Recordar, que restaura el tamaño también en Load.
-            AddHandler Load, Sub() AnclarPestanas()
+            ' Al cargar, con Tema ya aplicado y antes de que Ventanas.Recordar restaure el último tamaño, también en
+            ' Load: así las medidas base son las de diseño.
+            AddHandler Load, Sub()
+                                 ' Antes de Proporcional, para que tome esta letra como base y la agrande.
+                                 lblPrecioDia.Font = New Font(Font.FontFamily, Font.Size * 1.8F, FontStyle.Bold)
+                                 Proporcional.Aplicar(tabs.Parent)
+                             End Sub
             Ventanas.Recordar(Me)
-        End Sub
-
-        Private Sub AnclarPestanas()
-            txtEspecificacion.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
-            For Each c As Control In tabDetalle.Controls
-                If c.Top >= txtCreadoPor.Top - 5 Then c.Anchor = AnchorStyles.Bottom Or AnchorStyles.Left
-            Next
-            btnCodigosBarras.Anchor = AnchorStyles.Bottom Or AnchorStyles.Right
-            btnEtiqueta.Anchor = AnchorStyles.Bottom Or AnchorStyles.Right
-            btnProveedores.Anchor = AnchorStyles.Bottom Or AnchorStyles.Right
-            gridPrecios.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
-            picImagen.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
-            For Each c As Control In tabImagenes.Controls
-                If c IsNot picImagen Then c.Anchor = AnchorStyles.Top Or AnchorStyles.Right
-            Next
         End Sub
 
         Private Shared Function Etiqueta(texto As String, x As Integer, y As Integer) As Label
@@ -316,8 +300,7 @@ Namespace SD0502
                     gridPrecios.Rows.Add($"{i + 1}. {_catalogos.EtiquetasPrecio(i)}", "0", "0", "0")
                 Next
                 Dim delDia = gridPrecios.Rows(_catalogos.PrecioDelDia - 1)
-                delDia.Cells(colEtiqueta.Index).Style.BackColor = Color.FromArgb(198, 239, 206)
-                delDia.Cells(colEtiqueta.Index).Style.Font = New Font(gridPrecios.Font, FontStyle.Bold)
+                delDia.Cells(colEtiqueta.Index).Style.BackColor = Tema.ExitoSuave
                 Await LlenarAsync(cmbFiltroCat, 1, 0, 0, True)
                 Await LlenarAsync(cmbCat, 1, 0, 0, False)
                 Await SugeridoAsync()
@@ -403,6 +386,24 @@ Namespace SD0502
         Private Function IvaMostrado() As Double
             Return If(chkConIva.Checked, IvaActual(), 0)
         End Function
+
+        Private _negrita As Font
+        Private _negritaDe As Font
+
+        ''' <summary>
+        ''' La etiqueta del precio del día va en negrita. Se calcula al pintar, desde la letra actual de la rejilla,
+        ''' para que crezca con la ventana (Proporcional cambia esa letra).
+        ''' </summary>
+        Private Sub Precio_Formato(sender As Object, e As DataGridViewCellFormattingEventArgs)
+            If e.ColumnIndex <> colEtiqueta.Index OrElse e.RowIndex <> _catalogos.PrecioDelDia - 1 Then Return
+            Dim base = If(gridPrecios.DefaultCellStyle.Font, gridPrecios.Font)
+            If _negritaDe IsNot base Then
+                _negrita?.Dispose()
+                _negrita = New Font(base, FontStyle.Bold)
+                _negritaDe = base
+            End If
+            e.CellStyle.Font = _negrita
+        End Sub
 
         Private Function Celda(fila As Integer, columna As DataGridViewColumn) As Double
             Return Numero(Convert.ToString(gridPrecios.Rows(fila).Cells(columna.Index).Value, Cultura))

@@ -26,6 +26,8 @@ Public Module Programa
 
             Dim licencia As New LicenciaCoopepalmares()
             Dim preferencias = Core.Configuracion.Preferencias.Cargar(Core.Configuracion.Preferencias.RutaPredeterminada)
+            Tema.Establecer(Tema.InterpretarPreferencia(preferencias.TemaModo))
+            Tema.SeguirWindows()
             Dim datos = Core.Configuracion.CarpetaDatos.Predeterminada
             Core.Configuracion.CarpetaDatos.Preparar(datos, BinSdaca(argumentos))
             Using entrada As New FrmEntrada(licencia, datos, preferencias)

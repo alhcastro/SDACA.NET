@@ -12,6 +12,7 @@ Partial Class FrmMenu
     Private lblTitulo As Label
     Private lblResumen As Label
     Private WithEvents txtBuscar As TextBox
+    Private WithEvents btnTema As Button
     Private WithEvents contenido As FlowLayoutPanel
     Private lblVacio As Label
 
@@ -102,9 +103,14 @@ Partial Class FrmMenu
         }
         txtBuscar = New TextBox With {
             .Name = "txtBuscar", .AccessibleName = "Buscar opción", .PlaceholderText = "Buscar opción...",
-            .Location = New Point(574, 30), .Size = New Size(260, 26), .Anchor = AnchorStyles.Top Or AnchorStyles.Right
+            .Location = New Point(574, 30), .Size = New Size(260, 26), .Anchor = AnchorStyles.Top Or AnchorStyles.Right,
+            .BackColor = Tema.Superficie
         }
-        cabecera.Controls.AddRange(New Control() {lblTitulo, lblResumen, txtBuscar})
+        btnTema = New Button With {
+            .Name = "btnTema", .AccessibleName = "Modo de color", .Location = New Point(536, 29), .Size = New Size(30, 28),
+            .Anchor = AnchorStyles.Top Or AnchorStyles.Right, .Font = New Font(Tema.FuenteIconos, 11.0F), .TabStop = True
+        }
+        cabecera.Controls.AddRange(New Control() {lblTitulo, lblResumen, btnTema, txtBuscar})
     End Sub
 
 End Class
