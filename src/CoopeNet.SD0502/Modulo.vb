@@ -6,7 +6,7 @@ Namespace SD0502
 
     ''' <summary>
     ''' SD0502 - POS, Facturación e Inventarios de Coopepalmares. Migración de Fuentes\SD0502(Coopepalmares)\Clase.cls.
-    ''' Por ahora el Catálogo de Artículos, Cajas y el Verificador de Presentación; las demás opciones del Menu_Order se agregan al migrarlas.
+    ''' Por ahora el Catálogo de Artículos, Cajas, Datos personales, Clientes y el Verificador de Presentación; las demás opciones del Menu_Order se agregan al migrarlas.
     ''' </summary>
     Public NotInheritable Class Modulo
         Implements IModulo
@@ -73,6 +73,11 @@ Namespace SD0502
             Return New FrmCajas(New CajasRepositorio(s.Fabrica), s.Local, s.Uid, s.EstacionId, s.Genero)
         End Function
 
+        ''' <summary>frmClientes: las condiciones de venta de cada cliente en el local. Entra con el 5038.</summary>
+        Public Shared Function Clientes(s As Sesion) As Form
+            Return New FrmClientes(New ClientesRepositorio(s.Fabrica), s.Local)
+        End Function
+
         ''' <summary>FrmMantLocales: existencias del artículo por local.</summary>
         Public Shared Function Existencias(s As Sesion, codigo As String) As Form
             Return New FrmExistencias(New ExistenciasLocalRepositorio(s.Fabrica), New ArticulosRepositorio(s.Fabrica), codigo, s.Local, s.Uid, s.Estacion, s.DirectorioDatos)
@@ -85,6 +90,7 @@ Namespace SD0502
                         OpcionMenu.Formulario("Catálogo de Artículos", "5009", AddressOf Articulos, IconoMenu.Lista),
                         OpcionMenu.Formulario("Cajas", "5018", AddressOf Cajas, IconoMenu.Caja),
                         OpcionMenu.Formulario("Datos personales", "5085", AddressOf DatosPersonales, IconoMenu.Editar),
+                        OpcionMenu.Formulario("Clientes", "5038", AddressOf Clientes, IconoMenu.Personas),
                         OpcionMenu.Formulario("Verificador de Presentación", "5057", AddressOf Presentacion, IconoMenu.Consultar))
                 }
             End Get
