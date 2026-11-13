@@ -7,7 +7,7 @@ Namespace SD0502
     ''' <summary>
     ''' SD0502 - POS, Facturación e Inventarios de Coopepalmares. Migración de Fuentes\SD0502(Coopepalmares)\Clase.cls.
     ''' Por ahora el Catálogo de Artículos, Cajas, Datos personales, Clientes, Código de asociados, Proveedores, Mensajes
-    ''' para clientes, Justificaciones, Tipos de moneda, Tipos de tarjeta, Bancos, Tipo de cambio y el Verificador de Presentación; las demás opciones del Menu_Order se agregan al migrarlas.
+    ''' para clientes, Justificaciones, Tipos de moneda, Tipos de tarjeta, Bancos, Tipo de cambio, Tipo de scaner y el Verificador de Presentación; las demás opciones del Menu_Order se agregan al migrarlas.
     ''' </summary>
     Public NotInheritable Class Modulo
         Implements IModulo
@@ -132,6 +132,11 @@ Namespace SD0502
             Return New FrmBancosPos(New BancosPosRepositorio(s.Fabrica), s.Uid, s.Local, s.Genero)
         End Function
 
+        ''' <summary>frmScaner (opción 030, privilegio 5047): si el escáner de esta estación va por teclado o por serial.</summary>
+        Public Shared Function Scaner(s As Sesion) As Form
+            Return New FrmScaner(New ScanerEstacionRepositorio(s.Fabrica), s.EstacionId, s.Estacion, s.Local)
+        End Function
+
         ''' <summary>FrmMantLocales: existencias del artículo por local.</summary>
         Public Shared Function Existencias(s As Sesion, codigo As String) As Form
             Return New FrmExistencias(New ExistenciasLocalRepositorio(s.Fabrica), New ArticulosRepositorio(s.Fabrica), codigo, s.Local, s.Uid, s.Estacion, s.DirectorioDatos)
@@ -152,6 +157,7 @@ Namespace SD0502
                         OpcionMenu.Formulario("Tipos de moneda", "5035", AddressOf TiposMoneda, IconoMenu.Banco),
                         OpcionMenu.Formulario("Tipos de tarjeta", "5040", AddressOf Tarjetas, IconoMenu.Tarjeta),
                         OpcionMenu.Formulario("Bancos", "5045", AddressOf Bancos, IconoMenu.Banco),
+                        OpcionMenu.Formulario("Tipo de scaner", "5047", AddressOf Scaner, IconoMenu.Configurar),
                         OpcionMenu.Formulario("Tipo de cambio", "5046", AddressOf TipoCambio, IconoMenu.Calendario),
                         OpcionMenu.Formulario("Verificador de Presentación", "5057", AddressOf Presentacion, IconoMenu.Consultar))
                 }
