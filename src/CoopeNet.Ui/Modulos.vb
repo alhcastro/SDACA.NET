@@ -47,6 +47,7 @@ Public NotInheritable Class IconoMenu
     Public Const Caja As Char = ChrW(&HE8EF)
     Public Const Personas As Char = ChrW(&HE716)
     Public Const Mensaje As Char = ChrW(&HE8BD)
+    Public Const Tarjeta As Char = ChrW(&HE8C7)
 
     Private Sub New()
     End Sub
