@@ -1,3 +1,4 @@
+Imports System.IO
 Imports CoopeNet.Core.Configuracion
 
 Public Class ConfiguracionTests
@@ -39,6 +40,144 @@ Public Class ConfiguracionTests
     <InlineData(Nothing, 0L)>
     Public Sub Val_como_CLng_Val_de_vb6(texto As String, esperado As Long)
         Assert.Equal(esperado, Vb6.Val(texto))
+    End Sub
+
+    <Fact>
+    Public Sub ConValor_cambia_la_llave_y_respeta_el_resto()
+        Dim texto = ConexionesIni.ConValor(Ini, "cp.local", "Puerto", "3312")
+        Assert.Contains("PUERTO=3312" & vbCrLf & "SERVIDOR=130.0.0.2", texto)
+        Assert.Contains("USER::ROOT= 0", texto)
+        Assert.Contains("CNN=Provider=MSDASQL.1;Password=secreto", texto)
+        Assert.Equal(Ini.Replace("PUERTO= 3306", "PUERTO=3312"), texto)
+    End Sub
+
+    <Fact>
+    Public Sub ConValor_agrega_al_final_de_la_seccion_o_del_archivo()
+        Dim texto = ConexionesIni.ConValor(Ini, "GENERAL", "USUARIO", "alvaro")
+        Assert.Contains("CNN=Provider=MSDASQL.1;Password=secreto" & vbCrLf & "USUARIO=alvaro" & vbCrLf & "[CP DB SERVER PRUEBAS]", texto)
+        texto = ConexionesIni.ConValor(texto, "NUEVA", "SERVIDOR", "10.0.0.1")
+        Assert.EndsWith("SERVIDOR=130.0.0.2" & vbCrLf & "[NUEVA]" & vbCrLf & "SERVIDOR=10.0.0.1" & vbCrLf, texto)
+        Assert.Equal("[A]" & vbCrLf & "X=1" & vbCrLf, ConexionesIni.ConValor("", "A", "X", "1"))
+    End Sub
+
+    <Fact>
+    Public Sub SinSeccion_quita_solo_esa_seccion()
+        Dim texto = ConexionesIni.SinSeccion(Ini, "CP.LOCAL")
+        Assert.Equal({"GENERAL", "CP DB SERVER PRUEBAS"}, ConexionesIni.Secciones(texto).ToArray())
+        Assert.StartsWith("[GENERAL]", texto)
+        Assert.Equal(Ini, ConexionesIni.SinSeccion(Ini, "NO EXISTE"))
+    End Sub
+
+    <Fact>
+    Public Sub Recordar_usuario_como_SD_Procesar_Entrada()
+        Dim ruta = Path.Combine(Path.GetTempPath(), $"sdcnn-{Guid.NewGuid():N}.ini")
+        Try
+            File.WriteAllText(ruta, "[CP]" & vbCrLf & "SERVIDOR=10.0.0.9" & vbCrLf & "USUARIO0=ana" & vbCrLf & "USUARIO1=luis" & vbCrLf & "USUARIO2=" & vbCrLf, ConexionesIni.CodificacionWindows1252())
+            Assert.Equal({"ana", "luis"}, ConexionesIni.Leer(ruta).Single().Usuarios)
+
+            ' Uno nuevo entra de primero; uno que ya estaba conserva su lugar.
+            ConexionesIni.RecordarUsuario(ruta, "CP", "Peña")
+            ConexionesIni.RecordarUsuario(ruta, "cp", "LUIS")
+            Dim perfil = ConexionesIni.Leer(ruta).Single()
+            Assert.Equal({"Peña", "ana", "luis"}, perfil.Usuarios)
+            Assert.Equal("LUIS", perfil.UltimoUsuario)
+            Assert.Equal("10.0.0.9", perfil.Servidor)
+
+            ' Solo caben 10: el más viejo sale.
+            For i = 1 To 10
+                ConexionesIni.RecordarUsuario(ruta, "CP", $"u{i}")
+            Next
+            perfil = ConexionesIni.Leer(ruta).Single()
+            Assert.Equal(ConexionesIni.MaximoUsuarios, perfil.Usuarios.Count)
+            Assert.Equal("u10", perfil.Usuarios(0))
+            Assert.Equal("u1", perfil.Usuarios(9))
+        Finally
+            File.Delete(ruta)
+        End Try
+    End Sub
+
+    <Fact>
+    Public Sub Guardar_y_eliminar_perfil_en_archivo()
+        Dim ruta = Path.Combine(Path.GetTempPath(), $"sdcnn-{Guid.NewGuid():N}.ini")
+        Try
+            File.WriteAllText(ruta, Ini.Replace("DEFAULT=CP DB SERVER PRUEBAS", "DEFAULT=Peñas"), ConexionesIni.CodificacionWindows1252())
+            ConexionesIni.GuardarPerfil(ruta, "Peñas", "10.0.0.9", 3315UI, "sdprincipal")
+            Dim perfil = ConexionesIni.Leer(ruta).Single(Function(p) p.Nombre = "Peñas")
+            Assert.Equal("10.0.0.9", perfil.Servidor)
+            Assert.Equal(3315UI, perfil.Puerto)
+            Assert.Equal("sdprincipal", perfil.Catalogo)
+            Assert.DoesNotContain("Ã", File.ReadAllText(ruta, ConexionesIni.CodificacionWindows1252()))
+
+            ConexionesIni.EliminarPerfil(ruta, "PEÑAS")
+            Assert.DoesNotContain(ConexionesIni.LeerSecciones(ruta), Function(s) s = "Peñas")
+            Assert.Equal("CP.LOCAL", ConexionesIni.LeerValor(ruta, "GENERAL", "DEFAULT"))
+            Assert.Equal("secreto", ConexionesIni.LeerValor(ruta, "GENERAL", "CNN").Split("="c).Last())
+        Finally
+            File.Delete(ruta)
+        End Try
+    End Sub
+
+    <Fact>
+    Public Sub La_carpeta_de_datos_copia_de_SDACA_solo_lo_que_falta()
+        Dim raiz = Path.Combine(Path.GetTempPath(), $"coopenet-{Guid.NewGuid():N}")
+        Dim bin = Path.Combine(raiz, "SDACA", "Bin")
+        Dim datos = Path.Combine(raiz, "ProgramData", "CoopeNet")
+        Try
+            Directory.CreateDirectory(bin)
+            File.WriteAllText(Path.Combine(bin, "sdcnn007.ini"), "[SDACA]" & vbCrLf & "SERVIDOR=1.1.1.1" & vbCrLf)
+            File.WriteAllText(Path.Combine(bin, "sdconfig.ini"), "[GENERAL]" & vbCrLf & "IDEstacion=7" & vbCrLf)
+            File.WriteAllText(Path.Combine(raiz, "SDACA", "CONFIG.INI"), "[POS]" & vbCrLf & "MESES=3" & vbCrLf)
+            File.WriteAllText(Path.Combine(bin, "otro.ini"), "")
+
+            Assert.Equal({"sdcnn007.ini", "sdconfig.ini", "CONFIG.INI"}, CarpetaDatos.Preparar(datos, bin).ToArray())
+            Assert.Equal("3", ConexionesIni.LeerValor(Path.Combine(datos, "CONFIG.INI"), "POS", "MESES"))
+            Assert.False(File.Exists(Path.Combine(datos, "otro.ini")))
+
+            ' Lo que CoopeNet ya tiene no se reemplaza, y SDACA no se toca.
+            ConexionesIni.GuardarPerfil(Path.Combine(datos, "sdcnn007.ini"), "PROPIA", "2.2.2.2", 3306UI, "sdprincipal")
+            Assert.Empty(CarpetaDatos.Preparar(datos, bin))
+            Assert.Contains("PROPIA", ConexionesIni.LeerSecciones(Path.Combine(datos, "sdcnn007.ini")))
+            Assert.DoesNotContain("PROPIA", ConexionesIni.LeerSecciones(Path.Combine(bin, "sdcnn007.ini")))
+        Finally
+            If Directory.Exists(raiz) Then Directory.Delete(raiz, True)
+        End Try
+    End Sub
+
+    <Fact>
+    Public Sub Sin_SDACA_solo_crea_la_carpeta()
+        Dim datos = Path.Combine(Path.GetTempPath(), $"coopenet-{Guid.NewGuid():N}")
+        Try
+            Assert.Empty(CarpetaDatos.Preparar(datos, Path.Combine(datos, "no-existe")))
+            Assert.True(Directory.Exists(datos))
+        Finally
+            If Directory.Exists(datos) Then Directory.Delete(datos, True)
+        End Try
+    End Sub
+
+    <Fact>
+    Public Sub Guardar_crea_el_archivo_y_la_carpeta_si_no_existen()
+        Dim carpeta = Path.Combine(Path.GetTempPath(), $"sdaca-{Guid.NewGuid():N}")
+        Dim ruta = Path.Combine(carpeta, "Bin", "sdcnn007.ini")
+        Try
+            ConexionesIni.GuardarPerfil(ruta, "NUEVA", "10.0.0.1", 3306UI, "sdprincipal")
+            ConexionesIni.FijarValor(ruta, "GENERAL", "DEFAULT", "NUEVA")
+            Assert.Equal({"NUEVA", "GENERAL"}, ConexionesIni.LeerSecciones(ruta).ToArray())
+            Assert.Equal("10.0.0.1", ConexionesIni.Leer(ruta).Single().Servidor)
+        Finally
+            If Directory.Exists(carpeta) Then Directory.Delete(carpeta, True)
+        End Try
+    End Sub
+
+    <Theory>
+    <InlineData("", False)>
+    <InlineData("General", False)>
+    <InlineData("(Predeterminado)", False)>
+    <InlineData("cp.local", False)>
+    <InlineData("A[1]", False)>
+    <InlineData("CENTRO 5", True)>
+    Public Sub Valida_nombres_de_perfil(nombre As String, valido As Boolean)
+        Dim motivo = ConexionesIni.ValidarNombre(nombre, ConexionesIni.Secciones(Ini))
+        Assert.Equal(valido, motivo.Length = 0)
     End Sub
 
 End Class

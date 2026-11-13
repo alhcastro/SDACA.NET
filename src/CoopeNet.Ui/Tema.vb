@@ -18,21 +18,176 @@ Public NotInheritable Class Tema
     Private Sub New()
     End Sub
 
-    Public Shared ReadOnly Marino As Color = ColorTranslator.FromHtml("#102A43")
-    Public Shared ReadOnly MarinoClaro As Color = ColorTranslator.FromHtml("#1E3F5F")
-    Public Shared ReadOnly TextoSobreMarino As Color = ColorTranslator.FromHtml("#B6C6D6")
-    Public Shared ReadOnly Acento As Color = ColorTranslator.FromHtml("#0E7490")
-    Public Shared ReadOnly AcentoOscuro As Color = ColorTranslator.FromHtml("#0B5C73")
-    Public Shared ReadOnly AcentoSuave As Color = ColorTranslator.FromHtml("#E3F1F5")
-    Public Shared ReadOnly Peligro As Color = ColorTranslator.FromHtml("#B42318")
-    Public Shared ReadOnly PeligroSuave As Color = ColorTranslator.FromHtml("#FDECEA")
-    Public Shared ReadOnly Fondo As Color = ColorTranslator.FromHtml("#F2F4F7")
-    Public Shared ReadOnly Superficie As Color = Color.White
-    Public Shared ReadOnly CampoLectura As Color = ColorTranslator.FromHtml("#F5F7FA")
-    Public Shared ReadOnly Borde As Color = ColorTranslator.FromHtml("#D5DCE4")
-    Public Shared ReadOnly BordeFuerte As Color = ColorTranslator.FromHtml("#B8C3CF")
-    Public Shared ReadOnly Texto As Color = ColorTranslator.FromHtml("#1F2933")
-    Public Shared ReadOnly TextoTenue As Color = ColorTranslator.FromHtml("#52667A")
+    Private Shared _paleta As Paleta = Paleta.Clara
+    Private Shared _preferencia As PreferenciaTema = PreferenciaTema.Claro
+
+    ''' <summary>
+    ''' Se dispara al cambiar de modo, con la paleta anterior, para que las ventanas abiertas se vuelvan a pintar
+    ''' (<see cref="Recolorear"/>). Las que se abran después ya nacen con la nueva.
+    ''' </summary>
+    Public Shared Event Cambio(anterior As Paleta)
+
+    ''' <summary>True si se está usando la paleta oscura.</summary>
+    Public Shared ReadOnly Property Oscuro As Boolean
+        Get
+            Return _paleta Is Paleta.Oscura
+        End Get
+    End Property
+
+    Public Shared ReadOnly Property Preferencia As PreferenciaTema
+        Get
+            Return _preferencia
+        End Get
+    End Property
+
+    Public Shared ReadOnly Property Marino As Color
+        Get
+            Return _paleta.Marino
+        End Get
+    End Property
+    Public Shared ReadOnly Property MarinoClaro As Color
+        Get
+            Return _paleta.MarinoClaro
+        End Get
+    End Property
+    Public Shared ReadOnly Property TextoSobreMarino As Color
+        Get
+            Return _paleta.TextoSobreMarino
+        End Get
+    End Property
+    Public Shared ReadOnly Property Acento As Color
+        Get
+            Return _paleta.Acento
+        End Get
+    End Property
+    Public Shared ReadOnly Property AcentoOscuro As Color
+        Get
+            Return _paleta.AcentoOscuro
+        End Get
+    End Property
+    Public Shared ReadOnly Property AcentoSuave As Color
+        Get
+            Return _paleta.AcentoSuave
+        End Get
+    End Property
+    Public Shared ReadOnly Property Peligro As Color
+        Get
+            Return _paleta.Peligro
+        End Get
+    End Property
+    Public Shared ReadOnly Property PeligroSuave As Color
+        Get
+            Return _paleta.PeligroSuave
+        End Get
+    End Property
+    Public Shared ReadOnly Property Fondo As Color
+        Get
+            Return _paleta.Fondo
+        End Get
+    End Property
+    Public Shared ReadOnly Property Superficie As Color
+        Get
+            Return _paleta.Superficie
+        End Get
+    End Property
+    Public Shared ReadOnly Property CampoLectura As Color
+        Get
+            Return _paleta.CampoLectura
+        End Get
+    End Property
+    Public Shared ReadOnly Property Borde As Color
+        Get
+            Return _paleta.Borde
+        End Get
+    End Property
+    Public Shared ReadOnly Property BordeFuerte As Color
+        Get
+            Return _paleta.BordeFuerte
+        End Get
+    End Property
+    Public Shared ReadOnly Property Texto As Color
+        Get
+            Return _paleta.Texto
+        End Get
+    End Property
+    Public Shared ReadOnly Property TextoTenue As Color
+        Get
+            Return _paleta.TextoTenue
+        End Get
+    End Property
+    Public Shared ReadOnly Property Resaltado As Color
+        Get
+            Return _paleta.Resaltado
+        End Get
+    End Property
+    Public Shared ReadOnly Property ExitoSuave As Color
+        Get
+            Return _paleta.ExitoSuave
+        End Get
+    End Property
+
+    ''' <summary>Lee la preferencia guardada (CLARO, OSCURO o SISTEMA); cualquier otro valor es Claro.</summary>
+    Public Shared Function InterpretarPreferencia(texto As String) As PreferenciaTema
+        Select Case If(texto, "").Trim().ToUpperInvariant()
+            Case "OSCURO" : Return PreferenciaTema.Oscuro
+            Case "SISTEMA" : Return PreferenciaTema.Sistema
+            Case Else : Return PreferenciaTema.Claro
+        End Select
+    End Function
+
+    Public Shared Function TextoPreferencia(preferencia As PreferenciaTema) As String
+        Return preferencia.ToString().ToUpperInvariant()
+    End Function
+
+    ''' <summary>
+    ''' Elige la paleta. Con Sistema sigue a Windows (Configuración, Personalización, Colores, modo de aplicación)
+    ''' y cambia solo si Windows cambia mientras el sistema está abierto.
+    ''' </summary>
+    Public Shared Sub Establecer(preferencia As PreferenciaTema)
+        _preferencia = preferencia
+        AplicarPaleta(If(DebeSerOscuro(preferencia), Paleta.Oscura, Paleta.Clara))
+    End Sub
+
+    Private Shared Function DebeSerOscuro(preferencia As PreferenciaTema) As Boolean
+        Select Case preferencia
+            Case PreferenciaTema.Oscuro : Return True
+            Case PreferenciaTema.Sistema : Return WindowsEnOscuro()
+            Case Else : Return False
+        End Select
+    End Function
+
+    Private Shared Sub AplicarPaleta(nueva As Paleta)
+        If nueva Is _paleta Then Return
+        Dim anterior = _paleta
+        _paleta = nueva
+        RaiseEvent Cambio(anterior)
+    End Sub
+
+    Private Shared _escuchandoWindows As Boolean
+
+    ''' <summary>Empieza a seguir los cambios de Windows, para la preferencia Sistema. Llamarlo una vez al arrancar.</summary>
+    Public Shared Sub SeguirWindows()
+        If _escuchandoWindows Then Return
+        _escuchandoWindows = True
+        AddHandler Microsoft.Win32.SystemEvents.UserPreferenceChanged,
+            Sub(s, e)
+                If e.Category = Microsoft.Win32.UserPreferenceCategory.General AndAlso _preferencia = PreferenciaTema.Sistema Then
+                    AplicarPaleta(If(WindowsEnOscuro(), Paleta.Oscura, Paleta.Clara))
+                End If
+            End Sub
+    End Sub
+
+    ''' <summary>AppsUseLightTheme = 0 en el registro del usuario.</summary>
+    Public Shared Function WindowsEnOscuro() As Boolean
+        Try
+            Using llave = Microsoft.Win32.Registry.CurrentUser.OpenSubKey("Software\Microsoft\Windows\CurrentVersion\Themes\Personalize")
+                Dim valor = llave?.GetValue("AppsUseLightTheme")
+                Return valor IsNot Nothing AndAlso Convert.ToInt32(valor) = 0
+            End Using
+        Catch ex As Exception When TypeOf ex Is Security.SecurityException OrElse TypeOf ex Is UnauthorizedAccessException OrElse TypeOf ex Is IO.IOException
+            Return False
+        End Try
+    End Function
 
     ''' <summary>Nombre que ve el usuario. La carpeta de instalación y los .ini siguen siendo SDACA.</summary>
     Public Const Marca As String = "CoopeNet"
@@ -49,6 +204,19 @@ Public NotInheritable Class Tema
     Private Const AlturaMinimaTarjeta As Integer = 12
 
     Private Shared ReadOnly TituloGrupo As New Font(FuenteSemibold, 9.0F)
+    ''' <summary>Títulos de grupo agrandados por <see cref="Proporcional"/>; los demás usan TituloGrupo.</summary>
+    Private Shared ReadOnly TitulosEscalados As New Runtime.CompilerServices.ConditionalWeakTable(Of GroupBox, Font)
+
+    ''' <summary>Agranda el título de un grupo en la proporción dada; 1 lo devuelve a su tamaño.</summary>
+    Friend Shared Sub EscalarTituloGrupo(grupo As GroupBox, escala As Single)
+        Dim anterior As Font = Nothing
+        If TitulosEscalados.TryGetValue(grupo, anterior) Then
+            TitulosEscalados.Remove(grupo)
+            anterior.Dispose()
+        End If
+        If Math.Abs(escala - 1.0F) >= 0.01F Then TitulosEscalados.Add(grupo, New Font(TituloGrupo.FontFamily, TituloGrupo.Size * escala, TituloGrupo.Style))
+        grupo.Invalidate()
+    End Sub
 
     ''' <summary>Viste una pantalla completa y le agrega el encabezado.</summary>
     ''' <param name="modulo">Nombre del módulo, que se muestra sobre el título. Opcional.</param>
@@ -88,6 +256,10 @@ Public NotInheritable Class Tema
         ' Webdings y Consolas cumplen una función; solo se reemplaza la Arial heredada de VB6.
         If c.Font.Name = "Arial" Then c.Font = New Font(FuenteBase, c.Font.Size, c.Font.Style)
 
+        ' Los campos no heredan el color del contenedor: usan el negro de Windows, que no se lee en la oscura.
+        If (TypeOf c Is TextBoxBase OrElse TypeOf c Is ComboBox OrElse TypeOf c Is ListBox OrElse TypeOf c Is NumericUpDown OrElse TypeOf c Is ListView OrElse TypeOf c Is TreeView) AndAlso
+           c.ForeColor = SystemColors.WindowText Then c.ForeColor = Texto
+
         Select Case True
             Case TypeOf c Is Button
                 Dim boton = CType(c, Button)
@@ -99,7 +271,14 @@ Public NotInheritable Class Tema
             Case TypeOf c Is TabPage
                 c.BackColor = Superficie
             Case TypeOf c Is TextBox
-                If CType(c, TextBox).ReadOnly Then c.BackColor = CampoLectura
+                If CType(c, TextBox).ReadOnly Then
+                    c.BackColor = CampoLectura
+                ElseIf c.BackColor = SystemColors.Window Then
+                    c.BackColor = Superficie
+                End If
+            Case TypeOf c Is ComboBox OrElse TypeOf c Is ListBox OrElse TypeOf c Is NumericUpDown OrElse TypeOf c Is ListView OrElse TypeOf c Is TreeView OrElse TypeOf c Is RichTextBox
+                ' Solo el blanco de Windows: un color puesto a propósito (un campo resaltado) se respeta.
+                If c.BackColor = SystemColors.Window Then c.BackColor = Superficie
             Case TypeOf c Is DataGridView
                 VestirRejilla(CType(c, DataGridView))
             Case TypeOf c Is Label
@@ -131,8 +310,9 @@ Public NotInheritable Class Tema
             fondoBoton = Acento
             textoBoton = Color.White
             bordeBoton = Acento
-            encima = AcentoOscuro
-            presionado = AcentoOscuro
+            ' En la oscura AcentoOscuro es claro (para textos): el blanco no se leería encima.
+            encima = If(Oscuro, Mezclar(Acento, Color.Black, 0.18F), AcentoOscuro)
+            presionado = encima
         ElseIf estilo = EstiloBoton.Peligro Then
             textoBoton = Peligro
             bordeBoton = Peligro
@@ -170,7 +350,10 @@ Public NotInheritable Class Tema
             e.Graphics.DrawPath(lapiz, ruta)
         End Using
         If grupo.Text.Length > 0 Then
-            TextRenderer.DrawText(e.Graphics, grupo.Text, TituloGrupo, New Point(grupo.LogicalToDeviceUnits(9), grupo.LogicalToDeviceUnits(3)), grupo.ForeColor, TextFormatFlags.NoPrefix)
+            Dim letra As Font = Nothing
+            If Not TitulosEscalados.TryGetValue(grupo, letra) Then letra = TituloGrupo
+            Dim f = letra.Size / TituloGrupo.Size
+            TextRenderer.DrawText(e.Graphics, grupo.Text, letra, New Point(CInt(grupo.LogicalToDeviceUnits(9) * f), CInt(grupo.LogicalToDeviceUnits(3) * f)), grupo.ForeColor, TextFormatFlags.NoPrefix)
         End If
     End Sub
 
@@ -187,6 +370,10 @@ Public NotInheritable Class Tema
 
     Private Shared Sub VestirRejilla(rejilla As DataGridView)
         rejilla.BackgroundColor = Superficie
+        rejilla.RowHeadersDefaultCellStyle.BackColor = Fondo
+        rejilla.RowHeadersDefaultCellStyle.ForeColor = TextoTenue
+        rejilla.RowHeadersDefaultCellStyle.SelectionBackColor = AcentoSuave
+        rejilla.RowHeadersDefaultCellStyle.SelectionForeColor = Texto
         rejilla.BorderStyle = BorderStyle.None
         rejilla.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
         rejilla.GridColor = Borde
@@ -217,10 +404,12 @@ Public NotInheritable Class Tema
         cuerpo.Controls.AddRange(hijos)
         Dim encabezado As New EncabezadoVentana(formulario, modulo)
         Dim alto = encabezado.Height
+        ' Primero el área y después el mínimo: si el mínimo crece antes y supera el tamaño actual, Windows agranda
+        ' la ventana para cumplirlo y el encabezado se sumaba dos veces.
+        formulario.ClientSize = New Size(formulario.ClientSize.Width, formulario.ClientSize.Height + alto)
         If formulario.MinimumSize.Height > 0 Then
             formulario.MinimumSize = New Size(formulario.MinimumSize.Width, formulario.MinimumSize.Height + alto)
         End If
-        formulario.ClientSize = New Size(formulario.ClientSize.Width, formulario.ClientSize.Height + alto)
         cuerpo.Dock = DockStyle.Fill
         formulario.Controls.Add(cuerpo)
         formulario.Controls.Add(encabezado)
@@ -231,6 +420,8 @@ Public NotInheritable Class Tema
     Public Shared Sub ColorearVentana(formulario As Form, Optional ocultarTitulo As Boolean = False)
         AddHandler formulario.HandleCreated, Sub() TeñirBarra(formulario.Handle, ocultarTitulo)
         If formulario.IsHandleCreated Then TeñirBarra(formulario.Handle, ocultarTitulo)
+        ' Todas las ventanas pasan por aquí, también las que no usan Aplicar (inicio de sesión y menú).
+        If Oscuro Then TemaNativo(formulario)
     End Sub
 
     Private Shared Sub TeñirBarra(ventana As IntPtr, ocultarTitulo As Boolean)
@@ -239,9 +430,215 @@ Public NotInheritable Class Tema
         Const ColorTexto = 36
         Dim marinoNativo = ColorTranslator.ToWin32(Marino)
         Dim colorTitulo = ColorTranslator.ToWin32(If(ocultarTitulo, Marino, Color.White))
+        Const ModoOscuro = 20
+        Dim oscuroNativo = If(Oscuro, 1, 0)
+        DwmSetWindowAttribute(ventana, ModoOscuro, oscuroNativo, 4)
         DwmSetWindowAttribute(ventana, BordeVentana, marinoNativo, 4)
         DwmSetWindowAttribute(ventana, ColorBarra, marinoNativo, 4)
         DwmSetWindowAttribute(ventana, ColorTexto, colorTitulo, 4)
+    End Sub
+
+    ' ---- Modo oscuro en controles de Windows ----
+
+    <DllImport("uxtheme.dll", CharSet:=CharSet.Unicode)>
+    Private Shared Function SetWindowTheme(ventana As IntPtr, aplicacion As String, lista As String) As Integer
+    End Function
+
+    ''' <summary>Mezcla dos colores; <paramref name="cuanto"/> es la parte de <paramref name="b"/>.</summary>
+    Public Shared Function Mezclar(a As Color, b As Color, cuanto As Single) As Color
+        Return Color.FromArgb(CInt(a.R + (CInt(b.R) - a.R) * cuanto), CInt(a.G + (CInt(b.G) - a.G) * cuanto), CInt(a.B + (CInt(b.B) - a.B) * cuanto))
+    End Function
+
+    ''' <summary>
+    ''' Barras de desplazamiento y listas desplegables oscuras (los temas DarkMode_Explorer y DarkMode_CFD de
+    ''' Windows 10 1809 en adelante). En la clara vuelve al tema normal. El calendario de las fechas y los
+    ''' cuadros de mensaje siguen claros: Windows no les da modo oscuro.
+    ''' </summary>
+    Public Shared Sub TemaNativo(raiz As Control)
+        For Each c In Descendientes(raiz)
+            Dim temaOscuro As String = Nothing
+            If TypeOf c Is ComboBox OrElse TypeOf c Is TextBoxBase Then
+                ' CFD también oscurece el borde y el texto de un campo desactivado, que con Explorer queda casi invisible.
+                temaOscuro = "DarkMode_CFD"
+            ElseIf TypeOf c Is DataGridView OrElse TypeOf c Is ScrollBar OrElse TypeOf c Is ListBox OrElse TypeOf c Is ListView OrElse TypeOf c Is TreeView OrElse
+                   (TypeOf c Is ScrollableControl AndAlso CType(c, ScrollableControl).AutoScroll) Then
+                temaOscuro = "DarkMode_Explorer"
+            End If
+            If temaOscuro Is Nothing Then Continue For
+            Dim control = c
+            Dim nombre = temaOscuro
+            If control.IsHandleCreated Then
+                AplicarTemaNativo(control, nombre)
+            Else
+                AddHandler control.HandleCreated, Sub() AplicarTemaNativo(control, nombre)
+            End If
+        Next
+    End Sub
+
+    ''' <summary>
+    ''' En un combo editable (DropDown) también la caja de texto interna: si no, al desactivarlo Windows la pinta
+    ''' blanca en la oscura.
+    ''' </summary>
+    Private Shared Sub AplicarTemaNativo(control As Control, nombre As String)
+        Dim tema = If(Oscuro, nombre, "Explorer")
+        SetWindowTheme(control.Handle, tema, Nothing)
+        Dim combo = TryCast(control, ComboBox)
+        If combo Is Nothing OrElse combo.DropDownStyle <> ComboBoxStyle.DropDown Then Return
+        Dim info As New COMBOBOXINFO With {.cbSize = Marshal.SizeOf(Of COMBOBOXINFO)()}
+        If Not GetComboBoxInfo(combo.Handle, info) OrElse info.hwndItem = IntPtr.Zero Then Return
+        SetWindowTheme(info.hwndItem, tema, Nothing)
+        If Not CajasCombo.ContainsKey(combo) Then
+            CajasCombo(combo) = New CajaCombo(combo, info.hwndItem)
+            AddHandler combo.HandleDestroyed, Sub() CajasCombo.Remove(combo)
+        End If
+    End Sub
+
+    Private Shared ReadOnly CajasCombo As New Dictionary(Of ComboBox, CajaCombo)
+
+    ''' <summary>
+    ''' La caja de texto de un combo editable. Desactivada, Windows la pinta con sus colores (un bloque claro en la
+    ''' oscura) sin importar BackColor; aquí se pinta con el fondo y el texto tenue del tema.
+    ''' </summary>
+    Private NotInheritable Class CajaCombo
+        Inherits NativeWindow
+
+        Private Const WM_PAINT As Integer = &HF
+        Private Const WM_ERASEBKGND As Integer = &H14
+        Private ReadOnly _combo As ComboBox
+
+        Public Sub New(combo As ComboBox, caja As IntPtr)
+            _combo = combo
+            AssignHandle(caja)
+        End Sub
+
+        Protected Overrides Sub WndProc(ByRef m As Message)
+            If _combo.Enabled OrElse (m.Msg <> WM_PAINT AndAlso m.Msg <> WM_ERASEBKGND) Then
+                MyBase.WndProc(m)
+                Return
+            End If
+            If m.Msg = WM_ERASEBKGND Then
+                m.Result = New IntPtr(1)
+                Return
+            End If
+            Dim ps As PAINTSTRUCT
+            Dim hdc = BeginPaint(Handle, ps)
+            Try
+                Dim area As RECTW
+                GetClientRect(Handle, area)
+                Using g = Graphics.FromHdc(hdc)
+                    Dim r = Rectangle.FromLTRB(area.Left, area.Top, area.Right, area.Bottom)
+                    Using fondo As New SolidBrush(CampoLectura)
+                        g.FillRectangle(fondo, r)
+                    End Using
+                    TextRenderer.DrawText(g, _combo.Text, _combo.Font, r, TextoTenue, TextFormatFlags.Left Or TextFormatFlags.VerticalCenter Or TextFormatFlags.NoPrefix Or TextFormatFlags.SingleLine)
+                End Using
+            Finally
+                EndPaint(Handle, ps)
+            End Try
+            m.Result = IntPtr.Zero
+        End Sub
+    End Class
+
+    <StructLayout(LayoutKind.Sequential)>
+    Private Structure PAINTSTRUCT
+        Public hdc As IntPtr
+        Public fErase As Integer
+        Public rcPaint As RECTW
+        Public fRestore As Integer
+        Public fIncUpdate As Integer
+        <MarshalAs(UnmanagedType.ByValArray, SizeConst:=32)> Public rgbReserved As Byte()
+    End Structure
+
+    <DllImport("user32.dll")>
+    Private Shared Function BeginPaint(hwnd As IntPtr, ByRef ps As PAINTSTRUCT) As IntPtr
+    End Function
+
+    <DllImport("user32.dll")>
+    Private Shared Function EndPaint(hwnd As IntPtr, ByRef ps As PAINTSTRUCT) As Boolean
+    End Function
+
+    <DllImport("user32.dll")>
+    Private Shared Function GetClientRect(hwnd As IntPtr, ByRef r As RECTW) As Boolean
+    End Function
+
+    <StructLayout(LayoutKind.Sequential)>
+    Private Structure RECTW
+        Public Left, Top, Right, Bottom As Integer
+    End Structure
+
+    <StructLayout(LayoutKind.Sequential)>
+    Private Structure COMBOBOXINFO
+        Public cbSize As Integer
+        Public rcItem As RECTW
+        Public rcButton As RECTW
+        Public stateButton As Integer
+        Public hwndCombo As IntPtr
+        Public hwndItem As IntPtr
+        Public hwndList As IntPtr
+    End Structure
+
+    <DllImport("user32.dll")>
+    Private Shared Function GetComboBoxInfo(hwnd As IntPtr, ByRef info As COMBOBOXINFO) As Boolean
+    End Function
+
+    Private Shared Iterator Function Descendientes(raiz As Control) As IEnumerable(Of Control)
+        For Each c In raiz.Controls.Cast(Of Control)().ToList()
+            Yield c
+            For Each nieto In Descendientes(c)
+                Yield nieto
+            Next
+        Next
+    End Function
+
+    Private Shared ReadOnly SerializaFondo As Reflection.MethodInfo = GetType(Control).GetMethod("ShouldSerializeBackColor", Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance)
+    Private Shared ReadOnly SerializaTexto As Reflection.MethodInfo = GetType(Control).GetMethod("ShouldSerializeForeColor", Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance)
+
+    ''' <summary>True si el color se puso a propósito y no se hereda del contenedor.</summary>
+    Private Shared Function Propio(c As Control, metodo As Reflection.MethodInfo, color As Color, delPadre As Color) As Boolean
+        If metodo IsNot Nothing Then Return CBool(metodo.Invoke(c, Nothing))
+        Return c.Parent Is Nothing OrElse color <> delPadre
+    End Function
+
+    Private Shared Function Traducir(color As Color, desde As Color(), hacia As Color()) As Color
+        For i = 0 To desde.Length - 1
+            If color.ToArgb() = desde(i).ToArgb() Then Return hacia(i)
+        Next
+        Return color
+    End Function
+
+    ''' <summary>
+    ''' Vuelve a pintar una ventana abierta con la paleta actual: cambia cada color de la paleta anterior por el
+    ''' mismo de la nueva, repinta los botones, las rejillas y la barra de título. El logo y la vista del cheque,
+    ''' que imitan papel, quedan blancos.
+    ''' </summary>
+    Public Shared Sub Recolorear(formulario As Form, anterior As Paleta, Optional ocultarTitulo As Boolean = False)
+        Dim fondosAntes = anterior.Fondos()
+        Dim fondosAhora = _paleta.Fondos()
+        Dim textosAntes = anterior.Textos()
+        Dim textosAhora = _paleta.Textos()
+        formulario.SuspendLayout()
+        formulario.BackColor = Traducir(formulario.BackColor, fondosAntes, fondosAhora)
+        formulario.ForeColor = Traducir(formulario.ForeColor, textosAntes, textosAhora)
+        For Each c In Descendientes(formulario).ToList()
+            If TypeOf c Is LogoEmpresa OrElse c.Name = ControlExcluido OrElse (c.Parent IsNot Nothing AndAlso c.Parent.Name = ControlExcluido) Then Continue For
+            If Propio(c, SerializaFondo, c.BackColor, If(c.Parent?.BackColor, Color.Empty)) Then c.BackColor = Traducir(c.BackColor, fondosAntes, fondosAhora)
+            If Propio(c, SerializaTexto, c.ForeColor, If(c.Parent?.ForeColor, Color.Empty)) Then c.ForeColor = Traducir(c.ForeColor, textosAntes, textosAhora)
+            Dim enlace = TryCast(c, LinkLabel)
+            If enlace IsNot Nothing Then
+                enlace.LinkColor = Traducir(enlace.LinkColor, textosAntes, textosAhora)
+                enlace.ActiveLinkColor = Traducir(enlace.ActiveLinkColor, textosAntes, textosAhora)
+                enlace.VisitedLinkColor = Traducir(enlace.VisitedLinkColor, textosAntes, textosAhora)
+            End If
+            If c.GetType() Is GetType(Button) AndAlso CType(c, Button).FlatStyle = FlatStyle.Flat Then PintarBoton(CType(c, Button), EstiloDe(CType(c, Button)))
+            Dim barra = TryCast(c, BarraComandos)
+            If barra IsNot Nothing Then barra.Repintar()
+            Dim rejilla = TryCast(c, DataGridView)
+            If rejilla IsNot Nothing Then VestirRejilla(rejilla)
+        Next
+        TemaNativo(formulario)
+        If formulario.IsHandleCreated Then TeñirBarra(formulario.Handle, ocultarTitulo)
+        formulario.ResumeLayout(True)
+        formulario.Invalidate(True)
     End Sub
 
     <DllImport("dwmapi.dll")>

@@ -154,6 +154,13 @@ Public Class BarraComandos
         Next
     End Sub
 
+    ''' <summary>Vuelve a pintar los botones con la paleta actual, al cambiar de modo claro u oscuro.</summary>
+    Friend Sub Repintar()
+        For Each b In _botones
+            Tema.PintarBoton(b, EstiloDe(CType(b.Tag, BotonBarra)))
+        Next
+    End Sub
+
     Private Shared Function EstiloDe(boton As BotonBarra) As EstiloBoton
         Select Case boton
             Case BotonBarra.Guardar : Return EstiloBoton.Primario

@@ -54,6 +54,29 @@ Public Class PreferenciasTests
     End Sub
 
     <Fact>
+    Public Sub Guarda_y_recupera_el_modulo_del_menu()
+        Dim p = Preferencias.Cargar(Ruta)
+        Assert.Equal("", p.MenuModulo)
+        p.MenuModulo = "SD0502"
+        p.Guardar()
+
+        Assert.Equal("SD0502", Preferencias.Cargar(Ruta).MenuModulo)
+    End Sub
+
+    <Fact>
+    Public Sub Guarda_y_recupera_el_modo_de_color()
+        Dim p = Preferencias.Cargar(Ruta)
+        Assert.Equal("", p.TemaModo)
+        p.TemaModo = "OSCURO"
+        p.MenuModulo = "SD0502"
+        p.Guardar()
+
+        Dim leidas = Preferencias.Cargar(Ruta)
+        Assert.Equal("OSCURO", leidas.TemaModo)
+        Assert.Equal("SD0502", leidas.MenuModulo)
+    End Sub
+
+    <Fact>
     Public Sub El_usuario_no_distingue_mayusculas()
         Dim p = Preferencias.Cargar(Ruta)
         p.RecordarLocal("servidor|3306|sdprincipal|Ana", 5)

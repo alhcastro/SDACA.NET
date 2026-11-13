@@ -9,6 +9,11 @@ Public NotInheritable Class Mensajes
                         MessageBoxButtons.OK, MessageBoxIcon.Information)
     End Sub
 
+    Public Shared Sub NoPrivilegio(nombreUsuario As String, titulo As String)
+        MessageBox.Show($"El usuario {nombreUsuario} no tiene suficientes privilegios para accesar a esta opción.", titulo,
+                        MessageBoxButtons.OK, MessageBoxIcon.Information)
+    End Sub
+
     Public Shared Sub NoGuardo(descripcion As String, procedimiento As String, titulo As String)
         Dim mensaje = "TRANSACCION NO EJECUTADA" & vbCrLf & "EL SISTEMA A DETECTADO LA SIGUIENTE EXCEPCION:"
         If descripcion.Length > 0 Then mensaje &= vbCrLf & "DESCRIPCION: " & descripcion

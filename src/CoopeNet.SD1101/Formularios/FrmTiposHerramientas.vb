@@ -145,11 +145,11 @@ Namespace SD1101
         End Function
 
         Private Sub TxtDescripcion_Enter(sender As Object, e As EventArgs) Handles txtDescripcion.Enter
-            txtDescripcion.BackColor = SystemColors.Info
+            txtDescripcion.BackColor = Tema.Resaltado
         End Sub
 
         Private Sub TxtDescripcion_Leave(sender As Object, e As EventArgs) Handles txtDescripcion.Leave
-            txtDescripcion.BackColor = SystemColors.Window
+            txtDescripcion.BackColor = Tema.Superficie
             txtDescripcion.Text = txtDescripcion.Text.ToUpper()
         End Sub
 

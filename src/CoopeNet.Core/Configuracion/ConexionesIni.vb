@@ -16,12 +16,12 @@ Namespace Configuracion
     End Class
 
     ''' <summary>
-    ''' Lee el conexiones.ini que usa hoy el menú VB6, para que la versión .NET ofrezca los
-    ''' mismos perfiles sin configurar nada aparte.
+    ''' Lee y escribe el sdcnnNNN.ini que usa hoy el menú VB6, para que las dos versiones compartan
+    ''' los mismos perfiles. Escribe en Windows-1252 y deja intactas las llaves que no toca.
     ''' </summary>
     ''' <remarks>
-    ''' La sección [GENERAL] no se lee a propósito: su clave CNN guarda una contraseña en texto
-    ''' plano. Las contraseñas en .NET se guardan con <see cref="Secretos"/>.
+    ''' La sección [GENERAL] no se lee como perfil a propósito: su clave CNN guarda una contraseña en
+    ''' texto plano. Las contraseñas nunca se escriben en este archivo.
     ''' </remarks>
     Public NotInheritable Class ConexionesIni
 
@@ -58,8 +58,9 @@ Namespace Configuracion
                         actual.Puerto = If(UInteger.TryParse(valor, p) AndAlso p > 0UI, p, 3306UI)
                     Case "USUARIO" : actual.UltimoUsuario = valor
                     Case Else
+                        ' VB6 deja en blanco las posiciones que sobran (USUARIO7=).
                         If clave.StartsWith("USUARIO") AndAlso clave.Substring(7).All(AddressOf Char.IsDigit) AndAlso
-                           Not actual.Usuarios.Contains(valor, StringComparer.OrdinalIgnoreCase) Then
+                           valor.Length > 0 AndAlso Not actual.Usuarios.Contains(valor, StringComparer.OrdinalIgnoreCase) Then
                             actual.Usuarios.Add(valor)
                         End If
                 End Select
@@ -88,6 +89,170 @@ Namespace Configuracion
             Next
             Return ""
         End Function
+
+        ''' <summary>Nombres de todas las secciones del archivo, incluidas [GENERAL] y [USUARIOS].</summary>
+        Public Shared Function LeerSecciones(ruta As String) As IReadOnlyList(Of String)
+            If Not File.Exists(ruta) Then Return Array.Empty(Of String)()
+            Return Secciones(File.ReadAllText(ruta, CodificacionWindows1252()))
+        End Function
+
+        Public Shared Function Secciones(texto As String) As IReadOnlyList(Of String)
+            Return PartirLineas(texto).Select(AddressOf NombreSeccion).Where(Function(n) n IsNot Nothing).ToList()
+        End Function
+
+        ''' <summary>
+        ''' Guarda un perfil igual que <c>SD_Perfil_Guardar_Valores</c> de Module01.bas: solo
+        ''' catálogo, puerto y servidor. Las demás llaves del perfil (USUARIO, USER::) se conservan.
+        ''' La contraseña no se guarda, tampoco la guardaba el original.
+        ''' </summary>
+        Public Shared Sub GuardarPerfil(ruta As String, nombre As String, servidor As String, puerto As UInteger, catalogo As String)
+            Dim texto = LeerTexto(ruta)
+            texto = ConValor(texto, nombre, "CATALOGO", catalogo)
+            texto = ConValor(texto, nombre, "PUERTO", puerto.ToString())
+            texto = ConValor(texto, nombre, "SERVIDOR", servidor)
+            EscribirTexto(ruta, texto)
+        End Sub
+
+        ''' <summary>
+        ''' Quita la sección del perfil, como MnuEli_Click de FrmConfigurarServidor. Si era la
+        ''' predeterminada, pasa a serlo el primer perfil que quede (o ninguno).
+        ''' </summary>
+        Public Shared Sub EliminarPerfil(ruta As String, nombre As String)
+            Dim texto = SinSeccion(LeerTexto(ruta), nombre)
+            If String.Equals(ValorDe(texto, "GENERAL", "DEFAULT"), nombre, StringComparison.OrdinalIgnoreCase) Then
+                Dim primero = Parsear(texto).FirstOrDefault(Function(p) p.Servidor.Length > 0)
+                texto = ConValor(texto, "GENERAL", "DEFAULT", If(primero?.Nombre, ""))
+            End If
+            EscribirTexto(ruta, texto)
+        End Sub
+
+        ''' <summary>Cuántos usuarios recientes guarda cada perfil: USUARIO0 a USUARIO9.</summary>
+        Public Const MaximoUsuarios As Integer = 10
+
+        ''' <summary>
+        ''' Recuerda al usuario que acaba de entrar, como SD_Procesar_Entrada y
+        ''' SD_GUARDAR_LISTA_USUARIOS de Module01.bas: queda como USUARIO= del perfil y, si no estaba
+        ''' en la lista, entra de primero. Uno que ya estaba conserva su lugar. La lista guarda 10 y
+        ''' deja en blanco las posiciones que sobran.
+        ''' </summary>
+        Public Shared Sub RecordarUsuario(ruta As String, perfil As String, login As String)
+            login = If(login, "").Trim()
+            If String.IsNullOrWhiteSpace(perfil) OrElse login.Length = 0 Then Return
+            Dim texto = LeerTexto(ruta)
+            Dim actual = Parsear(texto).FirstOrDefault(Function(p) Coincide(p.Nombre, perfil))
+            Dim usuarios = If(actual?.Usuarios.ToList(), New List(Of String)())
+            If Not usuarios.Contains(login, StringComparer.OrdinalIgnoreCase) Then usuarios.Insert(0, login)
+            For i = 0 To MaximoUsuarios - 1
+                texto = ConValor(texto, perfil, $"USUARIO{i}", If(i < usuarios.Count, usuarios(i), ""))
+            Next
+            texto = ConValor(texto, perfil, "USUARIO", login)
+            EscribirTexto(ruta, texto)
+        End Sub
+
+        Public Shared Sub FijarValor(ruta As String, seccion As String, llave As String, valor As String)
+            EscribirTexto(ruta, ConValor(LeerTexto(ruta), seccion, llave, valor))
+        End Sub
+
+        ''' <summary>
+        ''' Explica por qué un nombre no sirve para un perfil nuevo, o devuelve "" si sirve. Un
+        ''' corchete rompería la sección, y GENERAL, USUARIOS y (Predeterminado) tienen otro uso.
+        ''' </summary>
+        Public Shared Function ValidarNombre(nombre As String, secciones As IEnumerable(Of String)) As String
+            nombre = If(nombre, "").Trim()
+            If nombre.Length = 0 Then Return "Indique un nombre para la conexión."
+            If nombre.IndexOfAny({"["c, "]"c, "="c, ";"c}) >= 0 Then Return "El nombre no puede llevar corchetes, signo igual ni punto y coma."
+            If {"GENERAL", "USUARIOS", "(PREDETERMINADO)"}.Contains(nombre.ToUpperInvariant()) Then Return $"""{nombre}"" es un nombre reservado."
+            If secciones.Contains(nombre, StringComparer.OrdinalIgnoreCase) Then Return $"Ya existe una conexión llamada ""{nombre}""."
+            Return ""
+        End Function
+
+        ''' <summary>
+        ''' Cambia o agrega una llave sin tocar el resto del archivo, como WritePrivateProfileString:
+        ''' conserva el nombre original de la llave y agrega al final de la sección (o crea la sección
+        ''' al final del archivo).
+        ''' </summary>
+        Public Shared Function ConValor(texto As String, seccion As String, llave As String, valor As String) As String
+            Dim lineas = PartirLineas(texto)
+            Dim inicio = lineas.FindIndex(Function(l) Coincide(NombreSeccion(l), seccion))
+            If inicio < 0 Then
+                lineas.Add($"[{seccion}]")
+                lineas.Add($"{llave}={valor}")
+                Return Unir(lineas)
+            End If
+            Dim fin = FinDeSeccion(lineas, inicio)
+            Dim ultima = inicio
+            For i = inicio + 1 To fin - 1
+                Dim linea = lineas(i).Trim()
+                If linea.Length = 0 Then Continue For
+                ultima = i
+                Dim igual = linea.IndexOf("="c)
+                If igual > 0 AndAlso Coincide(linea.Substring(0, igual).Trim(), llave) Then
+                    lineas(i) = $"{linea.Substring(0, igual).Trim()}={valor}"
+                    Return Unir(lineas)
+                End If
+            Next
+            lineas.Insert(ultima + 1, $"{llave}={valor}")
+            Return Unir(lineas)
+        End Function
+
+        Public Shared Function SinSeccion(texto As String, seccion As String) As String
+            Dim lineas = PartirLineas(texto)
+            Dim inicio = lineas.FindIndex(Function(l) Coincide(NombreSeccion(l), seccion))
+            If inicio < 0 Then Return Unir(lineas)
+            lineas.RemoveRange(inicio, FinDeSeccion(lineas, inicio) - inicio)
+            Return Unir(lineas)
+        End Function
+
+        Private Shared Function ValorDe(texto As String, seccion As String, llave As String) As String
+            Dim dentro = False
+            For Each crudo In PartirLineas(texto)
+                Dim nombre = NombreSeccion(crudo)
+                If nombre IsNot Nothing Then
+                    dentro = Coincide(nombre, seccion)
+                    Continue For
+                End If
+                Dim linea = crudo.Trim()
+                Dim igual = linea.IndexOf("="c)
+                If dentro AndAlso igual > 0 AndAlso Coincide(linea.Substring(0, igual).Trim(), llave) Then Return linea.Substring(igual + 1).Trim()
+            Next
+            Return ""
+        End Function
+
+        Private Shared Function NombreSeccion(linea As String) As String
+            Dim t = linea.Trim()
+            If t.Length < 2 OrElse Not t.StartsWith("[") OrElse Not t.EndsWith("]") Then Return Nothing
+            Return t.Substring(1, t.Length - 2).Trim()
+        End Function
+
+        Private Shared Function FinDeSeccion(lineas As List(Of String), inicio As Integer) As Integer
+            Dim fin = lineas.FindIndex(inicio + 1, Function(l) NombreSeccion(l) IsNot Nothing)
+            Return If(fin < 0, lineas.Count, fin)
+        End Function
+
+        Private Shared Function Coincide(a As String, b As String) As Boolean
+            Return a IsNot Nothing AndAlso String.Equals(a, b.Trim(), StringComparison.OrdinalIgnoreCase)
+        End Function
+
+        Private Shared Function PartirLineas(texto As String) As List(Of String)
+            Dim lista = If(texto, "").Split({vbCrLf, vbLf}, StringSplitOptions.None).ToList()
+            If lista.Count > 0 AndAlso lista(lista.Count - 1).Length = 0 Then lista.RemoveAt(lista.Count - 1)
+            Return lista
+        End Function
+
+        Private Shared Function Unir(lineas As List(Of String)) As String
+            Return If(lineas.Count = 0, "", String.Join(vbCrLf, lineas) & vbCrLf)
+        End Function
+
+        Private Shared Function LeerTexto(ruta As String) As String
+            Return If(File.Exists(ruta), File.ReadAllText(ruta, CodificacionWindows1252()), "")
+        End Function
+
+        ''' <summary>Crea la carpeta si falta: en un equipo sin SDACA todavía no existe la carpeta Bin.</summary>
+        Private Shared Sub EscribirTexto(ruta As String, texto As String)
+            Dim carpeta = Path.GetDirectoryName(ruta)
+            If Not String.IsNullOrEmpty(carpeta) Then Directory.CreateDirectory(carpeta)
+            File.WriteAllText(ruta, texto, CodificacionWindows1252())
+        End Sub
 
         Friend Shared Function CodificacionWindows1252() As Encoding
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance)

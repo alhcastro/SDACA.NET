@@ -25,7 +25,48 @@ dotnet test -c Release
 dotnet run --project src\CoopeNet.Erp -c Release
 ```
 
-`CoopeNet.Erp` lee los `.ini` de `C:\Program Files (x86)\SDACA\Bin`. Se cambia con `-inipath <carpeta>`, igual que en SDACAERP.
+`CoopeNet.Erp` tiene sus propios `.ini` en `C:\ProgramData\CoopeNet` (`CarpetaDatos`): las conexiones (`sdcnn007.ini`), `sdconfig.ini`, `CONFIG.INI` y `temp`. No escribe en la carpeta de SDACA. Al iniciar copia de SDACA los que le falten: `sdcnn*.ini` y `sdconfig.ini` de `C:\Program Files (x86)\SDACA\Bin` (otra carpeta con `-inipath <carpeta>`, igual que en SDACAERP) y `CONFIG.INI` de la carpeta de SDACA. Lo que ya tiene no se reemplaza, así que después cada sistema mantiene los suyos.
+
+## Instalador
+
+```powershell
+.\instalador\Construir-Instalador.ps1          # pruebas, publicación e instalador
+.\instalador\Construir-Instalador.ps1 -SinPruebas
+```
+
+Deja `artefactos\instalador\CoopeNet-<versión>-Instalador.exe` (unos 47 MB). Requiere Inno Setup 6 (`winget install JRSoftware.InnoSetup`). La versión es `<Version>` de `Directory.Build.props`; súbala antes de armar uno nuevo. No cambie el `AppId` de `instalador\CoopeNet.iss`: con él Windows trata cada instalador como actualización del anterior.
+
+- La aplicación va autocontenida, con .NET 8 incluido, para Windows 10 u 11 de 64 bits. No hace falta instalar nada más.
+- Se instala en `C:\Program Files\CoopeNet`, con acceso en el menú Inicio y, si se marca, en el escritorio.
+- Crea `C:\ProgramData\CoopeNet` con permiso de Modificar para el grupo Usuarios, porque CoopeNet corre sin elevar y guarda ahí sus conexiones y su configuración.
+- Pregunta dónde está la carpeta `Bin` de SDACA y, solo si a CoopeNet le faltan, copia de ahí `sdcnn*.ini` y `sdconfig.ini`, y de la carpeta de SDACA `CONFIG.INI`. No escribe ni cambia permisos en la carpeta de SDACA. Sin SDACA, las conexiones se crean con "Administrar conexiones".
+- Si CoopeNet está abierto, pide cerrarlo antes de instalar.
+- Al desinstalar no toca SDACA, ni `C:\ProgramData\CoopeNet` (para no perder las conexiones), ni las preferencias de cada usuario (`%LOCALAPPDATA%\SDACA`).
+
+Instalación desatendida: `CoopeNet-1.0.1-Instalador.exe /VERYSILENT`. Con `/DIR="..."` cambia la carpeta de CoopeNet y con `/BIN="..."`, la de SDACA de donde se copian las conexiones.
+
+## Actualizaciones
+
+El instalador se usa una vez por equipo. Los cambios se reparten por el servidor: el acceso directo abre `CoopeNetLanzador.exe` (`src/CoopeNet.Lanzador`), que pregunta qué versión le toca al equipo, baja solo los archivos que cambiaron y abre `CoopeNet.exe` desde `C:\ProgramData\CoopeNet\versiones\<versión>`.
+
+```powershell
+# 1. Subir <Version> en Directory.Build.props (1.0.1 -> 1.0.2)
+.\instalador\Publicar-Actualizacion.ps1 -Notas "SD0502: Proveedores"   # queda en el canal piloto
+dotnet run --project herramientas\Publicar -- liberar 1.0.2           # probada: a todos los equipos
+dotnet run --project herramientas\Publicar -- retirar 1.0.2           # con fallas: todos vuelven a la anterior
+dotnet run --project herramientas\Publicar -- listar                  # versiones publicadas
+dotnet run --project herramientas\Publicar -- equipos                 # qué versión tiene cada equipo
+```
+
+- **Almacén:** catálogo `coopenet_actualizaciones` del servidor `190.113.126.199:3312`, con el usuario `sdaca`. Cada archivo se guarda una sola vez por su SHA-256, con gzip y en partes de 4 MB, porque `max_allowed_packet` es de 20 MB. La primera versión sube unos 62 MB (el .NET incluido); las siguientes, casi siempre solo los `CoopeNet.*.dll`.
+- **Una sola versión para todo:** los módulos dependen de `CoopeNet.Core` y `CoopeNet.Ui`, así que no se actualizan por separado como los DLL de VB6. Aun así, lo que viaja es solo lo distinto.
+- **Firma:** cada versión va firmada con ECDSA. La clave privada está cifrada con DPAPI en `%APPDATA%\CoopeNet\publicacion.clave` de quien publica, y la pública está en `ClavePublicaPublicacion.vb`. El lanzador rechaza lo que no esté firmado con ella, aunque alguien escriba en el catálogo con `sdaca`. **Respaldar la clave** con `Publicar claves --exportar <archivo>` y guardarla fuera del equipo: si se pierde, hay que generar otra, cambiar la constante y reinstalar el lanzador en todos los equipos.
+- **Canales:** `C:\ProgramData\CoopeNet\actualizacion.ini`, `[ACTUALIZACION]` `CANAL=piloto` o `general` (el instalador lo pone con `/CANAL=piloto`). Ahí también se cambian `SERVIDOR` y `PUERTO`, y `ACTIVA=0` apaga las actualizaciones en ese equipo.
+- **Qué versión se abre:** la mayor activa que el canal ve, aunque sea más vieja que la que tiene el equipo; así funciona `retirar`. Si es la misma que la instalada, se abre la de `Program Files`. Sin conexión, o si la descarga falla, se abre la última que se usó (`versiones\actual.txt`) o la instalada; si falló la instalación de una versión, se avisa. Con CoopeNet abierto no se cambia nada.
+- **En el equipo:** se conservan la versión actual y la anterior. Lo que es igual entre ellas se enlaza (enlace duro) y no ocupa espacio; lo que viene de la instalada se copia. Una descarga cortada queda en `<versión>.descarga` y no cuenta hasta que tiene la marca `.completa`. El registro está en `C:\ProgramData\CoopeNet\lanzador.log`, y en el servidor la tabla `equipos` guarda la última versión y el resultado de cada equipo.
+- **Cambios de base de datos:** el lanzador no corre scripts. Si una versión necesita columnas o tablas nuevas, se aplican antes de liberarla.
+
+**Probado (2026-11-12) contra un catálogo desechable en el 3315, ya borrado:** la primera descarga completa (269 archivos, 62 MB) tardó unos 5 s. La 1.0.2, con un archivo distinto, bajó solo ese archivo y enlazó el resto. `retirar` volvió a la 1.0.1 sin bajar nada, y `equipos` mostró el equipo. En el 3312 el catálogo está creado y vacío. Falta armar el instalador con el lanzador e instalarlo en un equipo de una sucursal.
 
 ## Agregar un módulo
 
@@ -42,8 +83,11 @@ El menú muestra solo los módulos de la licencia y las opciones que el usuario 
 - Use `CoopeNet.Ui.Pestanas` en lugar de `TabControl`.
 - Tome los colores de `Tema`, no de `Color`. No fije `ForeColor` en los hijos de un grupo: `FrmVerCheque` pinta un cheque anulado por herencia.
 - Declare el ícono de la tarjeta en `OpcionMenu.Formulario` con una constante de `IconoMenu`.
+- Una pantalla con listas o muchos datos se puede agrandar y maximizar: ancle sus controles y llame `Ventanas.Recordar(Me)` en el constructor, antes de `Tema.Aplicar`. El tamaño de diseño queda como mínimo y al cerrar se guardan el tamaño (a 96 DPI) y si quedó maximizada en `%LOCALAPPDATA%\SDACAentanas.ini`; la posición no, para que siga abriendo sobre la pantalla que la llama. Los controles dentro de pestañas se anclan en `Load`, cuando las páginas ya tienen su tamaño (ver `FrmArticulos.AnclarPestanas`). Así están por ahora el Catálogo de Artículos, sus diálogos de proveedores, códigos de barras y alternos, y `FrmBuscador`.
 
 El panel `vista` de `FrmConfigCheque` representa el papel impreso y queda fuera del tema.
+
+`AgregarEncabezado` suma el alto del encabezado al área antes que al mínimo. Hasta el 2026-11-07 lo hacía al revés y, si el mínimo coincidía con el tamaño, el encabezado se sumaba dos veces: `FrmAnularCheque` y `FrmVerCheque` de SD1501 tenían 60 px de más al fondo, y ahora quedan con su alto de diseño.
 
 ## Reglas que hay que conservar mientras convivan VB6 y .NET
 
@@ -178,6 +222,40 @@ Difiere de VB6 en:
 **Probado en el 3315 (2026-11-07):** se leyeron las 59 filas de los 23 documentos. Con un documento sintético `ZZQ PRUEBA` se insertó, se cambiaron departamento, impresora y consecutivo a la vez, se rechazó una llave repetida y se borró e insertó con la misma llave; al final `gatimpresion` quedó idéntica (misma huella MD5). La pantalla se revisó a la escala del equipo sin aplicar cambios.
 
 **SD0001 queda completo** para Coopepalmares: solo faltan `ClsDP` y `FrmAgendaShow` (la entrada desde otros módulos), el modo de selección del padrón y `FrmCambioIdMasa`, cuya opción está comentada en VB6.
+
+## SD0502 - Facturación e Inventarios (POS)
+
+Proyecto `CoopeNet.SD0502`, migrado de `Fuentes\SD0502(Coopepalmares)`, que según el usuario es el único módulo cuyas fuentes están al día. Por ahora solo tiene el Catálogo de Artículos; las demás opciones del `Menu_Order` (unas 80) se agregan al migrarlas. SD0501 es el POS genérico de otros clientes y no se migra.
+
+**Catálogo de Artículos (opción 003, privilegio 5009):** `FrmArticulos` migra `frmMantArticulos`, `Core.Pos.ArticulosRepositorio` sus consultas y `Core.Pos.PreciosArticulo` el cálculo de `SD_ConsPrecImp`, `SD_DevUtilidad` y `SD_Rnd`. Tiene la ficha con las pestañas Detalle, Precio e Impuestos y otros, la navegación por código (filtrada por categorías), la búsqueda por código de barras o código corto (con las etiquetas de balanza 26 y 28), el buscador, y Nuevo, Editar y Borrar con el privilegio 5037. Utilidades, precios, extras, flete y descuentos piden el 5056. Cambiar una utilidad o un extra recalcula el precio, y cambiar el precio recalcula la utilidad. Al guardar replica `posarticulos` como `ARTICULOS` y el alta del local (`posarticuloslocal` y `posinventario`) como `posarticuloslocal`, y anota en `posvitmovimientos` los campos y las utilidades que cambiaron. Antes de guardar avisa si otro usuario cambió el artículo, como `SD_CompReg`.
+
+**Proveedores:** el botón Proveedores de la pestaña Detalle abre `FrmProveedoresArticulo`, que migra el marco que VB6 mostraba en lugar de las pestañas al pulsar Agregar, con `Core.Pos.ProveedoresArticuloRepositorio`. Muestra las filas de `poscodprove` del artículo en el local y permite agregar (identificación con Enter, o la lista de proveedores activos del local; cuenta; código del proveedor; cantidad por empaque) y quitar (tecla Supr o botón Quitar). Listo borra y vuelve a insertar las filas del artículo en el local y replica cada sentencia como `posarticuloslocal`, con `$Prefijolocal` delante de la cuenta (R, E o Z en los locales 2, 3 y 9) salvo que ya lo tenga, y con la pausa de un segundo de VB6 entre el borrado y las altas, porque `gatreplica` se procesa por `Fecha`. Cancelar descarta. Difiere de VB6 en: solo se abre al editar un artículo existente, como las imágenes; una cuenta vacía queda vacía (VB6 le ponía el prefijo y en los locales 2, 3 y 9 quedaba `R`, `E` o `Z`); rechaza una fila repetida y una cantidad por empaque que no sea mayor que cero; y la identificación se busca exacta (identificación, código de asociado o de cliente único) y si no se encuentra abre la lista de proveedores, sin el buscador de coincidencias parciales de `SD_Obtener_ID`.
+
+**Códigos de barras:** el botón Códigos de barras de la pestaña Detalle abre `FrmCodigosBarras`, que migra `frmCodBarra` con `Core.Pos.CodigosBarrasRepositorio`. Propone el próximo código corto sugerido y muestra los códigos de `poscodart_codbarra` del artículo en el local. Como en VB6, cada código se graba al pulsar Enter y se replica como `poscodart_codbarra`; quitar uno se graba al aceptar o con el siguiente Enter, borrando y volviendo a grabar la lista con la pausa de un segundo. Difiere de VB6 en: solo se abre al editar un artículo existente; un Enter sin códigos quitados graba solo el código nuevo (VB6 borraba y volvía a grabar todos, unas 300 filas de `gatreplica` por lectura en un artículo con 104 códigos, con el mismo resultado); el código usado por otro artículo se rechaza antes de agregarlo a la lista (VB6 lo dejaba en la lista sin grabarlo); un código repetido cambia sus unidades en lugar de duplicar la fila; y las unidades deben ser mayores que cero (VB6 grababa 1). No migra el lector serial (`posscanestac`) ni el `ALTER TABLE` y el `UPDATE ... SET Local` que VB6 corría al abrir; en el 3315 solo 2 filas tienen `Local` 0. Un trigger copia cada alta en `poscodart_codbarra_log`.
+
+**CABYS:** el botón … junto al código de Hacienda abre `FrmCabys`, que migra `frmCatCatal` en modo Buscar con `Core.Pos.CabysRepositorio` y `CatalogoCabys`. Muestra el árbol de `pos_catalogo` (8 niveles y 20,476 códigos en el 3315), la búsqueda y, al elegir un nodo, los artículos del local cuyo CABYS empieza con ese código (hasta 1000, como VB6). Asignar llena el campo, que se guarda con el artículo. Como en VB6, se habilita al editar, también en un Nuevo. Difiere de VB6 en: lee el catálogo una vez a memoria y crea cada rama al expandirla (VB6 cargaba los 50 mil nodos al abrir); busca sin distinguir mayúsculas ni tildes y por el comienzo del código (VB6 pedía el código exacto), mostrando hasta 500 coincidencias; y solo asigna códigos de 13 dígitos (VB6 aceptaba cualquier nivel del árbol). La consulta de artículos tarda alrededor de un segundo porque `CodAlterno` no tiene índice. El modo de asignación masiva por arrastre (opción 091 de Inventario) se migrará con Inventario. En el 3315, 872 artículos tienen un CABYS que no está en `pos_catalogo`.
+
+**Alternos:** el botón Asignar alternos de la pestaña Impuestos y otros abre `FrmAlternosArticulo`, que migra `frmArtAlternos` con `Core.Pos.AlternosArticuloRepositorio`. VB6 mostraba un alterno a la vez con anterior y siguiente, que comparaban el código como número y ordenaban por el artículo en lugar del alterno; aquí se ven todos en una lista. Nuevo pide el código (Enter vacío abre el buscador de artículos del local), que debe ser un artículo registrado en el local, como `SD_CargarArt`; seleccionar uno permite cambiar su detalle (en mayúsculas, conserva la fecha de creación) o eliminarlo. Guardar es un `REPLACE` replicado como `posarticulosalternos`, y eliminar también se replica, cosa que VB6 no hacía. Además rechaza que un artículo sea alterno de sí mismo. En el 3315 la tabla está vacía y no tiene destinos en `gatreplicadef`. Se abre al editar un artículo existente, como los demás botones.
+
+**Imágenes:** la pestaña Imágenes migra la de VB6 con `Core.Pos.ImagenesArticuloRepositorio`: muestra las de `posimagartic` con anterior y siguiente, y al editar permite Nueva (solo .jpg de menos de 256 KB), Guardar, Modificar la descripción y Eliminar. Como en VB6, cada botón graba en el momento, no al guardar el artículo, no replica y `Local` queda en 0, igual que las 11,412 filas del 3315. Difiere en que solo se habilita al editar un artículo existente (en un Nuevo VB6 dejaba grabar imágenes de un código que podía no guardarse), la primera imagen es la de menor `Consec` (VB6 no ordenaba) y la descripción se recorta a los 128 caracteres de la columna. `frmMantCategorias` guarda también en `posimagartic`, con `id` igual a la clave de la categoría, así que un artículo con el mismo número puede mostrar esa imagen, igual que en VB6.
+
+Varias columnas de `posarticulos` se usan para otra cosa que su nombre: `CodAlterno` es el CABYS, `Grupo` la presentación, `SubGrupo` la canasta básica, `CodArtProv` la marca, `Recomendada` el monto de otros impuestos, `Exento` el porcentaje de IVA, `Porcentaje` el descuento máximo, `Gasto` permite negativos y `Consumo` es No facturar. Los precios se guardan sin IVA. `Moneda` guarda el símbolo.
+
+Difiere de VB6 en:
+
+- **Categorías:** se exigen al guardar, como dice el mensaje. En VB6 una línea posterior pisaba la validación y solo quedaba la de unidad. Todos los artículos del local 1 tienen categoría, así que no bloquea ediciones.
+- **Buscador:** filtra por categorías. En VB6 el filtro quedaba dentro del `LEFT JOIN` de los códigos de barras y no filtraba.
+- **Precio a utilidad:** usa el mismo IVA con que se muestra el precio. VB6 siempre quitaba el IVA, aunque la casilla estuviera desmarcada. Con costo 0 la utilidad queda en 0, donde VB6 mostraba un error.
+- **Código nuevo:** se calcula como `pos_fun_obt_codigo2` (el primer hueco desde 10000) sin crear la tabla `postmpcodigos`, que VB6 creaba con el mismo nombre para todos los usuarios.
+- **Bitácora de utilidades:** se anota al guardar. VB6 la anotaba al salir de cada campo, aunque no se guardara.
+- **Altas en el local:** usan la lista de columnas en lugar de `VALUES` por posición. Las sentencias van parametrizadas o escapadas.
+- **Cancelar un Nuevo:** vuelve al artículo que se veía.
+
+Igual que VB6: el costo no se edita aquí (lo fijan las compras), borrar no replica y deja `posarticuloslocal` y `posinventario`, y las fórmulas `G_ORDCOMPVAR` no se usan, porque solo las llenan Compras y Órdenes. `SD_Rnd` se portó con punto decimal: las utilidades guardadas son múltiplos de 0.005 en 82,169 de 82,174 artículos. El precio recalculado desde la utilidad coincide al centavo con 23,858 de 79,106 artículos, más que cualquier variante de la fórmula; los demás tuvieron cambios de costo posteriores en otras pantallas.
+
+No migrado todavía: etiquetas, sincronizar con el centro, existencias por local, movimientos y utilidades históricas (DLL `REP`), y el lector de código serial. La pestaña Lista no se migra: en VB6 nunca se llenaba. El cambio de código tampoco: su botón tiene `Visible = False` y la línea que lo mostraba está comentada, y actualizaba 29 tablas sin replicar. `SDInventarioHistorico`, que VB6 corre al abrir, tampoco.
+
+**Probado en el 3315 (2026-11-07):** lecturas en el local 1 (catálogos, categorías, carga, navegación, buscador de 31,929 artículos en 1.8 s, códigos de barras, código nuevo y validación de borrado) y escrituras con el artículo sintético `ZZQ9001` en el local 7, que no replica: alta, edición, aviso de cambio de otro usuario, bitácora, borrado y limpieza, sin nada en `gatreplica`. Las imágenes se probaron igual con `ZZQ9001` (alta, consecutivos, reemplazo, descripción, borrado y limpieza) y 306 imágenes guardadas, incluidas las 6 PNG, se muestran bien. Los proveedores se probaron con `ZZQ9001` en el local 7 (alta con comilla en el código y cuenta vacía, quitar una, quitar todas), sin tocar el local 1 ni `gatreplica`; en el local 1 se abrió el diálogo al editar, se buscó un proveedor con dos cuentas, se agregó una fila y se canceló sin cambios en la base. Los códigos de barras se probaron con `ZZQ9001` en el local 7 (alta con comilla, unidades decimales, repetir un código, quitar uno, quitar todos), limpiando también `poscodart_codbarra_log`, sin tocar el local 1 ni `gatreplica`; en el local 1 se abrió el diálogo, se quitó un código y se canceló sin cambios. Los alternos se probaron con `ZZQ9001` en el local 7 (alta con comilla, cambio de detalle conservando la fecha, borrado) y la tabla quedó vacía. La pantalla se manejó en el local 1 sin guardar (cargar, navegar, editar y cancelar, nuevo y cancelar) y el artículo quedó igual. sdprincipal es la base del local 1: unidades, marcas y categorías solo existen ahí, y `ARTICULOS` se replica a los locales 1, 2, 3 y 9. No probar escrituras en el local 1.
 
 ## SD1401 - Control de Cuentas Bancarias
 

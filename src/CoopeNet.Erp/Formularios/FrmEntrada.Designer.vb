@@ -7,11 +7,12 @@ Partial Class FrmEntrada
     Private lblLicencia As Label
     Private WithEvents cmbPerfil As ComboBox
     Private WithEvents lnkConexion As LinkLabel
+    Private WithEvents lnkAdministrar As LinkLabel
     Private pnlConexion As Panel
     Private WithEvents txtServidor As TextBox
     Private WithEvents txtPuerto As TextBox
     Private WithEvents txtCatalogo As TextBox
-    Private WithEvents txtUsuario As TextBox
+    Private WithEvents cmbUsuario As ComboBox
     Private WithEvents txtClave As TextBox
     Private WithEvents cmbLocal As ComboBox
     Private WithEvents btnEntrar As Button
@@ -22,15 +23,28 @@ Partial Class FrmEntrada
         txtServidor = New TextBox() With {.Name = "txtServidor", .AccessibleName = "Servidor"}
         txtPuerto = New TextBox() With {.Name = "txtPuerto", .AccessibleName = "Puerto"}
         txtCatalogo = New TextBox() With {.Name = "txtCatalogo", .AccessibleName = "Catálogo"}
-        txtUsuario = New TextBox() With {.Name = "txtUsuario", .AccessibleName = "Usuario"}
+        ' Se puede escribir otro usuario o elegir uno de los últimos que entraron con la conexión (CmbUsr).
+        cmbUsuario = New ComboBox() With {
+            .Name = "cmbUsuario", .AccessibleName = "Usuario", .DropDownStyle = ComboBoxStyle.DropDown,
+            .AutoCompleteMode = AutoCompleteMode.SuggestAppend, .AutoCompleteSource = AutoCompleteSource.ListItems
+        }
         txtClave = New TextBox() With {.Name = "txtClave", .AccessibleName = "Contraseña", .UseSystemPasswordChar = True}
         cmbLocal = New ComboBox() With {.Name = "cmbLocal", .AccessibleName = "Departamento", .DropDownStyle = ComboBoxStyle.DropDownList}
         btnEntrar = New Button() With {.Name = "btnEntrar", .Text = "&Entrar", .Size = New Size(258, 36), .Margin = New Padding(0, 0, 8, 0)}
         btnSalir = New Button() With {.Name = "btnSalir", .Text = "&Salir", .Size = New Size(94, 36), .Margin = Padding.Empty}
         lnkConexion = New LinkLabel() With {
             .Name = "lnkConexion", .AutoSize = True, .Text = "Mostrar datos de conexión", .LinkColor = Tema.Acento, .ActiveLinkColor = Tema.AcentoOscuro,
-            .VisitedLinkColor = Tema.Acento, .LinkBehavior = LinkBehavior.HoverUnderline, .Margin = New Padding(0, 0, 0, 12)
+            .VisitedLinkColor = Tema.Acento, .LinkBehavior = LinkBehavior.HoverUnderline, .Anchor = AnchorStyles.Left, .Margin = Padding.Empty
         }
+        lnkAdministrar = New LinkLabel() With {
+            .Name = "lnkAdministrar", .AutoSize = True, .Text = "Administrar conexiones", .LinkColor = Tema.Acento, .ActiveLinkColor = Tema.AcentoOscuro,
+            .VisitedLinkColor = Tema.Acento, .LinkBehavior = LinkBehavior.HoverUnderline, .Anchor = AnchorStyles.Right, .Margin = Padding.Empty
+        }
+        Dim enlaces As New TableLayoutPanel() With {.Size = New Size(AnchoCampos, 22), .ColumnCount = 2, .RowCount = 1, .Margin = New Padding(0, 0, 0, 12)}
+        enlaces.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 50))
+        enlaces.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 50))
+        enlaces.Controls.Add(lnkConexion, 0, 0)
+        enlaces.Controls.Add(lnkAdministrar, 1, 0)
         SuspendLayout()
 
         pnlConexion = New Panel() With {.Name = "pnlConexion", .Size = New Size(AnchoCampos, 116), .Margin = Padding.Empty, .Visible = False}
@@ -53,8 +67,8 @@ Partial Class FrmEntrada
             .Dock = DockStyle.Fill, .FlowDirection = FlowDirection.TopDown, .WrapContents = False, .Padding = New Padding(40, 32, 40, 24), .BackColor = Tema.Superficie
         }
         columna.Controls.AddRange(New Control() {
-            titulo, subtitulo, Campo("Conexión", cmbPerfil, 0), lnkConexion, pnlConexion,
-            Campo("Usuario", txtUsuario, 6), Campo("Contraseña", txtClave, 6), Campo("Departamento", cmbLocal, 6), botones
+            titulo, subtitulo, Campo("Conexión", cmbPerfil, 0), enlaces, pnlConexion,
+            Campo("Usuario", cmbUsuario, 6), Campo("Contraseña", txtClave, 6), Campo("Departamento", cmbLocal, 6), botones
         })
 
         Controls.Add(columna)
@@ -107,7 +121,8 @@ Partial Class FrmEntrada
     ''' <summary>Rótulo arriba y campo abajo, en un bloque del ancho de la columna.</summary>
     Private Shared Function Campo(texto As String, control As Control, margenInferior As Integer) As Panel
         Dim bloque As New Panel() With {.Size = New Size(AnchoCampos, 50), .Margin = New Padding(0, 0, 0, margenInferior)}
-        bloque.Controls.AddRange(New Control() {Rotulo(texto, 0, 0), Colocar(control, 0, 20, AnchoCampos)})
+        ' El campo primero, para que quede encima del rótulo: si no, el rótulo tapa su borde superior.
+        bloque.Controls.AddRange(New Control() {Colocar(control, 0, 20, AnchoCampos), Rotulo(texto, 0, 0)})
         Return bloque
     End Function
 

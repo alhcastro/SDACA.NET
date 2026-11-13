@@ -9,7 +9,7 @@ Imports CoopeNet.Core.Seguridad
 Imports CoopeNet.Ui
 
 ''' <summary>
-''' Inicio de sesión. Ofrece los perfiles de sdcnn007.ini sin modificarlo y aplica las reglas de
+''' Inicio de sesión. Ofrece los perfiles del sdcnn007.ini de CoopeNet (CarpetaDatos; se administran en <see cref="FrmConexiones"/>) y aplica las reglas de
 ''' <see cref="ServicioEntrada"/>. Migración de SDACAERP\FrmEntrada.frm.
 ''' </summary>
 Partial Public Class FrmEntrada
@@ -53,19 +53,40 @@ Partial Public Class FrmEntrada
     End Sub
 
     Private Sub FrmEntrada_Shown(sender As Object, e As EventArgs) Handles Me.Shown
-        If txtUsuario.TextLength = 0 Then txtUsuario.Focus() Else txtClave.Focus()
+        If cmbUsuario.Text.Length = 0 Then cmbUsuario.Focus() Else txtClave.Focus()
     End Sub
 
-    Private Sub CargarPerfiles()
-        Dim ini = Path.Combine(_directorioIni, $"sdcnn{_licencia.Registro.NumeroCliente:000}.ini")
+    Private Function RutaIni() As String
+        Return Path.Combine(_directorioIni, $"sdcnn{_licencia.Registro.NumeroCliente:000}.ini")
+    End Function
+
+    ''' <summary>CmdOpciones_Click del original ("..."): abre la configuración del servidor.</summary>
+    Private Sub LnkAdministrar_LinkClicked(sender As Object, e As LinkLabelLinkClickedEventArgs) Handles lnkAdministrar.LinkClicked
+        Using ventana As New FrmConexiones(RutaIni(), cmbPerfil.Text, cmbUsuario.Text, txtClave.Text)
+            ventana.ShowDialog(Me)
+            If Not ventana.HuboCambios Then Return
+            Dim usuario = cmbUsuario.Text
+            CargarPerfiles(ventana.PerfilElegido)
+            If cmbUsuario.Text.Length = 0 Then cmbUsuario.Text = usuario
+        End Using
+        If cmbPerfil.SelectedIndex >= 0 Then txtClave.Focus()
+    End Sub
+
+    ''' <param name="elegir">Perfil que debe quedar seleccionado; si no se indica, el último usado o el predeterminado.</param>
+    Private Sub CargarPerfiles(Optional elegir As String = Nothing)
+        Dim ini = RutaIni()
         If Not File.Exists(ini) Then Return
         cmbPerfil.DisplayMember = NameOf(PerfilConexion.Nombre)
         cmbPerfil.DataSource = ConexionesIni.Leer(ini).Where(Function(p) p.Servidor.Length > 0).ToList()
         cmbPerfil.SelectedIndex = -1
+        If Not String.IsNullOrEmpty(elegir) AndAlso cmbPerfil.FindStringExact(elegir) >= 0 Then
+            cmbPerfil.SelectedIndex = cmbPerfil.FindStringExact(elegir)
+            Return
+        End If
         Dim ultimo = cmbPerfil.FindStringExact(_preferencias.UltimoPerfil)
         If ultimo >= 0 Then
             cmbPerfil.SelectedIndex = ultimo
-            If _preferencias.UltimoUsuario.Length > 0 Then txtUsuario.Text = _preferencias.UltimoUsuario
+            If _preferencias.UltimoUsuario.Length > 0 Then cmbUsuario.Text = _preferencias.UltimoUsuario
         Else
             cmbPerfil.SelectedIndex = cmbPerfil.FindStringExact(ConexionesIni.LeerValor(ini, "GENERAL", "DEFAULT"))
         End If
@@ -77,10 +98,13 @@ Partial Public Class FrmEntrada
         txtServidor.Text = perfil.Servidor
         txtPuerto.Text = perfil.Puerto.ToString()
         txtCatalogo.Text = perfil.Catalogo
-        txtUsuario.Text = perfil.UltimoUsuario
+        ' SD_CARGAR_LISTA_USUARIOS: los últimos usuarios de la conexión y, sin USUARIO=, el primero.
+        cmbUsuario.Items.Clear()
+        cmbUsuario.Items.AddRange(perfil.Usuarios.ToArray())
+        cmbUsuario.Text = If(perfil.UltimoUsuario.Length > 0 OrElse perfil.Usuarios.Count = 0, perfil.UltimoUsuario, perfil.Usuarios(0))
     End Sub
 
-    Private Sub Datos_Changed(sender As Object, e As EventArgs) Handles txtServidor.TextChanged, txtPuerto.TextChanged, txtCatalogo.TextChanged, txtUsuario.TextChanged, txtClave.TextChanged
+    Private Sub Datos_Changed(sender As Object, e As EventArgs) Handles txtServidor.TextChanged, txtPuerto.TextChanged, txtCatalogo.TextChanged, cmbUsuario.TextChanged, txtClave.TextChanged
         _localesDe = ""
         cmbLocal.DataSource = Nothing
     End Sub
@@ -88,7 +112,7 @@ Partial Public Class FrmEntrada
     Private Function Fabrica() As FabricaConexiones
         Dim puerto As UInteger
         UInteger.TryParse(txtPuerto.Text, puerto)
-        Return New FabricaConexiones(CadenaConexion.Crear(txtServidor.Text.Trim(), txtCatalogo.Text.Trim(), puerto, txtUsuario.Text.Trim(), txtClave.Text))
+        Return New FabricaConexiones(CadenaConexion.Crear(txtServidor.Text.Trim(), txtCatalogo.Text.Trim(), puerto, cmbUsuario.Text.Trim(), txtClave.Text))
     End Function
 
     Private Async Sub CmbLocal_Enter(sender As Object, e As EventArgs) Handles cmbLocal.Enter
@@ -99,9 +123,9 @@ Partial Public Class FrmEntrada
     Private Async Function CargarLocales() As Task(Of Boolean)
         Dim llave = LlaveConexion()
         If _localesDe = llave Then Return True
-        If txtUsuario.Text.Trim().Length = 0 Then Return False
+        If cmbUsuario.Text.Trim().Length = 0 Then Return False
         Try
-            Dim locales = Await New DatosEntradaMySql(Fabrica()).ListarLocalesAsync(txtUsuario.Text.Trim())
+            Dim locales = Await New DatosEntradaMySql(Fabrica()).ListarLocalesAsync(cmbUsuario.Text.Trim())
             cmbLocal.DisplayMember = NameOf(LocalEntrada.Descripcion)
             cmbLocal.DataSource = locales
             Dim ultimo = _preferencias.LocalDe(llave)
@@ -118,7 +142,7 @@ Partial Public Class FrmEntrada
 
     ''' <summary>Identifica los locales de un usuario en una base: los mismos datos dan la misma lista.</summary>
     Private Function LlaveConexion() As String
-        Return String.Join("|", txtServidor.Text.Trim(), txtPuerto.Text.Trim(), txtCatalogo.Text.Trim(), txtUsuario.Text.Trim())
+        Return String.Join("|", txtServidor.Text.Trim(), txtPuerto.Text.Trim(), txtCatalogo.Text.Trim(), cmbUsuario.Text.Trim())
     End Function
 
     Private Async Sub BtnEntrar_Click(sender As Object, e As EventArgs) Handles btnEntrar.Click
@@ -143,7 +167,7 @@ Partial Public Class FrmEntrada
     Private Async Function Entrar(local As LocalEntrada) As Task
         Dim fabrica = Me.Fabrica()
         Dim servicio As New ServicioEntrada(New DatosEntradaMySql(fabrica), _licencia)
-        Dim login = txtUsuario.Text.Trim()
+        Dim login = cmbUsuario.Text.Trim()
         Dim solicitud As New SolicitudEntrada With {
             .Login = login,
             .Local = local.Local,
@@ -164,10 +188,12 @@ Partial Public Class FrmEntrada
         End Try
         If respuesta.Resultado = ResultadoEntrada.Correcto Then
             respuesta.Sesion.Fabrica = fabrica
+            respuesta.Sesion.DirectorioDatos = _directorioIni
             _preferencias.RecordarLocal(LlaveConexion(), local.Local)
             _preferencias.UltimoPerfil = cmbPerfil.Text
             _preferencias.UltimoUsuario = login
             _preferencias.Guardar()
+            RecordarUsuario(login)
             _Sesion = respuesta.Sesion
             _Servicio = servicio
             DialogResult = DialogResult.OK
@@ -176,6 +202,14 @@ Partial Public Class FrmEntrada
             MessageBox.Show(MensajeDe(respuesta, login), Titulo, MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
         End If
     End Function
+
+    ''' <summary>Agrega el usuario a la lista de la conexión. Si el .ini no se puede escribir, se entra igual.</summary>
+    Private Sub RecordarUsuario(login As String)
+        Try
+            ConexionesIni.RecordarUsuario(RutaIni(), cmbPerfil.Text, login)
+        Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException
+        End Try
+    End Sub
 
     Private Function ConfirmarOtraEstacion(login As String, detalle As String) As Boolean
         Dim texto = $"El usuario {{{login}}} ya esta trabajando en la estación {{{detalle}}}.{vbCrLf}" &

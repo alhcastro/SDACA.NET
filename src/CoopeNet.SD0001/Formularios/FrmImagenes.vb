@@ -52,18 +52,6 @@ Namespace SD0001
             AddHandler btnBorrar.Click, AddressOf Borrar_Clic
         End Sub
 
-        ''' <summary>La imagen guardada, o Nothing si no hay o no se puede leer. Quien la recibe la libera.</summary>
-        Friend Shared Function CrearImagen(contenido As Byte()) As Image
-            If contenido Is Nothing OrElse contenido.Length = 0 Then Return Nothing
-            Try
-                Using flujo As New MemoryStream(contenido), original = Image.FromStream(flujo)
-                    Return New Bitmap(original)
-                End Using
-            Catch ex As ArgumentException
-                Return Nothing
-            End Try
-        End Function
-
         Private ReadOnly Property Tipo As TipoImagen
             Get
                 Return CType(cmbImagen.SelectedIndex, TipoImagen)
@@ -89,7 +77,7 @@ Namespace SD0001
         Private Async Sub Imagen_Cambio(sender As Object, e As EventArgs)
             _pendiente = Nothing
             Try
-                Pintar(CrearImagen(Await _repo.ObtenerImagenAsync(_id, Tipo)))
+                Pintar(Imagenes.Crear(Await _repo.ObtenerImagenAsync(_id, Tipo)))
             Catch ex As MySqlException
                 Mensajes.NoConecta()
             End Try
@@ -104,7 +92,7 @@ Namespace SD0001
                     MessageBox.Show(Me, "El tamaño del archivo excede los 256 kb permitidos.", Modulo.TituloModulo, MessageBoxButtons.OK, MessageBoxIcon.Information)
                     Return
                 End If
-                Dim imagen = CrearImagen(contenido)
+                Dim imagen = Imagenes.Crear(contenido)
                 If imagen Is Nothing Then
                     MessageBox.Show(Me, "El archivo no es una imagen válida.", Modulo.TituloModulo, MessageBoxButtons.OK, MessageBoxIcon.Information)
                     Return
