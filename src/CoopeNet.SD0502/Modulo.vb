@@ -7,7 +7,7 @@ Namespace SD0502
     ''' <summary>
     ''' SD0502 - POS, Facturación e Inventarios de Coopepalmares. Migración de Fuentes\SD0502(Coopepalmares)\Clase.cls.
     ''' Por ahora el Catálogo de Artículos, Cajas, Datos personales, Clientes, Código de asociados, Proveedores, Mensajes
-    ''' para clientes, Justificaciones y el Verificador de Presentación; las demás opciones del Menu_Order se agregan al migrarlas.
+    ''' para clientes, Justificaciones, Tipos de moneda, Tipo de cambio y el Verificador de Presentación; las demás opciones del Menu_Order se agregan al migrarlas.
     ''' </summary>
     Public NotInheritable Class Modulo
         Implements IModulo
@@ -112,6 +112,16 @@ Namespace SD0502
             Return New FrmJustificaciones(New JustificacionesRepositorio(s.Fabrica), s.Uid, s.Genero)
         End Function
 
+        ''' <summary>frmtipomonedas (opción 025, privilegio 5035): las monedas del POS, con su botón de tipo de cambio.</summary>
+        Public Shared Function TiposMoneda(s As Sesion) As Form
+            Return New FrmTiposMoneda(New MonedasPosRepositorio(s.Fabrica), s.Uid, s.Local, s.Genero)
+        End Function
+
+        ''' <summary>frmtipocambio (opción 029, privilegio 5046): el tipo de cambio del día en postipocambio.</summary>
+        Public Shared Function TipoCambio(s As Sesion) As Form
+            Return New FrmTipoCambioPos(New MonedasPosRepositorio(s.Fabrica), s.Uid, s.Local)
+        End Function
+
         ''' <summary>FrmMantLocales: existencias del artículo por local.</summary>
         Public Shared Function Existencias(s As Sesion, codigo As String) As Form
             Return New FrmExistencias(New ExistenciasLocalRepositorio(s.Fabrica), New ArticulosRepositorio(s.Fabrica), codigo, s.Local, s.Uid, s.Estacion, s.DirectorioDatos)
@@ -129,6 +139,8 @@ Namespace SD0502
                         OpcionMenu.Formulario("Proveedores", "5022", AddressOf Proveedores, IconoMenu.Entregar),
                         OpcionMenu.Formulario("Mensajes para clientes", "5024", AddressOf MensajesClientes, IconoMenu.Mensaje),
                         OpcionMenu.Formulario("Justificaciones", "5006", AddressOf Justificaciones, IconoMenu.Lista),
+                        OpcionMenu.Formulario("Tipos de moneda", "5035", AddressOf TiposMoneda, IconoMenu.Banco),
+                        OpcionMenu.Formulario("Tipo de cambio", "5046", AddressOf TipoCambio, IconoMenu.Calendario),
                         OpcionMenu.Formulario("Verificador de Presentación", "5057", AddressOf Presentacion, IconoMenu.Consultar))
                 }
             End Get
