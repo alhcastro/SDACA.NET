@@ -12,7 +12,7 @@
     <Company>Desarrollo Integral CP</Company>
     <Product>CoopeNet ERP</Product>
     <!-- La del ejecutable y la del instalador (instalador\Construir-Instalador.ps1 la lee de aquí). -->
-    <Version>1.0.3</Version>
+    <Version>1.0.4</Version>
   </PropertyGroup>
 
 </Project>
