@@ -7,7 +7,7 @@ Namespace SD0502
     ''' <summary>
     ''' SD0502 - POS, Facturación e Inventarios de Coopepalmares. Migración de Fuentes\SD0502(Coopepalmares)\Clase.cls.
     ''' Por ahora el Catálogo de Artículos, Cajas, Datos personales, Clientes, Código de asociados, Proveedores, Mensajes
-    ''' para clientes y el Verificador de Presentación; las demás opciones del Menu_Order se agregan al migrarlas.
+    ''' para clientes, Justificaciones y el Verificador de Presentación; las demás opciones del Menu_Order se agregan al migrarlas.
     ''' </summary>
     Public NotInheritable Class Modulo
         Implements IModulo
@@ -107,6 +107,11 @@ Namespace SD0502
             Return New FrmMensajesClientes(New MensajesClientesRepositorio(s.Fabrica), New Core.Datos.Parametros(s.Fabrica), s.Local, s.Uid, s.Genero, s.Puede("5000"))
         End Function
 
+        ''' <summary>frmMantJustif (opción 010, privilegio 5006): los motivos de anulaciones y devoluciones.</summary>
+        Public Shared Function Justificaciones(s As Sesion) As Form
+            Return New FrmJustificaciones(New JustificacionesRepositorio(s.Fabrica), s.Uid, s.Genero)
+        End Function
+
         ''' <summary>FrmMantLocales: existencias del artículo por local.</summary>
         Public Shared Function Existencias(s As Sesion, codigo As String) As Form
             Return New FrmExistencias(New ExistenciasLocalRepositorio(s.Fabrica), New ArticulosRepositorio(s.Fabrica), codigo, s.Local, s.Uid, s.Estacion, s.DirectorioDatos)
@@ -123,6 +128,7 @@ Namespace SD0502
                         OpcionMenu.Formulario("Código de asociados y clientes", "5038", AddressOf CodigosClientes, IconoMenu.Lista),
                         OpcionMenu.Formulario("Proveedores", "5022", AddressOf Proveedores, IconoMenu.Entregar),
                         OpcionMenu.Formulario("Mensajes para clientes", "5024", AddressOf MensajesClientes, IconoMenu.Mensaje),
+                        OpcionMenu.Formulario("Justificaciones", "5006", AddressOf Justificaciones, IconoMenu.Lista),
                         OpcionMenu.Formulario("Verificador de Presentación", "5057", AddressOf Presentacion, IconoMenu.Consultar))
                 }
             End Get
