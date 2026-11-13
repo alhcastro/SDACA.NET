@@ -10,6 +10,8 @@
 
 #define Producto "CoopeNet ERP"
 #define Ejecutable "CoopeNet.exe"
+; Los accesos directos abren el lanzador, que actualiza y luego abre CoopeNet.exe (CoopeNet.Lanzador).
+#define Lanzador "CoopeNetLanzador.exe"
 
 [Setup]
 ; No cambiar AppId: con él Windows reconoce las actualizaciones de la misma aplicación.
@@ -35,8 +37,9 @@ ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0
 PrivilegesRequired=admin
 WizardStyle=modern
-; Programa.vb abre el mutex "CoopeNet.Erp": si la aplicación está abierta, el instalador pide cerrarla.
-AppMutex=CoopeNet.Erp
+; Programa.vb abre el mutex "CoopeNet.Erp" y el lanzador "CoopeNet.Lanzador": si alguno está abierto, el
+; instalador pide cerrarlo.
+AppMutex=CoopeNet.Erp,CoopeNet.Lanzador
 CloseApplications=yes
 
 [Languages]
@@ -59,16 +62,31 @@ Source: "{code:CarpetaBin}\sdcnn*.ini"; DestDir: "{commonappdata}\CoopeNet"; Fla
 Source: "{code:CarpetaBin}\sdconfig.ini"; DestDir: "{commonappdata}\CoopeNet"; Flags: external onlyifdoesntexist skipifsourcedoesntexist uninsneveruninstall
 Source: "{code:CarpetaSdaca}\CONFIG.INI"; DestDir: "{commonappdata}\CoopeNet"; Flags: external onlyifdoesntexist skipifsourcedoesntexist uninsneveruninstall
 
+[INI]
+; De dónde se actualiza el equipo (ConfiguracionEquipo en CoopeNet.Actualizacion). /CANAL=piloto pone el equipo en
+; el canal piloto; sin el parámetro se conserva el canal que ya tenga, o general en una instalación nueva.
+Filename: "{commonappdata}\CoopeNet\actualizacion.ini"; Section: "ACTUALIZACION"; Key: "CANAL"; String: "{param:CANAL|general}"; Check: CanalIndicado; Flags: uninsdeletesectionifempty
+Filename: "{commonappdata}\CoopeNet\actualizacion.ini"; Section: "ACTUALIZACION"; Key: "CANAL"; String: "general"; Check: not CanalIndicado; Flags: createkeyifdoesntexist uninsdeletesectionifempty
+
+[UninstallDelete]
+; Las versiones bajadas por el lanzador: se vuelven a bajar si se reinstala.
+Type: filesandordirs; Name: "{commonappdata}\CoopeNetersiones"
+
 [Icons]
-Name: "{autoprograms}\{#Producto}"; Filename: "{app}\{#Ejecutable}"; WorkingDir: "{app}"
-Name: "{autodesktop}\{#Producto}"; Filename: "{app}\{#Ejecutable}"; WorkingDir: "{app}"; Tasks: escritorio
+Name: "{autoprograms}\{#Producto}"; Filename: "{app}\{#Lanzador}"; WorkingDir: "{app}"; IconFilename: "{app}\{#Ejecutable}"
+Name: "{autodesktop}\{#Producto}"; Filename: "{app}\{#Lanzador}"; WorkingDir: "{app}"; IconFilename: "{app}\{#Ejecutable}"; Tasks: escritorio
 
 [Run]
-Filename: "{app}\{#Ejecutable}"; Description: "Abrir {#Producto}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#Lanzador}"; Description: "Abrir {#Producto}"; Flags: nowait postinstall skipifsilent
 
 [Code]
 var
   PaginaSdaca: TInputDirWizardPage;
+
+function CanalIndicado: Boolean;
+begin
+  Result := ExpandConstant('{param:CANAL|}') <> '';
+end;
 
 { Donde instala SDACA ERP sus .ini (CarpetaDatos.BinSdaca en CoopeNet.Core). }
 function BinPredeterminado: String;

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Herramienta de consola para publicar versiones de CoopeNet. No forma parte de CoopeNet.sln ni se publica:
+       se corre desde instalador\Publicar-Actualizacion.ps1 o a mano (ver LEEME.md). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>$(CoopeNetTfmWindows)</TargetFramework>
+    <RootNamespace>Publicar</RootNamespace>
+    <StartupObject>Publicar.Programa</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\CoopeNet.Actualizacion\CoopeNet.Actualizacion.vbproj" />
+  </ItemGroup>
+
+</Project>

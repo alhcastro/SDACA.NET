@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- El acceso directo de CoopeNet apunta aquí: revisa si hay versión nueva, la baja y abre CoopeNet.exe. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>$(CoopeNetTfmWindows)</TargetFramework>
+    <RootNamespace>CoopeNet.Lanzador</RootNamespace>
+    <AssemblyName>CoopeNetLanzador</AssemblyName>
+    <UseWindowsForms>true</UseWindowsForms>
+    <MyType>Empty</MyType>
+    <StartupObject>CoopeNet.Lanzador.Programa</StartupObject>
+    <ApplicationIcon>..\CoopeNet.Erp\CoopeNet.ico</ApplicationIcon>
+    <SatelliteResourceLanguages>es</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CoopeNet.Actualizacion\CoopeNet.Actualizacion.vbproj" />
+  </ItemGroup>
+
+</Project>

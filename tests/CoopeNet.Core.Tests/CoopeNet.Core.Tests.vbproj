@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\CoopeNet.Core\CoopeNet.Core.vbproj" />
+    <ProjectReference Include="..\..\src\CoopeNet.Actualizacion\CoopeNet.Actualizacion.vbproj" />
   </ItemGroup>
 
 </Project>

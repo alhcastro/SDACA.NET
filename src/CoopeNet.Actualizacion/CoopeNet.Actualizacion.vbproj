@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Actualizaciones: el manifiesto firmado, el almacén en MySQL y la instalación de versiones en el equipo.
+       La usan el lanzador (CoopeNet.Lanzador) y la herramienta de publicación (herramientas\Publicar). -->
+  <PropertyGroup>
+    <TargetFramework>$(CoopeNetTfm)</TargetFramework>
+    <RootNamespace>CoopeNet.Actualizacion</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 2.6.1 o superior: corrige GHSA-473q-m89c-ghf8 -->
+    <PackageReference Include="MySqlConnector" Version="2.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="CoopeNet.Core.Tests" />
+  </ItemGroup>
+
+</Project>

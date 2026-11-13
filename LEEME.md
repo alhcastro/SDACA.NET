@@ -45,6 +45,29 @@ Deja `artefactos\instalador\CoopeNet-<versión>-Instalador.exe` (unos 47 MB). Re
 
 Instalación desatendida: `CoopeNet-1.0.1-Instalador.exe /VERYSILENT`. Con `/DIR="..."` cambia la carpeta de CoopeNet y con `/BIN="..."`, la de SDACA de donde se copian las conexiones.
 
+## Actualizaciones
+
+El instalador se usa una vez por equipo. Los cambios se reparten por el servidor: el acceso directo abre `CoopeNetLanzador.exe` (`src/CoopeNet.Lanzador`), que pregunta qué versión le toca al equipo, baja solo los archivos que cambiaron y abre `CoopeNet.exe` desde `C:\ProgramData\CoopeNet\versiones\<versión>`.
+
+```powershell
+# 1. Subir <Version> en Directory.Build.props (1.0.1 -> 1.0.2)
+.\instalador\Publicar-Actualizacion.ps1 -Notas "SD0502: Proveedores"   # queda en el canal piloto
+dotnet run --project herramientas\Publicar -- liberar 1.0.2           # probada: a todos los equipos
+dotnet run --project herramientas\Publicar -- retirar 1.0.2           # con fallas: todos vuelven a la anterior
+dotnet run --project herramientas\Publicar -- listar                  # versiones publicadas
+dotnet run --project herramientas\Publicar -- equipos                 # qué versión tiene cada equipo
+```
+
+- **Almacén:** catálogo `coopenet_actualizaciones` del servidor `190.113.126.199:3312`, con el usuario `sdaca`. Cada archivo se guarda una sola vez por su SHA-256, con gzip y en partes de 4 MB, porque `max_allowed_packet` es de 20 MB. La primera versión sube unos 62 MB (el .NET incluido); las siguientes, casi siempre solo los `CoopeNet.*.dll`.
+- **Una sola versión para todo:** los módulos dependen de `CoopeNet.Core` y `CoopeNet.Ui`, así que no se actualizan por separado como los DLL de VB6. Aun así, lo que viaja es solo lo distinto.
+- **Firma:** cada versión va firmada con ECDSA. La clave privada está cifrada con DPAPI en `%APPDATA%\CoopeNet\publicacion.clave` de quien publica, y la pública está en `ClavePublicaPublicacion.vb`. El lanzador rechaza lo que no esté firmado con ella, aunque alguien escriba en el catálogo con `sdaca`. **Respaldar la clave** con `Publicar claves --exportar <archivo>` y guardarla fuera del equipo: si se pierde, hay que generar otra, cambiar la constante y reinstalar el lanzador en todos los equipos.
+- **Canales:** `C:\ProgramData\CoopeNet\actualizacion.ini`, `[ACTUALIZACION]` `CANAL=piloto` o `general` (el instalador lo pone con `/CANAL=piloto`). Ahí también se cambian `SERVIDOR` y `PUERTO`, y `ACTIVA=0` apaga las actualizaciones en ese equipo.
+- **Qué versión se abre:** la mayor activa que el canal ve, aunque sea más vieja que la que tiene el equipo; así funciona `retirar`. Si es la misma que la instalada, se abre la de `Program Files`. Sin conexión, o si la descarga falla, se abre la última que se usó (`versiones\actual.txt`) o la instalada; si falló la instalación de una versión, se avisa. Con CoopeNet abierto no se cambia nada.
+- **En el equipo:** se conservan la versión actual y la anterior. Lo que es igual entre ellas se enlaza (enlace duro) y no ocupa espacio; lo que viene de la instalada se copia. Una descarga cortada queda en `<versión>.descarga` y no cuenta hasta que tiene la marca `.completa`. El registro está en `C:\ProgramData\CoopeNet\lanzador.log`, y en el servidor la tabla `equipos` guarda la última versión y el resultado de cada equipo.
+- **Cambios de base de datos:** el lanzador no corre scripts. Si una versión necesita columnas o tablas nuevas, se aplican antes de liberarla.
+
+**Probado (2026-11-12) contra un catálogo desechable en el 3315, ya borrado:** la primera descarga completa (269 archivos, 62 MB) tardó unos 5 s. La 1.0.2, con un archivo distinto, bajó solo ese archivo y enlazó el resto. `retirar` volvió a la 1.0.1 sin bajar nada, y `equipos` mostró el equipo. En el 3312 el catálogo está creado y vacío. Falta armar el instalador con el lanzador e instalarlo en un equipo de una sucursal.
+
 ## Agregar un módulo
 
 1. Crear `src/CoopeNet.SDxxxx` con una clase `Modulo` que implemente `IModulo` (ver `SD1101\Modulo.vb`). Las opciones que falten se declaran con `OpcionMenu.Pendiente`.
