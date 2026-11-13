@@ -72,12 +72,14 @@ Partial Class FrmMenu
             .AutoScroll = True, .BackColor = Tema.Marino
         }
 
-        Dim pie As New Panel With {.Dock = DockStyle.Bottom, .Height = 96, .BackColor = Tema.Marino}
+        Dim pie As New Panel With {.Dock = DockStyle.Bottom, .Height = 112, .BackColor = Tema.Marino}
         Dim linea As New Panel With {.Dock = DockStyle.Top, .Height = 1, .BackColor = Tema.MarinoClaro}
         lblUsuario = EtiquetaPie("lblUsuario", 14, Color.White, New Font(Tema.FuenteSemibold, 9.5F))
         lblLocal = EtiquetaPie("lblLocal", 38, Tema.TextoSobreMarino, New Font(Tema.FuenteBase, 8.75F))
         lblEstacion = EtiquetaPie("lblEstacion", 60, Tema.TextoSobreMarino, New Font(Tema.FuenteBase, 8.75F))
-        pie.Controls.AddRange(New Control() {linea, lblUsuario, lblLocal, lblEstacion})
+        Dim lblVersion = EtiquetaPie("lblVersion", 84, Tema.TextoSobreMarino, New Font(Tema.FuenteBase, 8.0F))
+        lblVersion.Text = Tema.VersionTexto
+        pie.Controls.AddRange(New Control() {linea, lblUsuario, lblLocal, lblEstacion, lblVersion})
 
         lateral.Controls.Add(listaModulos)
         lateral.Controls.Add(pie)

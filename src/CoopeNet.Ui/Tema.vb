@@ -194,6 +194,18 @@ Public NotInheritable Class Tema
     Public Const Producto As String = Marca & " ERP"
     Public Const Desarrollador As String = "Desarrollo Integral CP"
 
+    ''' <summary>
+    ''' "Versión 1.0.2": la &lt;Version&gt; de Directory.Build.props con que se compiló el ejecutable que corre, sin
+    ''' el commit que .NET agrega después del +. Es la que abrió el lanzador, no la instalada en Program Files.
+    ''' </summary>
+    Public Shared ReadOnly Property VersionTexto As String
+        Get
+            Dim v = Application.ProductVersion
+            Dim mas = v.IndexOf("+"c)
+            Return "Versión " & If(mas >= 0, v.Substring(0, mas), v)
+        End Get
+    End Property
+
     Public Const FuenteBase As String = "Segoe UI"
     Public Const FuenteSemibold As String = "Segoe UI Semibold"
     Public Const FuenteIconos As String = "Segoe MDL2 Assets"
