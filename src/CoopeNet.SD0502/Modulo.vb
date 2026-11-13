@@ -6,7 +6,8 @@ Namespace SD0502
 
     ''' <summary>
     ''' SD0502 - POS, Facturación e Inventarios de Coopepalmares. Migración de Fuentes\SD0502(Coopepalmares)\Clase.cls.
-    ''' Por ahora el Catálogo de Artículos, Cajas, Datos personales, Clientes y el Verificador de Presentación; las demás opciones del Menu_Order se agregan al migrarlas.
+    ''' Por ahora el Catálogo de Artículos, Cajas, Datos personales, Clientes, Código de asociados, Proveedores, Mensajes
+    ''' para clientes y el Verificador de Presentación; las demás opciones del Menu_Order se agregan al migrarlas.
     ''' </summary>
     Public NotInheritable Class Modulo
         Implements IModulo
@@ -98,6 +99,14 @@ Namespace SD0502
             }
         End Function
 
+        ''' <summary>
+        ''' frmMantMensajes (opción 019, privilegio 5024): los mensajes de la pantalla del cliente y su velocidad.
+        ''' La imagen de cada mensaje se importa y se borra con el 5000, como en FrmImgsMens.
+        ''' </summary>
+        Public Shared Function MensajesClientes(s As Sesion) As Form
+            Return New FrmMensajesClientes(New MensajesClientesRepositorio(s.Fabrica), New Core.Datos.Parametros(s.Fabrica), s.Local, s.Uid, s.Genero, s.Puede("5000"))
+        End Function
+
         ''' <summary>FrmMantLocales: existencias del artículo por local.</summary>
         Public Shared Function Existencias(s As Sesion, codigo As String) As Form
             Return New FrmExistencias(New ExistenciasLocalRepositorio(s.Fabrica), New ArticulosRepositorio(s.Fabrica), codigo, s.Local, s.Uid, s.Estacion, s.DirectorioDatos)
@@ -113,6 +122,7 @@ Namespace SD0502
                         OpcionMenu.Formulario("Clientes", "5038", AddressOf Clientes, IconoMenu.Personas),
                         OpcionMenu.Formulario("Código de asociados y clientes", "5038", AddressOf CodigosClientes, IconoMenu.Lista),
                         OpcionMenu.Formulario("Proveedores", "5022", AddressOf Proveedores, IconoMenu.Entregar),
+                        OpcionMenu.Formulario("Mensajes para clientes", "5024", AddressOf MensajesClientes, IconoMenu.Mensaje),
                         OpcionMenu.Formulario("Verificador de Presentación", "5057", AddressOf Presentacion, IconoMenu.Consultar))
                 }
             End Get
