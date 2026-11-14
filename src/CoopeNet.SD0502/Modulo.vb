@@ -7,7 +7,7 @@ Namespace SD0502
     ''' <summary>
     ''' SD0502 - POS, Facturación e Inventarios de Coopepalmares. Migración de Fuentes\SD0502(Coopepalmares)\Clase.cls.
     ''' Por ahora el Catálogo de Artículos, Cajas, Datos personales, Clientes, Código de asociados, Proveedores, Mensajes
-    ''' para clientes, Justificaciones, Tipos de moneda, Tipos de tarjeta, Bancos, Tipo de cambio, Tipo de scaner y el Verificador de Presentación; las demás opciones del Menu_Order se agregan al migrarlas.
+    ''' para clientes, Justificaciones, Tipos de moneda, Tipos de tarjeta, Bancos, Tipo de cambio, Tipo de scaner, Configurar Impresión y el Verificador de Presentación; las demás opciones del Menu_Order se agregan al migrarlas.
     ''' </summary>
     Public NotInheritable Class Modulo
         Implements IModulo
@@ -137,6 +137,15 @@ Namespace SD0502
             Return New FrmScaner(New ScanerEstacionRepositorio(s.Fabrica), s.EstacionId, s.Estacion, s.Local)
         End Function
 
+        ''' <summary>
+        ''' Configurar impresión (opción 043, privilegio 5072): VB6 llama a FACPOS.Clase.Configuracion, que abre
+        ''' frmOpImpres. La impresora y el formato de cada documento van al CONFIG.INI de CoopeNet.
+        ''' </summary>
+        Public Shared Function PropiedadesFacturacion(s As Sesion) As Form
+            Return New FrmPropiedadesFacturacion(New PropiedadesFacturacionRepositorio(s.Fabrica), New VariablesImpresionRepositorio(s.Fabrica),
+                                                 IO.Path.Combine(s.DirectorioDatos, "CONFIG.INI"), s.Local, s.Uid, s.Genero, s.Empresa)
+        End Function
+
         ''' <summary>FrmMantLocales: existencias del artículo por local.</summary>
         Public Shared Function Existencias(s As Sesion, codigo As String) As Form
             Return New FrmExistencias(New ExistenciasLocalRepositorio(s.Fabrica), New ArticulosRepositorio(s.Fabrica), codigo, s.Local, s.Uid, s.Estacion, s.DirectorioDatos)
@@ -158,6 +167,7 @@ Namespace SD0502
                         OpcionMenu.Formulario("Tipos de tarjeta", "5040", AddressOf Tarjetas, IconoMenu.Tarjeta),
                         OpcionMenu.Formulario("Bancos", "5045", AddressOf Bancos, IconoMenu.Banco),
                         OpcionMenu.Formulario("Tipo de scaner", "5047", AddressOf Scaner, IconoMenu.Configurar),
+                        OpcionMenu.Formulario("Configurar Impresión", "5072", AddressOf PropiedadesFacturacion, IconoMenu.Imprimir),
                         OpcionMenu.Formulario("Tipo de cambio", "5046", AddressOf TipoCambio, IconoMenu.Calendario),
                         OpcionMenu.Formulario("Verificador de Presentación", "5057", AddressOf Presentacion, IconoMenu.Consultar))
                 }
