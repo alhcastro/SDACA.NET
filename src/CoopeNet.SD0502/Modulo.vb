@@ -7,7 +7,7 @@ Namespace SD0502
     ''' <summary>
     ''' SD0502 - POS, Facturación e Inventarios de Coopepalmares. Migración de Fuentes\SD0502(Coopepalmares)\Clase.cls.
     ''' Por ahora el Catálogo de Artículos, Cajas, Datos personales, Clientes, Código de asociados, Proveedores, Mensajes
-    ''' para clientes, Justificaciones, Tipos de moneda, Tipos de tarjeta, Bancos, Tipo de cambio, Tipo de scaner, Configurar Impresión, Catálogo de Marcas, Descripción de precios, Configuración de informes y el Verificador de Presentación; las demás opciones del Menu_Order se agregan al migrarlas.
+    ''' para clientes, Justificaciones, Tipos de moneda, Tipos de tarjeta, Bancos, Tipo de cambio, Tipo de scaner, Configurar Impresión, Catálogo de Marcas, Descripción de precios, Configuración de informes, Monedas y el Verificador de Presentación; las demás opciones del Menu_Order se agregan al migrarlas.
     ''' </summary>
     Public NotInheritable Class Modulo
         Implements IModulo
@@ -163,6 +163,11 @@ Namespace SD0502
             Return New FrmConfiguracionInformes(IO.Path.Combine(s.DirectorioDatos, "CONFIG.INI"))
         End Function
 
+        ''' <summary>frmMantMonedas (opción 067, privilegio 5012): los billetes y monedas de cada tipo, con su imagen.</summary>
+        Public Shared Function Denominaciones(s As Sesion) As Form
+            Return New FrmDenominaciones(New DenominacionesRepositorio(s.Fabrica), s.Uid, s.Local, s.Genero)
+        End Function
+
         ''' <summary>FrmMantLocales: existencias del artículo por local.</summary>
         Public Shared Function Existencias(s As Sesion, codigo As String) As Form
             Return New FrmExistencias(New ExistenciasLocalRepositorio(s.Fabrica), New ArticulosRepositorio(s.Fabrica), codigo, s.Local, s.Uid, s.Estacion, s.DirectorioDatos)
@@ -189,6 +194,7 @@ Namespace SD0502
                         OpcionMenu.Formulario("Catálogo de Marcas", "5082", AddressOf Marcas, IconoMenu.Etiqueta),
                         OpcionMenu.Formulario("Descripción de precios", "5083", AddressOf EtiquetasPrecio, IconoMenu.Editar),
                         OpcionMenu.Formulario("Configuración de informes", "5072", AddressOf ConfiguracionInformes, IconoMenu.Imprimir),
+                        OpcionMenu.Formulario("Monedas", "5012", AddressOf Denominaciones, IconoMenu.Banco),
                         OpcionMenu.Formulario("Verificador de Presentación", "5057", AddressOf Presentacion, IconoMenu.Consultar))
                 }
             End Get
