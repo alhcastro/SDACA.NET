@@ -282,7 +282,9 @@ Partial Public Class FrmMenu
             MessageBox.Show(Me, "Esta opción todavía no está migrada. Use el sistema anterior.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information)
             Return
         End If
+        ' Una opción puede no abrir nada (devuelve Nothing) cuando ella misma ya avisó por qué.
         Using formulario = opcion.Crear(_sesion)
+            If formulario Is Nothing Then Return
             Tema.Aplicar(formulario, modulo.Descripcion)
             formulario.ShowDialog(Me)
         End Using

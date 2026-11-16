@@ -7,7 +7,7 @@ Namespace SD0502
     ''' <summary>
     ''' SD0502 - POS, Facturación e Inventarios de Coopepalmares. Migración de Fuentes\SD0502(Coopepalmares)\Clase.cls.
     ''' Por ahora el Catálogo de Artículos, Cajas, Datos personales, Clientes, Código de asociados, Proveedores, Mensajes
-    ''' para clientes, Justificaciones, Tipos de moneda, Tipos de tarjeta, Bancos, Tipo de cambio, Tipo de scaner, Configurar Impresión, Catálogo de Marcas, Descripción de precios, Configuración de informes, Monedas, Vendedores y el Verificador de Presentación; las demás opciones del Menu_Order se agregan al migrarlas.
+    ''' para clientes, Justificaciones, Tipos de moneda, Tipos de tarjeta, Bancos, Tipo de cambio, Tipo de scaner, Configurar Impresión, Catálogo de Marcas, Descripción de precios, Configuración de informes, Monedas, Vendedores, Conceptos (Ajustes) y el Verificador de Presentación; las demás opciones del Menu_Order se agregan al migrarlas.
     ''' </summary>
     Public NotInheritable Class Modulo
         Implements IModulo
@@ -173,6 +173,18 @@ Namespace SD0502
             Return New FrmVendedores(New VendedoresRepositorio(s.Fabrica), s.Uid, s.Local, s.LocalDescripcion, s.Genero)
         End Function
 
+        ''' <summary>
+        ''' frmMantAjustes (opción 070, privilegio 5019): los conceptos de los ajustes de inventario. Como en VB6, solo
+        ''' la abren los usuarios 0 y 14; a los demás se les avisa (VB6 no hacía nada).
+        ''' </summary>
+        Public Shared Function ConceptosAjuste(s As Sesion) As Form
+            If Not ConceptosAjusteRepositorio.PuedeAbrir(s.Uid) Then
+                MessageBox.Show("Esta opción solo la pueden abrir los usuarios autorizados.", TituloModulo, MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Return Nothing
+            End If
+            Return New FrmConceptosAjuste(New ConceptosAjusteRepositorio(s.Fabrica), s.Uid, s.Genero)
+        End Function
+
         ''' <summary>FrmMantLocales: existencias del artículo por local.</summary>
         Public Shared Function Existencias(s As Sesion, codigo As String) As Form
             Return New FrmExistencias(New ExistenciasLocalRepositorio(s.Fabrica), New ArticulosRepositorio(s.Fabrica), codigo, s.Local, s.Uid, s.Estacion, s.DirectorioDatos)
@@ -201,6 +213,7 @@ Namespace SD0502
                         OpcionMenu.Formulario("Configuración de informes", "5072", AddressOf ConfiguracionInformes, IconoMenu.Imprimir),
                         OpcionMenu.Formulario("Monedas", "5012", AddressOf Denominaciones, IconoMenu.Banco),
                         OpcionMenu.Formulario("Vendedores", "5017", AddressOf Vendedores, IconoMenu.Personas),
+                        OpcionMenu.Formulario("Conceptos (Ajustes)", "5019", AddressOf ConceptosAjuste, IconoMenu.Lista),
                         OpcionMenu.Formulario("Verificador de Presentación", "5057", AddressOf Presentacion, IconoMenu.Consultar))
                 }
             End Get
