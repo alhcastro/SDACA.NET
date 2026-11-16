@@ -12,8 +12,9 @@ Namespace SD0502
     ''' <remarks>
     ''' La impresora y el formato de cada documento van al CONFIG.INI de CoopeNet (C:\ProgramData\CoopeNet), no al de
     ''' SDACA: los usará la facturación de CoopeNet, y el POS de VB6 sigue con los suyos. Los parámetros y los formatos
-    ''' sí van a la base y el POS de VB6 los usa. Aún falta la vista de una factura con el formato (Ver, Imprimir y
-    ''' Vista previa), que necesita el motor de impresión de facturas de FACPOS.
+    ''' sí van a la base y el POS de VB6 los usa. Ver arma una factura del local con el motor de impresión de facturas
+    ''' (contado, crédito y cupón); la proforma y la orden de entrega tienen motores propios que se migran con la
+    ''' facturación.
     ''' </remarks>
     Public Class FrmPropiedadesFacturacion
         Inherits Form
@@ -62,17 +63,36 @@ Namespace SD0502
         Private ReadOnly btnVariables As New Button With {.Name = "btnVariables", .Text = "&Variables", .Location = New Point(436, 12), .Size = New Size(100, 28)}
         Private ReadOnly btnBuscarVariable As New Button With {.Name = "btnBuscarVariable", .Text = "&Buscar variable", .Location = New Point(542, 12), .Size = New Size(130, 28), .Anchor = AnchorStyles.Top Or AnchorStyles.Right}
         Private ReadOnly btnGuardarFormato As New Button With {.Name = "btnGuardarFormato", .Text = "&Guardar formato", .Location = New Point(678, 12), .Size = New Size(126, 28), .Anchor = AnchorStyles.Top Or AnchorStyles.Right}
+        Private ReadOnly lblFactura As New Label With {.Text = "Factura", .AutoSize = True, .Location = New Point(12, 53)}
+        Private ReadOnly txtFactura As New TextBox With {.Name = "txtFactura", .AccessibleName = "Número de factura", .TextAlign = HorizontalAlignment.Center, .Location = New Point(150, 50), .Width = 150}
+        Private ReadOnly btnFacturaAnterior As New Button With {.Name = "btnFacturaAnterior", .Text = "▼", .AccessibleName = "Factura anterior", .Location = New Point(304, 48), .Size = New Size(30, 28)}
+        Private ReadOnly btnFacturaSiguiente As New Button With {.Name = "btnFacturaSiguiente", .Text = "▲", .AccessibleName = "Factura siguiente", .Location = New Point(336, 48), .Size = New Size(30, 28)}
+        Private ReadOnly btnVer As New Button With {.Name = "btnVer", .Text = "V&er", .Location = New Point(372, 48), .Size = New Size(80, 28)}
         Private ReadOnly grdFormato As New DataGridView With {
-            .Name = "grdFormato", .AccessibleName = "Líneas del formato", .Location = New Point(10, 50), .Size = New Size(794, 454),
-            .Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right,
+            .Name = "grdFormato", .AccessibleName = "Líneas del formato", .Location = New Point(10, 84), .Size = New Size(794, 250),
+            .Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right,
             .AllowUserToAddRows = True, .AllowUserToDeleteRows = True, .AllowUserToResizeRows = False, .RowHeadersWidth = 28,
             .AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells, .SelectionMode = DataGridViewSelectionMode.CellSelect}
+        Private ReadOnly txtVista As New TextBox With {
+            .Name = "txtVista", .AccessibleName = "Factura con el formato", .Multiline = True, .ReadOnly = True, .ScrollBars = ScrollBars.Both, .WordWrap = False,
+            .Font = New Font("Consolas", 9.75F), .Location = New Point(10, 342), .Size = New Size(794, 162),
+            .Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right}
+        Private ReadOnly btnImprimir As New Button With {.Name = "btnImprimir", .Text = "Im&primir", .Location = New Point(10, 512), .Size = New Size(100, 28), .Anchor = AnchorStyles.Bottom Or AnchorStyles.Left}
+        Private ReadOnly chkVistaPrevia As New CheckBox With {.Name = "chkVistaPrevia", .Text = "Vista previa sobre la factura", .AutoSize = True, .Location = New Point(124, 517), .Anchor = AnchorStyles.Bottom Or AnchorStyles.Left}
         Private ReadOnly btnExportar As New Button With {.Name = "btnExportar", .Text = "&Exportar", .Location = New Point(578, 512), .Size = New Size(110, 28), .Anchor = AnchorStyles.Bottom Or AnchorStyles.Right}
         Private ReadOnly btnImportar As New Button With {.Name = "btnImportar", .Text = "&Importar", .Location = New Point(694, 512), .Size = New Size(110, 28), .Anchor = AnchorStyles.Bottom Or AnchorStyles.Right}
 
-        Public Sub New(repo As PropiedadesFacturacionRepositorio, variables As VariablesImpresionRepositorio, configIni As String, local As Long, uid As Long, genero As String, empresa As String)
+        Private ReadOnly _facturas As FacturaImpresionRepositorio
+        Private ReadOnly _emisor As EmisorFactura
+        ''' <summary>El texto de la última factura vista, con sus códigos de control, para Imprimir.</summary>
+        Private _impreso As String = ""
+
+        Public Sub New(repo As PropiedadesFacturacionRepositorio, variables As VariablesImpresionRepositorio, facturas As FacturaImpresionRepositorio, emisor As EmisorFactura,
+                       configIni As String, local As Long, uid As Long, genero As String, empresa As String)
             _repo = repo
             _variables = variables
+            _facturas = facturas
+            _emisor = emisor
             _configIni = configIni
             _local = local
             _uid = uid
@@ -107,7 +127,9 @@ Namespace SD0502
             grdFormato.Columns.Add(New DataGridViewTextBoxColumn With {.Name = "colLinea", .HeaderText = "Línea", .AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill, .MaxInputLength = PropiedadesFacturacionRepositorio.LargoLinea,
                                                                    .DefaultCellStyle = New DataGridViewCellStyle With {.WrapMode = DataGridViewTriState.True, .Font = New Font("Consolas", 9.0F)}})
             grdFormato.Columns.Add(New DataGridViewTextBoxColumn With {.Name = "colMultiple", .HeaderText = "Múltiple", .Width = 80, .ValueType = GetType(Integer)})
-            tabFormatos.Controls.AddRange(New Control() {New Label With {.Text = "Formatos de factura", .AutoSize = True, .Location = New Point(12, 17)}, cmbFormatos, btnVariables, btnBuscarVariable, btnGuardarFormato, grdFormato, btnExportar, btnImportar})
+            tabFormatos.Controls.AddRange(New Control() {
+                New Label With {.Text = "Formatos de factura", .AutoSize = True, .Location = New Point(12, 17)}, cmbFormatos, btnVariables, btnBuscarVariable, btnGuardarFormato,
+                lblFactura, txtFactura, btnFacturaAnterior, btnFacturaSiguiente, btnVer, grdFormato, txtVista, btnImprimir, chkVistaPrevia, btnExportar, btnImportar})
 
             tabs.TabPages.AddRange({tabParametros, tabFormatos})
             Controls.Add(tabs)
@@ -127,6 +149,13 @@ Namespace SD0502
             AddHandler btnGuardarFormato.Click, Async Sub() Await GuardarFormatoAsync()
             AddHandler btnVariables.Click, AddressOf Variables_Clic
             AddHandler btnBuscarVariable.Click, Async Sub() Await BuscarVariableAsync()
+            AddHandler btnFacturaAnterior.Click, Async Sub() Await MoverFacturaAsync(False)
+            AddHandler btnFacturaSiguiente.Click, Async Sub() Await MoverFacturaAsync(True)
+            AddHandler txtFactura.KeyPress, Sub(s, e)
+                                                If Not Char.IsControl(e.KeyChar) AndAlso Not Char.IsDigit(e.KeyChar) Then e.Handled = True
+                                            End Sub
+            AddHandler btnVer.Click, Async Sub() Await VerAsync()
+            AddHandler btnImprimir.Click, AddressOf Imprimir_Clic
             AddHandler btnExportar.Click, AddressOf Exportar_Clic
             AddHandler btnImportar.Click, AddressOf Importar_Clic
             AddHandler grdFormato.DataError, Sub(s, e)
@@ -169,6 +198,7 @@ Namespace SD0502
                 cmbFormatoDocumento.Items.AddRange(formatos.ToArray())
                 cmbFormatoDocumento.Items.Add(ImpresorasPos.FormatoCarta)
                 cmbDocumento.SelectedIndex = 0
+                txtFactura.Text = Await _facturas.UltimaAsync(_local)
                 If formatos.Count = 0 Then
                     MessageBox.Show(Me, "No se encontraron formatos de factura. Favor crear al menos uno.", Modulo.TituloModulo, MessageBoxButtons.OK, MessageBoxIcon.Information)
                 Else
@@ -321,6 +351,67 @@ Namespace SD0502
                 Mensajes.NoGuardo(ex.Message, "FORMATOS", Modulo.TituloModulo)
             End Try
         End Function
+
+        ' ---- Ver una factura con el formato ----
+
+        ''' <summary>UpDown1: la factura anterior o siguiente del local.</summary>
+        Private Async Function MoverFacturaAsync(siguiente As Boolean) As Task
+            Try
+                Dim numero = Await _facturas.VecinaAsync(CLng(Core.Vb6.Val(txtFactura.Text)), siguiente, _local)
+                If numero <> "" Then txtFactura.Text = numero
+            Catch ex As MySqlException
+                Mensajes.NoConecta()
+            End Try
+        End Function
+
+        ''' <summary>
+        ''' cmdVer: arma la factura con las líneas que están en pantalla. VB6 guardaba antes el formato y usaba el que
+        ''' tuviera asignado el documento; aquí se ve lo que se está editando, sin guardar. Con "Vista previa sobre la
+        ''' factura" se abre además sobre la imagen de la factura preimpresa (frmConfFact).
+        ''' </summary>
+        Private Async Function VerAsync() As Task
+            grdFormato.EndEdit()
+            Dim numero = txtFactura.Text.Trim()
+            If numero.Length = 0 Then Return
+            Dim lineas = LineasEnPantalla()
+            If lineas.Count = 0 Then
+                MessageBox.Show(Me, "El formato no tiene líneas.", Modulo.TituloModulo, MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Return
+            End If
+            Try
+                btnVer.Enabled = False
+                UseWaitCursor = True
+                Dim datos = Await _facturas.DatosAsync(numero, _local, _local, _emisor)
+                If datos Is Nothing Then
+                    MessageBox.Show(Me, $"No se encontró la factura {numero} en este local.", Modulo.TituloModulo, MessageBoxButtons.OK, MessageBoxIcon.Information)
+                    Return
+                End If
+                _impreso = ImpresionFormato.Interpretar(lineas, datos.Parametros, datos.Valores)
+                txtVista.Text = ImpresionFormato.ParaPantalla(_impreso)
+                If chkVistaPrevia.Checked Then
+                    Using f As New FrmFormatoSobreImagen(_impreso, _configIni)
+                        f.ShowDialog(Me)
+                    End Using
+                End If
+            Catch ex As MySqlException
+                Mensajes.NoGuardo(ex.Message, "Imprimir facturas", Modulo.TituloModulo)
+            Finally
+                UseWaitCursor = False
+                btnVer.Enabled = True
+            End Try
+        End Function
+
+        ''' <summary>cmdprevia: frmVistaPrevia con la factura vista.</summary>
+        Private Sub Imprimir_Clic(sender As Object, e As EventArgs)
+            If _impreso = "" Then
+                MessageBox.Show(Me, "Primero vea una factura con el formato.", Modulo.TituloModulo, MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Return
+            End If
+            Using f As New FrmVistaPreviaTexto(_impreso, _configIni, "VISTA PREVIA")
+                Tema.Aplicar(f, Modulo.TituloModulo)
+                f.ShowDialog(Me)
+            End Using
+        End Sub
 
         Private Sub Variables_Clic(sender As Object, e As EventArgs)
             Using f As New FrmVariablesImpresion(_variables, _uid, _genero, _empresa)

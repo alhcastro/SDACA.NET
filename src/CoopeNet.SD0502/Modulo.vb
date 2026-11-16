@@ -142,7 +142,9 @@ Namespace SD0502
         ''' frmOpImpres. La impresora y el formato de cada documento van al CONFIG.INI de CoopeNet.
         ''' </summary>
         Public Shared Function PropiedadesFacturacion(s As Sesion) As Form
-            Return New FrmPropiedadesFacturacion(New PropiedadesFacturacionRepositorio(s.Fabrica), New VariablesImpresionRepositorio(s.Fabrica),
+            Dim registro = New Core.Licencias.LicenciaCoopepalmares().Registro
+            Dim emisor As New EmisorFactura With {.NombreCorto = registro.NombreCorto, .Cedula = registro.Cedula}
+            Return New FrmPropiedadesFacturacion(New PropiedadesFacturacionRepositorio(s.Fabrica), New VariablesImpresionRepositorio(s.Fabrica), New FacturaImpresionRepositorio(s.Fabrica), emisor,
                                                  IO.Path.Combine(s.DirectorioDatos, "CONFIG.INI"), s.Local, s.Uid, s.Genero, s.Empresa)
         End Function
 
