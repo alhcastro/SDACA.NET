@@ -7,7 +7,7 @@ Namespace SD0502
     ''' <summary>
     ''' SD0502 - POS, Facturación e Inventarios de Coopepalmares. Migración de Fuentes\SD0502(Coopepalmares)\Clase.cls.
     ''' Por ahora el Catálogo de Artículos, Cajas, Datos personales, Clientes, Código de asociados, Proveedores, Mensajes
-    ''' para clientes, Justificaciones, Tipos de moneda, Tipos de tarjeta, Bancos, Tipo de cambio, Tipo de scaner, Configurar Impresión, Catálogo de Marcas y el Verificador de Presentación; las demás opciones del Menu_Order se agregan al migrarlas.
+    ''' para clientes, Justificaciones, Tipos de moneda, Tipos de tarjeta, Bancos, Tipo de cambio, Tipo de scaner, Configurar Impresión, Catálogo de Marcas, Descripción de precios y el Verificador de Presentación; las demás opciones del Menu_Order se agregan al migrarlas.
     ''' </summary>
     Public NotInheritable Class Modulo
         Implements IModulo
@@ -153,6 +153,11 @@ Namespace SD0502
             Return New FrmMarcas(New MarcasRepositorio(s.Fabrica), s.Uid, s.Local, s.Genero)
         End Function
 
+        ''' <summary>FrmEtiquetasPrecios (opción 052, privilegio 5083): los nombres de los seis precios de venta.</summary>
+        Public Shared Function EtiquetasPrecio(s As Sesion) As Form
+            Return New FrmEtiquetasPrecio(New EtiquetasPrecioRepositorio(s.Fabrica), s.Local, s.Uid)
+        End Function
+
         ''' <summary>FrmMantLocales: existencias del artículo por local.</summary>
         Public Shared Function Existencias(s As Sesion, codigo As String) As Form
             Return New FrmExistencias(New ExistenciasLocalRepositorio(s.Fabrica), New ArticulosRepositorio(s.Fabrica), codigo, s.Local, s.Uid, s.Estacion, s.DirectorioDatos)
@@ -177,6 +182,7 @@ Namespace SD0502
                         OpcionMenu.Formulario("Configurar Impresión", "5072", AddressOf PropiedadesFacturacion, IconoMenu.Imprimir),
                         OpcionMenu.Formulario("Tipo de cambio", "5046", AddressOf TipoCambio, IconoMenu.Calendario),
                         OpcionMenu.Formulario("Catálogo de Marcas", "5082", AddressOf Marcas, IconoMenu.Etiqueta),
+                        OpcionMenu.Formulario("Descripción de precios", "5083", AddressOf EtiquetasPrecio, IconoMenu.Editar),
                         OpcionMenu.Formulario("Verificador de Presentación", "5057", AddressOf Presentacion, IconoMenu.Consultar))
                 }
             End Get
