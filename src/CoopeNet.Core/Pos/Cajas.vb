@@ -246,28 +246,7 @@ Namespace Pos
         ''' el local. root y Administrador no necesitan privilegios.
         ''' </summary>
         Public Async Function AutorizarAsync(login As String, clave As String, local As Long, Optional ct As CancellationToken = Nothing) As Task(Of ResultadoAutorizacion)
-            Dim uid As Long
-            Using cn = Await _fabrica.AbrirAsync(ct).ConfigureAwait(False)
-                Dim cadena As New MySqlConnectionStringBuilder(cn.ConnectionString)
-                Dim credenciales = CadenaConexion.ResolverCredenciales(login, clave)
-                cadena.UserID = credenciales.UsuarioMySql
-                cadena.Password = credenciales.Contrasena
-                Try
-                    Using prueba As New MySqlConnection(cadena.ConnectionString)
-                        Await prueba.OpenAsync(ct).ConfigureAwait(False)
-                    End Using
-                Catch ex As MySqlException
-                    Return ResultadoAutorizacion.NoAutorizado
-                End Try
-                If Privilegios.EsAdministrador(login) Then Return ResultadoAutorizacion.Autorizado
-                uid = CLng(Vb6.Val(Convert.ToString(Await cn.ExecuteScalarAsync(Of Object)(New CommandDefinition(
-                    "SELECT UID FROM gatusuarios WHERE USUARIO = @login", New With {login}, cancellationToken:=ct)).ConfigureAwait(False), Invariante)))
-                Dim total = Await cn.ExecuteScalarAsync(Of Long)(New CommandDefinition(
-                    "SELECT COUNT(uid) FROM gatusuariospriv2 WHERE uid = @hash AND pri IN (@p5000, @p5030)",
-                    New With {.hash = Privilegios.HashUsuario(local, uid), .p5000 = Privilegios.HashPrivilegio(local, uid, 5000), .p5030 = Privilegios.HashPrivilegio(local, uid, 5030)},
-                    cancellationToken:=ct)).ConfigureAwait(False)
-                Return If(total >= 2, ResultadoAutorizacion.Autorizado, ResultadoAutorizacion.SinPrivilegio)
-            End Using
+            Return (Await AutorizacionSupervisor.AutorizarAsync(_fabrica, login, clave, local, ct).ConfigureAwait(False)).Resultado
         End Function
 
         ''' <summary>
